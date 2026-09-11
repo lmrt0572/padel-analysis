@@ -5,7 +5,7 @@ Au fond du court, ou un pixel vaut 6,47 cm, l'effet est brutal. On le chiffre.
 
 Usage:
     python scripts/experiment_imgsz.py --video <video.mp4> --annotations <pose.json> \
-        --calibration data/calibrations/<nom>.json --start 5000 --frames 200
+        --calibration ground_truth/calibrations/<nom>.json --start 5000 --frames 200
 """
 
 import argparse

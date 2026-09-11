@@ -1,0 +1,160 @@
+{
+  "points": [
+    {
+      "name": "corner_near_left",
+      "court_xy": [
+        -5.0,
+        -10.0
+      ],
+      "image_xy": [
+        210.0,
+        960.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "corner_near_right",
+      "court_xy": [
+        5.0,
+        -10.0
+      ],
+      "image_xy": [
+        1722.0,
+        959.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "corner_far_right",
+      "court_xy": [
+        5.0,
+        10.0
+      ],
+      "image_xy": [
+        1326.0,
+        315.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "corner_far_left",
+      "court_xy": [
+        -5.0,
+        10.0
+      ],
+      "image_xy": [
+        594.0,
+        317.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "service_near_left",
+      "court_xy": [
+        -5.0,
+        -6.95
+      ],
+      "image_xy": [
+        314.0,
+        786.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "service_near_right",
+      "court_xy": [
+        5.0,
+        -6.95
+      ],
+      "image_xy": [
+        1615.0,
+        784.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "service_far_left",
+      "court_xy": [
+        -5.0,
+        6.95
+      ],
+      "image_xy": [
+        564.0,
+        372.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "service_far_right",
+      "court_xy": [
+        5.0,
+        6.95
+      ],
+      "image_xy": [
+        1358.0,
+        369.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "net_left",
+      "court_xy": [
+        -5.0,
+        0.0
+      ],
+      "image_xy": [
+        474.0,
+        527.0
+      ],
+      "is_control": false
+    },
+    {
+      "name": "net_right",
+      "court_xy": [
+        5.0,
+        0.0
+      ],
+      "image_xy": [
+        1451.0,
+        527.0
+      ],
+      "is_control": true
+    },
+    {
+      "name": "service_near_centre",
+      "court_xy": [
+        0.0,
+        -6.95
+      ],
+      "image_xy": [
+        961.0,
+        784.0
+      ],
+      "is_control": true
+    },
+    {
+      "name": "service_far_centre",
+      "court_xy": [
+        0.0,
+        6.95
+      ],
+      "image_xy": [
+        960.0,
+        372.0
+      ],
+      "is_control": true
+    },
+    {
+      "name": "net_centre",
+      "court_xy": [
+        0.0,
+        0.0
+      ],
+      "image_xy": [
+        960.0,
+        530.0
+      ],
+      "is_control": true
+    }
+  ]
+}

@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.5"]
+eval = ["supervision>=0.25,<0.31", "motmetrics>=1.4"]
 
 [project.scripts]
 padel-analysis = "padel_analysis.cli:main"

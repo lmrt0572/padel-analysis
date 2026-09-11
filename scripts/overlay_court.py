@@ -2,7 +2,7 @@
 
 Usage:
     python scripts/overlay_court.py --video data/clips/match.mp4 --frame 500 \
-        --calibration data/calibrations/match.json --out outputs/overlay.png
+        --calibration ground_truth/calibrations/match.json --out outputs/overlay.png
 """
 
 import argparse

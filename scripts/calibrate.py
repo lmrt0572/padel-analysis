@@ -2,7 +2,7 @@
 
 Usage:
     python scripts/calibrate.py --video data/clips/match.mp4 --frame 500 \
-        --out data/calibrations/match.json
+        --out ground_truth/calibrations/match.json
 
 A schematic of the court is drawn in the corner of the window with the point being
 asked for highlighted, so there is no ambiguity about which intersection to click.
