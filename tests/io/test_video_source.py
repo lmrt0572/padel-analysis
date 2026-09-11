@@ -53,9 +53,8 @@ def test_iteration_can_start_and_stop_at_given_indices(tiny_video):
 
 
 def test_reading_past_the_end_raises(tiny_video):
-    with VideoSource(tiny_video) as source:
-        with pytest.raises(IndexError):
-            source.read(999)
+    with VideoSource(tiny_video) as source, pytest.raises(IndexError):
+        source.read(999)
 
 
 def test_missing_file_raises(tmp_path):

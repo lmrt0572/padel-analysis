@@ -8,6 +8,7 @@ cost around a hundred gigabytes, so nothing is ever written out.
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Self
 
 import cv2
 import numpy as np
@@ -28,7 +29,7 @@ class VideoSource:
         self._path = Path(path)
         self._capture: cv2.VideoCapture | None = None
 
-    def open(self) -> "VideoSource":
+    def open(self) -> Self:
         if not self._path.exists():
             raise FileNotFoundError(f"no such video: {self._path}")
         capture = cv2.VideoCapture(str(self._path))
@@ -42,7 +43,7 @@ class VideoSource:
             self._capture.release()
             self._capture = None
 
-    def __enter__(self) -> "VideoSource":
+    def __enter__(self) -> Self:
         return self.open()
 
     def __exit__(self, *exc_info: object) -> None:

@@ -38,7 +38,7 @@ class Minimap:
         x, y = float(court_xy[0]), float(court_xy[1])
         px = self._margin + (x + self._court.half_width) * self._scale
         py = self._margin + (self._court.half_length - y) * self._scale
-        return int(round(px)), int(round(py))
+        return round(px), round(py)
 
     def draw(self, positions: dict[str, tuple[float, float]]) -> np.ndarray:
         court = self._court

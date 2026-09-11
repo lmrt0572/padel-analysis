@@ -17,7 +17,7 @@ def torso_histogram(frame: np.ndarray, bbox: np.ndarray, bins: int = BINS) -> np
     otherwise dominate the signature with the blue of the floor.
     """
     height, width = frame.shape[:2]
-    x1, y1, x2, y2 = (int(round(float(v))) for v in bbox)
+    x1, y1, x2, y2 = (round(float(v)) for v in bbox)
     x1, x2 = max(0, min(x1, width - 1)), max(1, min(x2, width))
     y1, y2 = max(0, min(y1, height - 1)), max(1, min(y2, height))
     if x2 <= x1 or y2 <= y1:
