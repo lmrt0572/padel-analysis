@@ -33,6 +33,15 @@ class AmbiguousEpisode:
     min_separation_m: float
 
 
+@dataclass(frozen=True)
+class CameraCut:
+    """A shot change, and which pairs it puts at risk."""
+
+    frame: int  # first frame of the new shot
+    sides: tuple[str, ...]  # ("near",), ("far",) or both
+    displacement_m: float  # smallest jump among the players at risk
+
+
 @dataclass
 class IdentityGroundTruth:
     """Per-frame slot assignments, plus the episodes a human still has to settle."""
@@ -40,6 +49,8 @@ class IdentityGroundTruth:
     assignments: dict[int, dict[str, int]]
     episodes: list[AmbiguousEpisode]
     resolved: list[int] = field(default_factory=list)
+    cuts: list[CameraCut] = field(default_factory=list)
+    resolved_cuts: list[int] = field(default_factory=list)
 
     def apply_swap(self, from_frame: int, slots: tuple[str, str]) -> None:
         """Exchange two slots from `from_frame` onward.
@@ -70,6 +81,15 @@ class IdentityGroundTruth:
                 for e in self.episodes
             ],
             "resolved": self.resolved,
+            "cuts": [
+                {
+                    "frame": c.frame,
+                    "sides": list(c.sides),
+                    "displacement_m": c.displacement_m,
+                }
+                for c in self.cuts
+            ],
+            "resolved_cuts": self.resolved_cuts,
         }
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -110,6 +130,17 @@ class IdentityGroundTruth:
                 for e in payload["episodes"]
             ],
             resolved=[int(f) for f in payload["resolved"]],
+            # Les deux champs suivants sont apparus apres les premieres verites
+            # terrain : un fichier qui les ignore reste lisible.
+            cuts=[
+                CameraCut(
+                    frame=int(c["frame"]),
+                    sides=tuple(c["sides"]),
+                    displacement_m=float(c["displacement_m"]),
+                )
+                for c in payload.get("cuts", [])
+            ],
+            resolved_cuts=[int(f) for f in payload.get("resolved_cuts", [])],
         )
 
 

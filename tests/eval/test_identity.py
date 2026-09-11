@@ -174,3 +174,31 @@ def test_a_failed_save_leaves_no_temporary_file_behind(tmp_path, monkeypatch):
             assignments={1: {"near_1": 1}}, episodes=[], resolved=[]
         ).save(path)
     assert sorted(p.name for p in tmp_path.iterdir()) == ["truth.json"]
+
+
+def test_a_ground_truth_written_before_cuts_existed_still_loads(tmp_path):
+    """Les premieres verites terrain n'ont ni coupures ni arbitrage de coupures."""
+    path = tmp_path / "truth.json"
+    path.write_text(
+        '{"assignments": {"0": {"near_1": 0}}, "episodes": [], "resolved": [0]}',
+        encoding="utf-8",
+    )
+    truth = IdentityGroundTruth.load(path)
+    assert truth.resolved == [0]
+    assert truth.cuts == []
+    assert truth.resolved_cuts == []
+
+
+def test_cuts_survive_a_save_and_a_load(tmp_path):
+    path = tmp_path / "truth.json"
+    IdentityGroundTruth(
+        assignments={0: {"near_1": 0}},
+        episodes=[],
+        cuts=[identity.CameraCut(frame=12, sides=("near", "far"), displacement_m=3.5)],
+        resolved_cuts=[12],
+    ).save(path)
+    loaded = IdentityGroundTruth.load(path)
+    assert loaded.cuts == [
+        identity.CameraCut(frame=12, sides=("near", "far"), displacement_m=3.5)
+    ]
+    assert loaded.resolved_cuts == [12]

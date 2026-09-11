@@ -1,12 +1,28 @@
-"""Arbitrage humain des episodes ou deux partenaires se croisent.
+"""Arbitrage humain des moments ou l'identite peut avoir decroche.
 
-Pour chaque episode, la video est rejouee en boucle autour du moment le plus serre,
-avec les deux joueurs concernes entoures de leur couleur de slot. La question est
-binaire : ont-ils permute, ou non ?
+Deux natures de doute, arbitrees l'une apres l'autre.
 
-Touches :
+RAPPROCHEMENTS - deux partenaires passent assez pres pour que l'association
+hesite. La video est rejouee en boucle avec les deux joueurs concernes entoures
+de leur couleur de slot.
+
     n  ils n'ont PAS permute, l'association automatique etait bonne
     s  ils ONT permute : les deux slots sont echanges a partir de cet episode
+
+COUPURES DE PLAN - la camera change, les joueurs reapparaissent ailleurs, et
+l'association les rattache au plus proche de leur position d'avant. Si deux
+partenaires ont echange leur poste pendant la coupure, elle suit le mauvais. Les
+deux paires peuvent permuter independamment, d'ou quatre reponses.
+
+    n  aucune permutation
+    p  la paire PROCHE a permute
+    e  la paire ELOIGNEE a permute
+    b  les DEUX paires ont permute
+
+Ne juge pas les corps mais les couleurs : le meme joueur porte-t-il la meme
+couleur avant et apres ? Un detail stable - casquette, chaussures, manches - vaut
+mieux qu'une impression generale.
+
     q  abandonner (les arbitrages deja rendus sont conserves)
 
 Usage:
@@ -21,7 +37,12 @@ import cv2
 import numpy as np
 
 from padel_analysis.eval.dataset import PoseAnnotations
-from padel_analysis.eval.identity import IdentityGroundTruth
+from padel_analysis.eval.identity import (
+    FAR_SLOTS,
+    NEAR_SLOTS,
+    SLOTS,
+    IdentityGroundTruth,
+)
 from padel_analysis.io.video_source import VideoSource
 from padel_analysis.render.minimap import TEAM_COLOURS
 
@@ -29,12 +50,13 @@ WINDOW = "revue d'identite"
 MARGIN = 45
 
 
-def draw_episode_frame(
+def draw_frame(
     frame: np.ndarray,
     people: list,
     row: dict[str, int],
-    slots: tuple[str, str],
+    slots: tuple[str, ...],
     caption: str,
+    keys: str,
 ) -> np.ndarray:
     canvas = frame.copy()
     for slot in slots:
@@ -51,10 +73,105 @@ def draw_episode_frame(
     for colour, thickness in (((0, 0, 0), 5), ((0, 255, 255), 2)):
         cv2.putText(canvas, caption, (20, 44), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
                     colour, thickness)
-        cv2.putText(canvas, "n = pas de permutation    s = permutation    q = quitter",
-                    (20, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.65, colour,
-                    max(1, thickness - 2))
+        cv2.putText(canvas, keys, (20, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.65,
+                    colour, max(1, thickness - 2))
     return canvas
+
+
+def ask(
+    source: VideoSource,
+    annotations: PoseAnnotations,
+    truth: IdentityGroundTruth,
+    start: int,
+    stop: int,
+    slots: tuple[str, ...],
+    caption: str,
+    keys: str,
+    allowed: str,
+) -> str:
+    """Rejoue la sequence en boucle jusqu'a ce qu'une touche valide soit frappee."""
+    accepted = set(allowed) | {"q"}
+    while True:
+        for index, frame in source.iter_frames(start=max(0, start), stop=stop):
+            people = annotations.for_frame(index)
+            row = truth.assignments.get(index, {})
+            cv2.imshow(
+                WINDOW, draw_frame(frame, people, row, slots, caption, keys)
+            )
+            key = cv2.waitKey(40) & 0xFF
+            if key != 255 and chr(key) in accepted:
+                return chr(key)
+
+
+def review_episodes(source, annotations, truth, path) -> bool:
+    """Retourne False si l'utilisateur a demande a quitter."""
+    pending = [e for e in truth.episodes if e.start_frame not in truth.resolved]
+    print(f"rapprochements a arbitrer : {len(pending)}/{len(truth.episodes)}")
+
+    for position, episode in enumerate(pending, start=1):
+        caption = (f"[rapprochement {position}/{len(pending)}] frames "
+                   f"{episode.start_frame}-{episode.end_frame}  "
+                   f"{episode.slots[0]} / {episode.slots[1]}  "
+                   f"min {episode.min_separation_m:.2f} m")
+        decision = ask(
+            source, annotations, truth,
+            episode.start_frame - MARGIN, episode.end_frame + MARGIN,
+            episode.slots, caption,
+            "n = pas de permutation    s = permutation    q = quitter", "ns",
+        )
+        if decision == "q":
+            return False
+        if decision == "s":
+            truth.apply_swap(episode.start_frame, episode.slots)
+            print(f"  rapprochement {episode.start_frame}: PERMUTATION appliquee")
+        else:
+            print(f"  rapprochement {episode.start_frame}: pas de permutation")
+        truth.resolved.append(episode.start_frame)
+        truth.save(path)
+    return True
+
+
+def review_cuts(source, annotations, truth, path) -> bool:
+    pending = [c for c in truth.cuts if c.frame not in truth.resolved_cuts]
+    print(f"coupures a arbitrer : {len(pending)}/{len(truth.cuts)}")
+
+    for position, cut in enumerate(pending, start=1):
+        allowed = "n"
+        wording = ["n = aucune"]
+        if "near" in cut.sides:
+            allowed += "p"
+            wording.append("p = proche")
+        if "far" in cut.sides:
+            allowed += "e"
+            wording.append("e = eloignee")
+        if len(cut.sides) == 2:
+            allowed += "b"
+            wording.append("b = les deux")
+        wording.append("q = quitter")
+
+        caption = (f"[coupure {position}/{len(pending)}] frame {cut.frame}  "
+                   f"paires en risque : {' + '.join(cut.sides)}  "
+                   f"saut {cut.displacement_m:.1f} m")
+        decision = ask(
+            source, annotations, truth,
+            cut.frame - MARGIN, cut.frame + MARGIN,
+            SLOTS, caption, "    ".join(wording), allowed,
+        )
+        if decision == "q":
+            return False
+
+        swapped = []
+        if decision in ("p", "b"):
+            truth.apply_swap(cut.frame, NEAR_SLOTS)
+            swapped.append("proche")
+        if decision in ("e", "b"):
+            truth.apply_swap(cut.frame, FAR_SLOTS)
+            swapped.append("eloignee")
+        print(f"  coupure {cut.frame}: "
+              f"{'PERMUTATION ' + ' et '.join(swapped) if swapped else 'aucune'}")
+        truth.resolved_cuts.append(cut.frame)
+        truth.save(path)
+    return True
 
 
 def main() -> None:
@@ -68,48 +185,14 @@ def main() -> None:
     annotations = PoseAnnotations.load(args.annotations)
     truth = IdentityGroundTruth.load(args.identity)
 
-    pending = [e for e in truth.episodes if e.start_frame not in truth.resolved]
-    print(f"{len(pending)} episodes a arbitrer sur {len(truth.episodes)}")
-    if not pending:
-        print("rien a faire")
-        return
-
     cv2.namedWindow(WINDOW, cv2.WINDOW_NORMAL)
     with VideoSource(args.video) as source:
-        for position, episode in enumerate(pending, start=1):
-            start = max(0, episode.start_frame - MARGIN)
-            stop = episode.end_frame + MARGIN
-            caption = (f"[{position}/{len(pending)}] frames "
-                       f"{episode.start_frame}-{episode.end_frame}  "
-                       f"{episode.slots[0]} / {episode.slots[1]}  "
-                       f"min {episode.min_separation_m:.2f} m")
-
-            decision = None
-            while decision is None:
-                for index, frame in source.iter_frames(start=start, stop=stop):
-                    people = annotations.for_frame(index)
-                    row = truth.assignments.get(index, {})
-                    cv2.imshow(
-                        WINDOW,
-                        draw_episode_frame(frame, people, row, episode.slots, caption),
-                    )
-                    key = cv2.waitKey(40) & 0xFF
-                    if key in (ord("n"), ord("s"), ord("q")):
-                        decision = chr(key)
-                        break
-
-            if decision == "q":
-                break
-            if decision == "s":
-                truth.apply_swap(episode.start_frame, episode.slots)
-                print(f"  episode {episode.start_frame}: PERMUTATION appliquee")
-            else:
-                print(f"  episode {episode.start_frame}: pas de permutation")
-            truth.resolved.append(episode.start_frame)
-            truth.save(args.identity)
-
+        if review_episodes(source, annotations, truth, args.identity):
+            review_cuts(source, annotations, truth, args.identity)
     cv2.destroyAllWindows()
-    print(f"\n{len(truth.resolved)}/{len(truth.episodes)} episodes arbitres")
+
+    print(f"\nrapprochements : {len(truth.resolved)}/{len(truth.episodes)}")
+    print(f"coupures       : {len(truth.resolved_cuts)}/{len(truth.cuts)}")
     print(f"enregistre dans {args.identity}")
 
 
