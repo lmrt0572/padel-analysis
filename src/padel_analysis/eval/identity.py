@@ -51,6 +51,10 @@ class IdentityGroundTruth:
     resolved: list[int] = field(default_factory=list)
     cuts: list[CameraCut] = field(default_factory=list)
     resolved_cuts: list[int] = field(default_factory=list)
+    # Frames ou les equipes ont change de cote. Les slots designent une moitie de
+    # court, pas une personne : apres un changement de cote, `near_1` est quelqu'un
+    # d'autre. Rien a echanger donc - l'identite du joueur s'arrete la et repart.
+    boundaries: list[int] = field(default_factory=list)
 
     def apply_swap(self, from_frame: int, slots: tuple[str, str]) -> None:
         """Exchange two slots from `from_frame` onward.
@@ -65,6 +69,14 @@ class IdentityGroundTruth:
             row = self.assignments[frame]
             if first in row and second in row:
                 row[first], row[second] = row[second], row[first]
+
+    def segment_of(self, frame: int) -> int:
+        """Index of the stretch `frame` belongs to, counting from zero.
+
+        Player identity holds inside a stretch and makes no claim across one, so a
+        metric that follows identities must not carry a name over a boundary.
+        """
+        return sum(1 for boundary in self.boundaries if frame >= boundary)
 
     def save(self, path: Path) -> None:
         payload = {
@@ -90,6 +102,7 @@ class IdentityGroundTruth:
                 for c in self.cuts
             ],
             "resolved_cuts": self.resolved_cuts,
+            "boundaries": self.boundaries,
         }
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +154,7 @@ class IdentityGroundTruth:
                 for c in payload.get("cuts", [])
             ],
             resolved_cuts=[int(f) for f in payload.get("resolved_cuts", [])],
+            boundaries=[int(f) for f in payload.get("boundaries", [])],
         )
 
 

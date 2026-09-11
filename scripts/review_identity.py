@@ -18,6 +18,12 @@ deux paires peuvent permuter independamment, d'ou quatre reponses.
     p  la paire PROCHE a permute
     e  la paire ELOIGNEE a permute
     b  les DEUX paires ont permute
+    c  les EQUIPES ONT CHANGE DE COTE
+
+Le changement de cote est a part. Les slots designent une moitie de court, pas une
+personne : apres un changement de cote, `near_1` est quelqu'un d'autre, et aucun
+echange d'etiquettes ne peut l'exprimer. L'identite du joueur s'arrete la et repart
+a zero - c'est une frontiere, pas une correction.
 
 Ne juge pas les corps mais les couleurs : le meme joueur porte-t-il la meme
 couleur avant et apres ? Un detail stable - casquette, chaussures, manches - vaut
@@ -136,7 +142,7 @@ def review_cuts(source, annotations, truth, path) -> bool:
     print(f"coupures a arbitrer : {len(pending)}/{len(truth.cuts)}")
 
     for position, cut in enumerate(pending, start=1):
-        allowed = "n"
+        allowed = "nc"
         wording = ["n = aucune"]
         if "near" in cut.sides:
             allowed += "p"
@@ -147,6 +153,7 @@ def review_cuts(source, annotations, truth, path) -> bool:
         if len(cut.sides) == 2:
             allowed += "b"
             wording.append("b = les deux")
+        wording.append("c = CHANGEMENT DE COTE")
         wording.append("q = quitter")
 
         caption = (f"[coupure {position}/{len(pending)}] frame {cut.frame}  "
@@ -159,6 +166,14 @@ def review_cuts(source, annotations, truth, path) -> bool:
         )
         if decision == "q":
             return False
+
+        if decision == "c":
+            truth.boundaries.append(cut.frame)
+            truth.boundaries.sort()
+            truth.resolved_cuts.append(cut.frame)
+            truth.save(path)
+            print(f"  coupure {cut.frame}: CHANGEMENT DE COTE, identite relancee")
+            continue
 
         swapped = []
         if decision in ("p", "b"):

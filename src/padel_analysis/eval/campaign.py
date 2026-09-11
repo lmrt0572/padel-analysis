@@ -105,8 +105,13 @@ def run_campaign(
             # MOTA et IDF1 : seulement sur les frames ou l'identite est connue.
             identity_row = truth_identity.assignments.get(index)
             if identity_row:
+                # Les equipes changent de cote au cours du match, et les slots
+                # designent une moitie de court : au-dela d'une frontiere, `near_1`
+                # est quelqu'un d'autre. Le nom de reference porte donc le segment,
+                # ce qui arrete l'identite au lieu de la prolonger a tort.
+                segment = truth_identity.segment_of(index)
                 reference = {
-                    slot: truth[annotation_index].bbox
+                    f"{slot}#{segment}": truth[annotation_index].bbox
                     for slot, annotation_index in identity_row.items()
                     if annotation_index < len(truth)
                 }
@@ -137,6 +142,12 @@ def run_campaign(
 
     return {
         "frames": int(constrained_counts.size),
+        "identity": {
+            "cuts": len(truth_identity.cuts),
+            "boundaries": len(truth_identity.boundaries),
+            "arbitrated_episodes": len(truth_identity.resolved),
+            "arbitrated_cuts": len(truth_identity.resolved_cuts),
+        },
         "detection": {
             "precision": score.precision,
             "recall": score.recall,

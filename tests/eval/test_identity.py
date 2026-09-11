@@ -202,3 +202,26 @@ def test_cuts_survive_a_save_and_a_load(tmp_path):
         identity.CameraCut(frame=12, sides=("near", "far"), displacement_m=3.5)
     ]
     assert loaded.resolved_cuts == [12]
+
+
+def test_without_a_boundary_every_frame_is_in_the_first_segment():
+    truth = IdentityGroundTruth(assignments={}, episodes=[])
+    assert truth.segment_of(0) == 0
+    assert truth.segment_of(50_000) == 0
+
+
+def test_a_boundary_starts_a_new_segment_from_its_own_frame():
+    """Un changement de cote n'echange rien : il arrete l'identite et la relance."""
+    truth = IdentityGroundTruth(assignments={}, episodes=[], boundaries=[100, 500])
+    assert truth.segment_of(99) == 0
+    assert truth.segment_of(100) == 1
+    assert truth.segment_of(499) == 1
+    assert truth.segment_of(500) == 2
+
+
+def test_boundaries_survive_a_save_and_a_load(tmp_path):
+    path = tmp_path / "truth.json"
+    IdentityGroundTruth(
+        assignments={0: {"near_1": 0}}, episodes=[], boundaries=[7, 9]
+    ).save(path)
+    assert IdentityGroundTruth.load(path).boundaries == [7, 9]
