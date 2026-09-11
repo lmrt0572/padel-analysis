@@ -6,6 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "padel-analysis"
 version = "0.1.0"
 description = "Automatic analysis of padel matches from broadcast video"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26",

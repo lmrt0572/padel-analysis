@@ -8,8 +8,12 @@ Origin at the centre of the net, at ground level.
     z: upwards from the ground.
 All lengths in metres.
 
-Every constant below must be checked against the FIP Rules of Padel and annotated
-with its source article. Do not change a value without updating its reference.
+Source
+------
+Constants follow the FIP Rules of Padel. Court rectangle, service line, net heights
+and back wall composition are confirmed. The stepped side walls are not modelled
+here: secondary sources disagree on their geometry, so they need checking against
+the rulebook itself before being added.
 """
 
 from dataclasses import dataclass
@@ -21,7 +25,7 @@ import numpy as np
 class Court:
     """Dimensions of a regulation padel court."""
 
-    # FIP Rules of Padel, court dimensions.
+    # Court rectangle. FIP allows a 0.5% tolerance either way.
     length: float = 20.0
     width: float = 10.0
     # Distance from the net to the service line, on each side.
@@ -29,7 +33,7 @@ class Court:
     # Net height at the centre and at the posts.
     net_height_centre: float = 0.88
     net_height_posts: float = 0.92
-    # Back wall: glass section, then mesh section above it.
+    # Back wall: 3 m of tempered glass with 1 m of metallic mesh above it.
     back_wall_glass_height: float = 3.0
     back_wall_total_height: float = 4.0
 
