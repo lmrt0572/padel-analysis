@@ -6,8 +6,8 @@ court en mètres, et statistiques tactiques.
 
 ## État
 
-Jalon 2 terminé : chaîne complète de la vidéo à la minimap, avec identités stables.
-Statistiques tactiques et évaluation chiffrée à venir.
+Jalon 3A terminé : statistiques tactiques sur un match complet de vingt-cinq minutes.
+Évaluation chiffrée et ablations à venir.
 
 ## Installation
 
@@ -55,6 +55,21 @@ Lancer la chaîne complète — vidéo annotée avec minimap, et positions mises
 python -m padel_analysis.cli --video <video.mp4> \
     --calibration data/calibrations/<nom>.json \
     --out outputs/annotated.mp4 --cache cache/<nom>.json --start 5000 --frames 1800
+```
+
+Pour un passage destiné aux statistiques, `--no-video` saute le rendu et ne produit
+que le cache. Un match entier prend alors environ une heure sur une GTX 1650 :
+
+```bash
+python -m padel_analysis.cli --video <video.mp4> \
+    --calibration data/calibrations/<nom>.json --cache cache/<nom>.json --no-video
+```
+
+Puis calculer les statistiques et les figures depuis ce cache, sans réinférence :
+
+```bash
+python -m padel_analysis.analyse --cache cache/<nom>.json \
+    --out outputs/<nom>_report.json --figures outputs/
 ```
 
 ## Résultats
@@ -172,6 +187,59 @@ dérive d'un même joueur d'une frame à l'autre vaut 0,031, contre 0,199 entre 
 partenaires. Le rapport de 6,3 confirme qu'elle distingue bien des coéquipiers
 portant la même tenue, et pas seulement les deux équipes.
 
+### Analyse tactique — contrôle du filet
+
+Mesuré sur le match complet, 45 934 frames, dont 44 911 portent les quatre joueurs.
+
+Les joueurs occupent deux profondeurs distinctes. Sur 182 713 positions, le mode
+offensif culmine à **3,95 m** du filet et le mode défensif à **7,85 m**, contre la
+vitre de fond. Le creux qui les sépare tombe à **5,85 m**, et c'est là qu'est placé le
+seuil.
+
+La ligne de service, à 6,95 m, n'est délibérément pas utilisée : c'est une règle de
+service et non un marqueur de position tactique, et elle tombe du mauvais côté du
+creux — elle classerait toute la bande défensive comme offensive.
+
+| Mesure | Valeur |
+|---|---|
+| Contrôle côté proche | **38,0 %** |
+| Contrôle côté éloigné | **20,5 %** |
+| Disputé | 41,5 % |
+| Frames évaluées | 44 911 |
+
+**Le creux est large et peu profond**, donc la valeur exacte du seuil relève en partie
+de la convention, et les pourcentages la suivent :
+
+| Seuil | Proche | Éloigné | Disputé | Rapport proche/éloigné |
+|---|---|---|---|---|
+| 5,00 m | 28,0 % | 12,3 % | 59,8 % | 2,28 |
+| 5,50 m | 33,9 % | 18,0 % | 48,2 % | 1,88 |
+| **5,85 m** | **38,0 %** | **20,5 %** | **41,5 %** | **1,85** |
+| 6,00 m | 39,7 % | 21,4 % | 38,9 % | 1,86 |
+| 6,50 m | 43,5 % | 23,5 % | 33,0 % | 1,85 |
+
+Les valeurs absolues dépendent donc du seuil, mais **le rapport entre les deux paires
+ne bouge pratiquement pas** au-delà de 5,5 m. La conclusion robuste de ce match est
+que la paire du côté proche a tenu le filet environ **1,85 fois plus souvent** que
+l'autre — indépendamment de la convention retenue.
+
+### Analyse tactique — distance et vitesse
+
+La distance est donnée brute et lissée. L'écart entre les deux chiffre la part qu'y a
+prise le bruit de position, au lieu de la masquer.
+
+| Joueur | Moitié | Distance brute | Distance lissée | Part de bruit | Vitesse p95 | Profondeur moyenne |
+|---|---|---|---|---|---|---|
+| near_1 | proche | 2890 m | 2261 m | **21,8 %** | 3,50 m/s | 5,41 m |
+| near_2 | proche | 2807 m | 2210 m | **21,3 %** | 3,51 m/s | 5,44 m |
+| far_1 | éloignée | 3282 m | 2233 m | **32,0 %** | 3,77 m/s | 6,75 m |
+| far_2 | éloignée | 3300 m | 2285 m | **30,8 %** | 3,92 m/s | 6,77 m |
+
+**La part de bruit est une demi-fois plus élevée pour la moitié éloignée**, ce que
+prédit l'asymétrie de 4,3× documentée plus haut. Les distances lissées, elles, sont
+comparables entre les quatre joueurs alors que les distances brutes ne l'étaient pas :
+l'écart apparent de 400 mètres entre les deux paires était du bruit, pas du jeu.
+
 ## Limites connues
 
 **L'identité entre partenaires n'est pas encore vérifiée.** La contrainte de côté,
@@ -188,6 +256,18 @@ court, lorsque deux joueuses adjacentes s'occultent mutuellement.
 
 **Les parois latérales ne sont pas modélisées.** Seules les parois de fond le sont ;
 la géométrie en paliers des côtés demande une vérification dans le règlement FIP.
+
+**Le lissage ne retire pas tout le bruit.** L'écart entre distance brute et distance
+lissée dit ce que le lissage a enlevé, pas ce qu'il reste. Les distances lissées
+correspondent à environ 88 mètres par minute de **jeu effectif** — la vidéo étant
+montée sur les échanges, elle ne contient aucun temps mort. Ce chiffre n'est donc pas
+directement comparable aux distances par match que rapporte la littérature, qui
+incluent les interruptions.
+
+**Le seuil du filet est une convention, quoique mesurée.** Le creux entre les deux
+modes est réel mais large : les pourcentages absolus de contrôle bougent de quinze
+points selon l'endroit où on le place dans ce creux. Le rapport entre les deux paires,
+lui, est stable — c'est cette forme-là qu'il faut citer.
 
 ## Données
 
