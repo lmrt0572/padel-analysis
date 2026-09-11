@@ -29,6 +29,7 @@ Ne juge pas les corps mais les couleurs : le meme joueur porte-t-il la meme
 couleur avant et apres ? Un detail stable - casquette, chaussures, manches - vaut
 mieux qu'une impression generale.
 
+    r  revenir au clip precedent et annuler sa reponse
     q  abandonner (les arbitrages deja rendus sont conserves)
 
 Usage:
@@ -109,13 +110,40 @@ def ask(
                 return chr(key)
 
 
+def undo_episode(truth: IdentityGroundTruth, episode) -> str | None:
+    """Defait la reponse rendue sur un rapprochement. L'echange est son inverse."""
+    key = truth.decisions.pop(f"episode:{episode.start_frame}", None)
+    if key == "s":
+        truth.apply_swap(episode.start_frame, episode.slots)
+    if episode.start_frame in truth.resolved:
+        truth.resolved.remove(episode.start_frame)
+    return key
+
+
+def undo_cut(truth: IdentityGroundTruth, cut) -> str | None:
+    key = truth.decisions.pop(f"cut:{cut.frame}", None)
+    if key is None and cut.frame in truth.boundaries:
+        key = "c"  # repondu avant que les reponses soient tracees
+    if key == "c" and cut.frame in truth.boundaries:
+        truth.boundaries.remove(cut.frame)
+    if key in ("p", "b"):
+        truth.apply_swap(cut.frame, NEAR_SLOTS)
+    if key in ("e", "b"):
+        truth.apply_swap(cut.frame, FAR_SLOTS)
+    if cut.frame in truth.resolved_cuts:
+        truth.resolved_cuts.remove(cut.frame)
+    return key
+
+
 def review_episodes(source, annotations, truth, path) -> bool:
     """Retourne False si l'utilisateur a demande a quitter."""
     pending = [e for e in truth.episodes if e.start_frame not in truth.resolved]
     print(f"rapprochements a arbitrer : {len(pending)}/{len(truth.episodes)}")
 
-    for position, episode in enumerate(pending, start=1):
-        caption = (f"[rapprochement {position}/{len(pending)}] frames "
+    position = 0
+    while position < len(pending):
+        episode = pending[position]
+        caption = (f"[rapprochement {position + 1}/{len(pending)}] frames "
                    f"{episode.start_frame}-{episode.end_frame}  "
                    f"{episode.slots[0]} / {episode.slots[1]}  "
                    f"min {episode.min_separation_m:.2f} m")
@@ -123,17 +151,42 @@ def review_episodes(source, annotations, truth, path) -> bool:
             source, annotations, truth,
             episode.start_frame - MARGIN, episode.end_frame + MARGIN,
             episode.slots, caption,
-            "n = pas de permutation    s = permutation    q = quitter", "ns",
+            "n = pas de permutation    s = permutation    "
+            "r = retour    q = quitter", "nsr",
         )
         if decision == "q":
             return False
+        if decision == "r":
+            if position > 0:
+                position -= 1
+                previous = pending[position]
+            elif truth.resolved:
+                done = truth.resolved[-1]
+                previous = next(
+                    (e for e in truth.episodes if e.start_frame == done), None
+                )
+                if previous is None:
+                    print("  rien a annuler")
+                    continue
+                pending.insert(0, previous)
+            else:
+                print("  rien a annuler : aucun rapprochement rendu")
+                continue
+            undone = undo_episode(truth, previous)
+            truth.save(path)
+            print(f"  retour sur {previous.start_frame} "
+                  f"(reponse annulee : {undone or 'inconnue'})")
+            continue
+
         if decision == "s":
             truth.apply_swap(episode.start_frame, episode.slots)
             print(f"  rapprochement {episode.start_frame}: PERMUTATION appliquee")
         else:
             print(f"  rapprochement {episode.start_frame}: pas de permutation")
         truth.resolved.append(episode.start_frame)
+        truth.decisions[f"episode:{episode.start_frame}"] = decision
         truth.save(path)
+        position += 1
     return True
 
 
@@ -141,43 +194,71 @@ def review_cuts(source, annotations, truth, path) -> bool:
     pending = [c for c in truth.cuts if c.frame not in truth.resolved_cuts]
     print(f"coupures a arbitrer : {len(pending)}/{len(truth.cuts)}")
 
-    for position, cut in enumerate(pending, start=1):
+    position = 0
+    while position < len(pending):
+        cut = pending[position]
         # Les cinq reponses sont toujours offertes. Le detecteur sert a trouver les
         # clips a regarder ; ce qu'on y voit ne lui appartient pas. Deux partenaires
         # proches qui echangent leurs places parcourent moins que le seuil, et la
         # paire n'est donc pas annoncee - sans cesser d'avoir permute.
         keys = ("n = aucune    p = proche    e = eloignee    b = les deux    "
-                "c = CHANGEMENT DE COTE    q = quitter")
-        caption = (f"[coupure {position}/{len(pending)}] frame {cut.frame}  "
+                "c = CHANGEMENT DE COTE    r = retour    q = quitter")
+        caption = (f"[coupure {position + 1}/{len(pending)}] frame {cut.frame}  "
                    f"paires signalees : {' + '.join(cut.sides)}  "
                    f"saut {cut.displacement_m:.1f} m")
         decision = ask(
             source, annotations, truth,
             cut.frame - MARGIN, cut.frame + MARGIN,
-            SLOTS, caption, keys, "npebc",
+            SLOTS, caption, keys, "npebcr",
         )
         if decision == "q":
             return False
 
+        if decision == "r":
+            # Au premier clip de la file, le precedent a ete rendu dans une session
+            # anterieure : il n'est plus en attente, il faut le reprendre au dossier.
+            if position > 0:
+                position -= 1
+                previous = pending[position]
+            elif truth.resolved_cuts:
+                done = truth.resolved_cuts[-1]
+                previous = next((c for c in truth.cuts if c.frame == done), None)
+                if previous is None:
+                    print("  rien a annuler")
+                    continue
+                pending.insert(0, previous)
+            else:
+                print("  rien a annuler : aucune coupure rendue")
+                continue
+            undone = undo_cut(truth, previous)
+            truth.save(path)
+            if undone is None:
+                print(f"  retour sur {previous.frame} : reponse precedente NON "
+                      f"tracee, seule la marque est retiree - si c'etait une "
+                      f"permutation, la reappliquer puis annuler a nouveau")
+            else:
+                print(f"  retour sur {previous.frame} (reponse annulee : {undone})")
+            continue
+
         if decision == "c":
             truth.boundaries.append(cut.frame)
             truth.boundaries.sort()
-            truth.resolved_cuts.append(cut.frame)
-            truth.save(path)
             print(f"  coupure {cut.frame}: CHANGEMENT DE COTE, identite relancee")
-            continue
+        else:
+            swapped = []
+            if decision in ("p", "b"):
+                truth.apply_swap(cut.frame, NEAR_SLOTS)
+                swapped.append("proche")
+            if decision in ("e", "b"):
+                truth.apply_swap(cut.frame, FAR_SLOTS)
+                swapped.append("eloignee")
+            print(f"  coupure {cut.frame}: "
+                  f"{'PERMUTATION ' + ' et '.join(swapped) if swapped else 'aucune'}")
 
-        swapped = []
-        if decision in ("p", "b"):
-            truth.apply_swap(cut.frame, NEAR_SLOTS)
-            swapped.append("proche")
-        if decision in ("e", "b"):
-            truth.apply_swap(cut.frame, FAR_SLOTS)
-            swapped.append("eloignee")
-        print(f"  coupure {cut.frame}: "
-              f"{'PERMUTATION ' + ' et '.join(swapped) if swapped else 'aucune'}")
         truth.resolved_cuts.append(cut.frame)
+        truth.decisions[f"cut:{cut.frame}"] = decision
         truth.save(path)
+        position += 1
     return True
 
 

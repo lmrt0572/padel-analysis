@@ -225,3 +225,37 @@ def test_boundaries_survive_a_save_and_a_load(tmp_path):
         assignments={0: {"near_1": 0}}, episodes=[], boundaries=[7, 9]
     ).save(path)
     assert IdentityGroundTruth.load(path).boundaries == [7, 9]
+
+
+def test_decisions_survive_a_save_and_a_load(tmp_path):
+    path = tmp_path / "truth.json"
+    IdentityGroundTruth(
+        assignments={0: {"near_1": 0}},
+        episodes=[],
+        decisions={"cut:120": "p", "cut:300": "c", "episode:7": "n"},
+    ).save(path)
+    assert IdentityGroundTruth.load(path).decisions == {
+        "cut:120": "p",
+        "cut:300": "c",
+        "episode:7": "n",
+    }
+
+
+def test_a_ground_truth_written_before_decisions_existed_still_loads(tmp_path):
+    path = tmp_path / "truth.json"
+    path.write_text(
+        '{"assignments": {}, "episodes": [], "resolved": []}', encoding="utf-8"
+    )
+    assert IdentityGroundTruth.load(path).decisions == {}
+
+
+def test_a_swap_applied_twice_returns_to_the_start():
+    """C'est ce qui rend l'annulation possible : l'echange est son propre inverse."""
+    truth = IdentityGroundTruth(
+        assignments={5: {"near_1": 0, "near_2": 1}, 6: {"near_1": 0, "near_2": 1}},
+        episodes=[],
+    )
+    truth.apply_swap(5, ("near_1", "near_2"))
+    assert truth.assignments[5] == {"near_1": 1, "near_2": 0}
+    truth.apply_swap(5, ("near_1", "near_2"))
+    assert truth.assignments[5] == {"near_1": 0, "near_2": 1}

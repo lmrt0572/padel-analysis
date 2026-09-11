@@ -55,6 +55,10 @@ class IdentityGroundTruth:
     # court, pas une personne : apres un changement de cote, `near_1` est quelqu'un
     # d'autre. Rien a echanger donc - l'identite du joueur s'arrete la et repart.
     boundaries: list[int] = field(default_factory=list)
+    # Ce qui a ete repondu a chaque clip, sous "episode:<frame>" ou "cut:<frame>".
+    # Sans cette trace, une reponse ne peut pas etre defaite : rien dans les
+    # assignations ne distingue "pas de permutation" d'une permutation corrigee.
+    decisions: dict[str, str] = field(default_factory=dict)
 
     def apply_swap(self, from_frame: int, slots: tuple[str, str]) -> None:
         """Exchange two slots from `from_frame` onward.
@@ -103,6 +107,7 @@ class IdentityGroundTruth:
             ],
             "resolved_cuts": self.resolved_cuts,
             "boundaries": self.boundaries,
+            "decisions": self.decisions,
         }
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -155,6 +160,7 @@ class IdentityGroundTruth:
             ],
             resolved_cuts=[int(f) for f in payload.get("resolved_cuts", [])],
             boundaries=[int(f) for f in payload.get("boundaries", [])],
+            decisions=dict(payload.get("decisions", {})),
         )
 
 
