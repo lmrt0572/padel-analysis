@@ -121,6 +121,17 @@ def magnifier(frame: np.ndarray, cursor: tuple[int, int], half: int = 44,
     return big
 
 
+def paste_inset(canvas: np.ndarray, inset: np.ndarray, top: bool, left: bool) -> None:
+    """Paste an inset into a corner of the canvas, in place."""
+    ch, cw = canvas.shape[:2]
+    ih, iw = inset.shape[:2]
+    if ih + 20 >= ch or iw + 20 >= cw:
+        return
+    y0 = 10 if top else ch - ih - 10
+    x0 = 10 if left else cw - iw - 10
+    canvas[y0:y0 + ih, x0:x0 + iw] = inset
+
+
 def grab_frame(video: Path, index: int) -> np.ndarray:
     cap = cv2.VideoCapture(str(video))
     cap.set(cv2.CAP_PROP_POS_FRAMES, index)
@@ -161,21 +172,12 @@ def collect_clicks(frame: np.ndarray, court: Court) -> list[CalibrationPoint]:
                         (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color,
                         max(1, thick - 2))
 
-        fh, fw = canvas.shape[:2]
         # Les encarts basculent du cote oppose au curseur, pour ne jamais masquer
         # le point que l'on cherche a cliquer.
-        on_right = cursor[0] > fw // 2
-
-        def paste(inset: np.ndarray, top: bool) -> None:
-            ih, iw = inset.shape[:2]
-            if ih + 20 >= fh or iw + 20 >= fw:
-                return
-            y0 = 10 if top else fh - ih - 10
-            x0 = 10 if on_right else fw - iw - 10
-            canvas[y0:y0 + ih, x0:x0 + iw] = inset
-
-        paste(court_schema(court, wanted, i), top=True)
-        paste(magnifier(frame, (cursor[0], cursor[1])), top=False)
+        on_left = cursor[0] > canvas.shape[1] // 2
+        paste_inset(canvas, court_schema(court, wanted, i), top=True, left=on_left)
+        paste_inset(canvas, magnifier(frame, (cursor[0], cursor[1])),
+                    top=False, left=on_left)
 
         cv2.imshow(WINDOW, canvas)
 
