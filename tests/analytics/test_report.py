@@ -44,9 +44,13 @@ def test_each_player_is_labelled_with_its_half_of_the_court():
 
 
 def test_net_control_is_included():
+    """Le rapport doit porter le seuil effectivement utilise, pas une valeur figee :
+    coder 5.5 en dur ici couplerait le test a une constante reglable."""
+    from padel_analysis.analytics.net_control import NET_THRESHOLD
+
     control = build_report(_trajectories())["net_control"]
     assert control["near_percent"] == pytest.approx(100.0)
-    assert control["threshold_m"] == pytest.approx(5.5)
+    assert control["threshold_m"] == pytest.approx(NET_THRESHOLD)
 
 
 def test_the_report_records_its_coverage():

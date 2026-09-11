@@ -2,14 +2,20 @@
 
 Threshold
 ---------
-Players occupy two distinct depths: an attacking band 3.5 to 4.5 metres from the
-net, and a defending one from 6.5 to 9 metres, against the back glass. The gap
-between them, measured on a minute of play, sits at 5.5 to 6.0 metres, and the
+Players occupy two distinct depths. Measured over a full match - 182 713 positions -
+the attacking mode peaks at 3.95 metres from the net and the defending one at 7.85,
+against the back glass. The gap between them bottoms out at 5.85 metres, and the
 threshold is placed there.
 
 The service line, at 6.95 metres, is deliberately not used: it is a rule about
 serving, not a marker of tactical position, and it falls on the wrong side of the
 gap - it would count the whole defending band as attacking.
+
+The gap is broad and shallow, so the exact value carries a degree of convention, and
+the resulting percentages move with it: raising the threshold from 5.0 to 6.5 metres
+takes the near pair's share from 28 % to 44 %. What does hold steady is the ratio
+between the two pairs, which stays near 1.85 across that range. The README publishes
+the sensitivity alongside the figures.
 """
 
 from dataclasses import dataclass
@@ -18,7 +24,7 @@ import numpy as np
 
 from .trajectories import SLOTS, MatchTrajectories
 
-NET_THRESHOLD = 5.5
+NET_THRESHOLD = 5.85
 HYSTERESIS = 0.4
 
 NEAR_SLOTS = ("near_1", "near_2")
