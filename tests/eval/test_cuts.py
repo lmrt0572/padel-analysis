@@ -52,11 +52,11 @@ def test_a_cut_can_put_both_sides_at_risk():
     assert find_camera_cuts(_positions(rows))[0].sides == ("near", "far")
 
 
-def test_one_player_moving_alone_is_not_a_cut():
-    """Un seul joueur qui saute est une erreur de suivi, pas un changement de plan."""
+def test_one_player_moving_alone_is_enough():
+    """L'association efface le deplacement d'une paire qui permute : un seul suffit."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             1: [(4.0, -8.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
-    assert find_camera_cuts(_positions(rows)) == []
+    assert find_camera_cuts(_positions(rows))[0].sides == ("near",)
 
 
 def test_a_hole_in_the_annotations_is_not_a_cut():
@@ -66,11 +66,11 @@ def test_a_hole_in_the_annotations_is_not_a_cut():
     assert find_camera_cuts(_positions(rows)) == []
 
 
-def test_the_reported_displacement_is_the_smallest_of_those_at_risk():
+def test_the_reported_displacement_is_the_largest_seen():
+    """C'est le plus grand saut qui atteste du raccord, pas le plus petit."""
     rows = {0: [(0.0, -5.0), (0.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             1: [(0.0, -8.0), (0.0, -7.0), (-2.0, 5.0), (2.0, 5.0)]}
-    cut = find_camera_cuts(_positions(rows))[0]
-    assert cut.displacement_m == 2.0
+    assert find_camera_cuts(_positions(rows))[0].displacement_m == 3.0
 
 
 def test_the_threshold_can_be_raised():
@@ -80,9 +80,37 @@ def test_the_threshold_can_be_raised():
     assert find_camera_cuts(_positions(rows), threshold=1.5) == []
 
 
-def test_a_side_missing_a_player_is_not_judged_but_the_other_still_is():
-    """On ne peut rien dire d'une paire incomplete ; l'autre reste jugeable."""
+def test_an_absent_player_does_not_prevent_reading_the_others():
+    """Le joueur qui reste suffit a attester le raccord de son cote."""
     rows = _positions({0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
                        1: [(3.0, -8.0), (-3.0, -2.0), (3.0, 8.0), (-3.0, 2.0)]})
     del rows[1]["far_2"]
+    assert find_camera_cuts(rows)[0].sides == ("near", "far")
+
+
+def test_a_side_with_no_annotated_player_is_left_out():
+    rows = _positions({0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+                       1: [(3.0, -8.0), (-3.0, -2.0), (3.0, 8.0), (-3.0, 2.0)]})
+    del rows[1]["far_1"]
+    del rows[1]["far_2"]
     assert find_camera_cuts(rows)[0].sides == ("near",)
+
+
+def test_a_teleport_across_a_short_hole_is_a_cut():
+    """Huit metres en trois frames absentes : personne ne court aussi vite."""
+    rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            3: [(-2.0, 3.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
+    assert find_camera_cuts(_positions(rows))[0].frame == 3
+
+
+def test_running_across_a_long_hole_is_not_a_cut():
+    """Sept metres en trente-six frames absentes : un joueur qui court."""
+    rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            36: [(-2.0, 2.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
+    assert find_camera_cuts(_positions(rows)) == []
+
+
+def test_a_very_long_hole_excuses_any_displacement():
+    rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            600: [(4.0, 9.0), (-4.0, 9.0), (4.0, -9.0), (-4.0, -9.0)]}
+    assert find_camera_cuts(_positions(rows)) == []
