@@ -6,8 +6,9 @@ court en mètres, et statistiques tactiques.
 
 ## État
 
-Jalon 3A terminé : statistiques tactiques sur un match complet de vingt-cinq minutes.
-Évaluation chiffrée et ablations à venir.
+Jalon 3B terminé : statistiques tactiques sur un match complet, évaluation chiffrée
+contre les annotations du dataset, deux ablations, et validation sur un second match
+jamais utilisé pour régler quoi que ce soit.
 
 ## Installation
 
@@ -70,6 +71,58 @@ Puis calculer les statistiques et les figures depuis ce cache, sans réinférenc
 ```bash
 python -m padel_analysis.analyse --cache cache/<nom>.json \
     --out outputs/<nom>_report.json --figures outputs/
+```
+
+### Reproduire l'évaluation
+
+Les métriques de suivi ajoutent deux dépendances, séparées parce qu'elles ne servent
+qu'à mesurer :
+
+```bash
+pip install -e ".[eval]"
+```
+
+Le dataset ne fournit pas d'identité. Il faut la reconstruire, puis arbitrer à la main
+les moments où la reconstruction est douteuse.
+
+```bash
+python scripts/build_identity_truth.py --annotations <pose.json> \
+    --calibration data/calibrations/<nom>.json --out data/identity/<nom>.json
+
+python scripts/detect_cuts.py --annotations <pose.json> \
+    --calibration data/calibrations/<nom>.json --identity data/identity/<nom>.json
+
+python scripts/review_identity.py --video <video.mp4> \
+    --annotations <pose.json> --identity data/identity/<nom>.json
+```
+
+Le premier associe au plus proche voisin sur tout le match et liste les rapprochements
+douteux ; le deuxième ajoute les raccords de plan, que la proximité ne voit pas ; le
+troisième rejoue chaque moment douteux en boucle, les joueurs encadrés de leur couleur
+d'emplacement.
+
+La question posée n'est pas « se sont-ils croisés » mais **« le même joueur porte-t-il
+la même couleur avant et après »**.
+
+| Touche | Sur un rapprochement | Sur un raccord |
+|---|---|---|
+| `n` | pas de permutation | aucune permutation |
+| `s` | permutation | — |
+| `p` / `e` / `b` | — | la paire proche, éloignée, ou les deux ont permuté |
+| `c` | — | les équipes ont changé de côté |
+| `r` | revenir au clip précédent et annuler sa réponse | idem |
+| `q` | quitter en conservant les réponses rendues | idem |
+
+Le fichier est réécrit après chaque réponse, de façon atomique : une coupure de
+courant coûte le clip en cours, pas l'arbitrage entier.
+
+La campagne calcule ensuite la détection, la localisation et les deux ablations en un
+seul passage sur la vidéo :
+
+```bash
+python scripts/run_evaluation.py --video <video.mp4> --annotations <pose.json> \
+    --calibration data/calibrations/<nom>.json --identity data/identity/<nom>.json \
+    --out outputs/<nom>_eval.json --frames 9000
 ```
 
 ## Résultats
@@ -228,27 +281,201 @@ l'autre — indépendamment de la convention retenue.
 La distance est donnée brute et lissée. L'écart entre les deux chiffre la part qu'y a
 prise le bruit de position, au lieu de la masquer.
 
-| Joueur | Moitié | Distance brute | Distance lissée | Part de bruit | Vitesse p95 | Profondeur moyenne |
+| Emplacement | Moitié | Distance brute | Distance lissée | Part de bruit | Vitesse p95 | Profondeur moyenne |
 |---|---|---|---|---|---|---|
 | near_1 | proche | 2890 m | 2261 m | **21,8 %** | 3,50 m/s | 5,41 m |
 | near_2 | proche | 2807 m | 2210 m | **21,3 %** | 3,51 m/s | 5,44 m |
 | far_1 | éloignée | 3282 m | 2233 m | **32,0 %** | 3,77 m/s | 6,75 m |
 | far_2 | éloignée | 3300 m | 2285 m | **30,8 %** | 3,92 m/s | 6,77 m |
 
+**Ces lignes sont des emplacements, pas des joueurs.** Les quatre emplacements
+désignent deux positions de chaque côté du filet, et les équipes changent de côté
+sept fois au cours de ce match : `near_1` est donc successivement plusieurs personnes.
+Ces distances agrègent le trajet parcouru *à cet endroit du court*, ce qui reste une
+mesure valide et interprétable, mais ce n'est pas une distance par joueur. La section
+[Évaluation](#évaluation) explique pourquoi suivre un joueur à travers un changement
+de côté est hors de portée de l'image seule.
+
 **La part de bruit est une demi-fois plus élevée pour la moitié éloignée**, ce que
 prédit l'asymétrie de 4,3× documentée plus haut. Les distances lissées, elles, sont
-comparables entre les quatre joueurs alors que les distances brutes ne l'étaient pas :
-l'écart apparent de 400 mètres entre les deux paires était du bruit, pas du jeu.
+comparables entre les quatre emplacements alors que les distances brutes ne l'étaient
+pas : l'écart apparent de 400 mètres entre les deux paires était du bruit, pas du jeu.
+
+## Évaluation
+
+Les mesures qui suivent comparent la sortie du pipeline aux annotations du dataset
+sur 9 000 frames, soit cinq minutes de jeu. **Les deux ablations sortent du même
+passage sur la vidéo** : aucune comparaison ne peut être faussée par un échantillon
+différent.
+
+### Détection
+
+| Mesure | Valeur |
+|---|---|
+| Précision | 0,778 |
+| **Rappel** | **0,954** |
+| F1 | 0,857 |
+| Personnes prédites | 44 134 |
+| Personnes annotées | 36 006 |
+| Appariées (IoU ≥ 0,5) | 34 338 |
+
+La précision de 0,778 ne dit pas que le détecteur se trompe. Il trouve **8 000
+personnes de plus qu'il n'y a de joueurs annotés** : arbitre, ramasseurs de balle,
+premiers rangs du public. Ces détections sont correctes, elles ne sont simplement pas
+des joueurs. C'est le rôle du suivi contraint de les écarter, et c'est ce que mesure
+l'ablation 2.
+
+Le rappel est donc la mesure qui compte ici : **95,4 % des joueurs annotés sont
+retrouvés**.
+
+### Ablation 1 — d'où vient le point au sol
+
+Deux façons de décider où un joueur touche le sol : le milieu de ses chevilles, ou le
+centre du bord inférieur de sa boîte englobante. Les deux implémentations coexistent
+dans le code pour que le choix soit tranché par la mesure.
+
+| Stratégie | Global | Moitié proche | Moitié éloignée |
+|---|---|---|---|
+| **Milieu des chevilles** | **1,89 px** | 2,01 px — 3,0 cm | 1,77 px — **11,5 cm** |
+| Bas de la boîte | 19,61 px | 24,19 px — 36,5 cm | 16,64 px — **107,7 cm** |
+
+Sur 34 338 échantillons appariés, **les chevilles font dix fois mieux**. Le bas de la
+boîte englobante n'est pas l'endroit où le joueur touche le sol : c'est le point le
+plus bas de l'englobant, qui inclut la raquette baissée et un pied levé.
+
+L'écart est plus grand en pixels près de la caméra, et plus grand en mètres au fond du
+court — les deux lectures sont vraies, et c'est l'asymétrie de 4,3× qui les sépare. Un
+mètre d'erreur au fond avec le bas de la boîte, c'est la moitié d'une zone de service.
+
+### Vérité terrain d'identité
+
+Le dataset donne quatre personnes par frame mais ne dit jamais laquelle est laquelle.
+Reconstruire cette information est presque gratuit : sur un match entier, deux
+partenaires ne s'approchent **jamais** à moins de cinquante centimètres. La machine
+associe donc au plus proche voisin sur tout le match, et un humain n'arbitre que les
+moments où ça devient douteux.
+
+Mais cette association suppose une image continue, et elle ne l'est pas. **La vidéo du
+dataset est une concaténation des séquences de jeu**, temps morts retirés. Le tableau
+d'affichage le prouve : entre deux frames consécutives, le score passe de 30 à 40.
+
+À chaque raccord, les joueurs réapparaissent ailleurs. Ce n'est pas un rapprochement —
+ils ne se frôlent pas, ils se téléportent — donc rien ne paraît ambigu, et l'identité
+peut changer en silence.
+
+| | rapprochements | raccords | changements de côté |
+|---|---|---|---|
+| Final féminine | 14 | 83 | 7 |
+| Final masculine | 54 | 115 | 8 |
+
+**266 clips arbitrés à la main**, chacun rejoué en boucle avec les quatre joueurs
+encadrés de leur couleur d'emplacement.
+
+Détecter ces raccords demande un critère contre-intuitif. Exiger que **les deux**
+joueurs d'une paire bougent semble plus sûr, et c'est exactement l'inverse :
+l'association au plus proche voisin minimise le déplacement apparent, donc une paire
+qui échange ses places à un raccord produit le signal « ils n'ont pas bougé ». Le
+critère strict est aveugle aux cas qu'il devrait attraper. Un seul joueur au-dessus du
+seuil suffit donc, et la tolérance croît avec le temps écoulé : huit mètres en trois
+frames manquantes est un raccord, dix mètres en soixante-dix-sept est un joueur qui
+court.
+
+Un changement de côté, lui, n'est pas une erreur à corriger. Les emplacements
+désignent une moitié de court : quand les équipes changent de côté, `near_1` est
+quelqu'un d'autre, et aucun échange d'étiquettes ne peut l'exprimer. **L'identité
+s'arrête là et repart** — les métriques d'identité coupent des deux côtés de la
+comparaison à cet endroit, et ne créditent ni ne pénalisent personne pour une
+frontière qu'aucune information de l'image ne permet de franchir.
+
+### Ablation 2 — la contrainte de court
+
+Le suivi contraint tient exactement quatre emplacements, deux de chaque côté du filet,
+et refuse toute position hors de l'enceinte. La ligne de base est ByteTrack, sans
+aucune de ces contraintes.
+
+| | Pistes moy. | Frames > 4 pistes | MOTA | IDF1 | Permutations |
+|---|---|---|---|---|---|
+| **Suivi contraint** | **3,98** | **0** | **0,912** | **0,819** | **4** |
+| ByteTrack seul | 4,78 | 5 152 | 0,704 | 0,281 | 67 |
+
+**ByteTrack dépasse quatre pistes sur 5 152 frames des 8 990 évaluées** — plus d'une
+sur deux. Rien ne le borne, et le détecteur lui fournit huit mille personnes de trop.
+L'IDF1 de 0,281 signifie que la plupart des identités de référence ne sont couvertes
+par aucune piste stable : des statistiques par joueur calculées là-dessus seraient du
+bruit.
+
+### Ce que l'arbitrage change à la mesure
+
+La vérité terrain d'identité peut être construite automatiquement, sans arbitrage
+humain. Elle donne alors ceci, sur exactement les mêmes frames et le même code :
+
+| | Sans arbitrage | Après arbitrage |
+|---|---|---|
+| MOTA | 0,913 | 0,912 |
+| **IDF1** | **0,956** | **0,819** |
+| **Permutations d'identité** | **0** | **4** |
+
+**La version automatique annonce zéro permutation. Il y en a quatre.**
+
+L'explication tient en une phrase : l'association au plus proche voisin qui construit
+la référence est la même hypothèse que celle du tracker évalué. Aux raccords, les deux
+se trompent ensemble, et la métrique compare une erreur à elle-même. L'IDF1 était
+surestimé de 0,137.
+
+MOTA ne bouge pas (0,913 → 0,912), ce qui est cohérent : il est dominé par les faux
+positifs et les manques de détection, pas par l'identité. **Il fallait IDF1 pour voir
+le problème, et une référence indépendante pour qu'IDF1 puisse le dire.**
+
+Sur ces 9 000 frames il y a 18 raccords, 3 rapprochements et 1 changement de côté :
+le suivi contraint décroche 4 fois sur 21 occasions, ByteTrack 67 fois.
+
+### Phases aériennes
+
+Un point à hauteur `h` projeté par une homographie de sol atterrit à `d × H / (H − h)`
+de l'aplomb caméra au lieu de `d`. Le padel se joue en sautant — smash, bandeja,
+vibora — donc la question n'est pas de savoir si le biais existe mais ce qu'il pèse.
+
+| | Frames en phase aérienne |
+|---|---|
+| Final féminine | 1 640 / 183 456 — **0,89 %** |
+| Final masculine | 2 293 / 211 252 — **1,09 %** |
+
+| Hauteur du saut | Biais au filet | Biais au fond |
+|---|---|---|
+| 15 cm | 16 cm | 36 cm |
+| 30 cm | 33 cm | **74 cm** |
+| 50 cm | 56 cm | **127 cm** |
+
+**Le biais est important quand il survient, et il survient rarement.** Un saut de
+30 cm décale la position projetée de 74 cm au fond du court, soit six fois l'erreur
+médiane des chevilles au même endroit. Mais sur 1 % des frames : sa contribution à une
+heatmap ou à une distance cumulée est marginale, alors qu'elle domine toute position
+instantanée mesurée pendant un smash.
 
 ## Limites connues
 
-**L'identité entre partenaires n'est pas encore vérifiée.** La contrainte de côté,
-elle, l'est : sur 7 137 positions enregistrées, aucune n'attribue un emplacement du
-côté proche à une observation du côté éloigné. Mais un échange d'identité *entre les
-deux partenaires d'une même paire* ne violerait aucune contrainte, et rien ici ne le
-détecterait. Les positions moyennes des quatre emplacements sont désormais bien
-séparées, ce qui est encourageant sans rien prouver. Trancher demande une vérité
-terrain d'identité, que le dataset ne fournit pas et qu'il faudra annoter à la main.
+**Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
+emplacements désignent des moitiés de court, et le suivi refuse par construction une
+observation du mauvais côté du filet — c'est ce qui lui donne son « 0 frame au-dessus
+de quatre ». Le prix de cette contrainte est qu'un joueur qui change de côté change
+d'emplacement. Rien dans l'image ne permettrait de le rattacher : le pipeline ne lit
+ni les visages ni les numéros. Les statistiques par emplacement restent valides sur le
+match entier ; les statistiques **par joueur** ne le sont qu'à l'intérieur d'un
+segment entre deux changements de côté.
+
+**L'identité entre partenaires décroche quatre fois sur cinq minutes de jeu.** Ce
+n'est plus une inconnue mais une mesure, et elle a coûté 266 clips d'arbitrage humain.
+Le chiffre correspond à 21 occasions de décrocher — 18 raccords, 3 rapprochements —
+soit un taux d'échec de 19 %. Sur les 47 clips de la finale masculine dont la réponse
+a été tracée, 11 portaient une permutation réelle : **près d'un raccord sur quatre
+fait décrocher l'identité**.
+
+**La vérité terrain d'identité dépend d'un jugement humain non reproductible.** Les
+266 arbitrages ont été rendus par une seule personne, sans second annotateur, donc
+sans accord inter-annotateurs à rapporter. Les sept changements de côté de la finale
+féminine ont en revanche été confirmés par deux voies indépendantes — la tenue des
+équipes échantillonnée sur tout le match, et le tableau d'affichage sur le passage
+douteux.
 
 **Les frames incomplètes sont des échecs de détection**, pas de suivi : ce sont
 exactement celles où le modèle ne trouve que trois personnes, toujours au fond du
