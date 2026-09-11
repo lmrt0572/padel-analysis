@@ -107,8 +107,14 @@ def run_campaign(
             if identity_row:
                 # Les equipes changent de cote au cours du match, et les slots
                 # designent une moitie de court : au-dela d'une frontiere, `near_1`
-                # est quelqu'un d'autre. Le nom de reference porte donc le segment,
-                # ce qui arrete l'identite au lieu de la prolonger a tort.
+                # est quelqu'un d'autre. Le nom porte donc le segment, ce qui arrete
+                # l'identite au lieu de la prolonger a tort.
+                #
+                # Des DEUX cotes. IDF1 apparie chaque reference a une seule
+                # hypothese, globalement : couper la reference seule laisserait des
+                # references sans partenaire possible, comptees comme manquees, et
+                # punirait les deux trackers pour une frontiere qu'aucune
+                # information de l'image ne permet de franchir.
                 segment = truth_identity.segment_of(index)
                 reference = {
                     f"{slot}#{segment}": truth[annotation_index].bbox
@@ -118,12 +124,15 @@ def run_campaign(
                 constrained_score.add(
                     truth=reference,
                     hypothesis={
-                        slot: detections[i].bbox for slot, i in assignment.items()
+                        f"{slot}#{segment}": detections[i].bbox
+                        for slot, i in assignment.items()
                     },
                 )
                 bytetrack_score.add(
                     truth=reference,
-                    hypothesis={str(t.track_id): t.bbox for t in tracked},
+                    hypothesis={
+                        f"{t.track_id}#{segment}": t.bbox for t in tracked
+                    },
                 )
 
     depths = np.array(totals.depths)

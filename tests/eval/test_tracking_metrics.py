@@ -75,3 +75,35 @@ def test_boxes_too_far_apart_are_not_matched():
     for _ in range(10):
         accumulator.add(truth={"near_1": _box(0, 0)}, hypothesis={"a": _box(900, 0)})
     assert accumulator.score().mota < 0.5
+
+
+def test_cutting_only_the_reference_at_a_boundary_wrecks_idf1():
+    """Piege : IDF1 apparie chaque reference a UNE seule hypothese, globalement.
+
+    Couper la reference en segments sans couper l'hypothese laisse des references
+    sans partenaire possible, comptees comme entierement manquees - alors que le
+    suivi est parfait.
+    """
+    accumulator = TrackingAccumulator()
+    for frame in range(20):
+        segment = 0 if frame < 10 else 1
+        accumulator.add(
+            truth={f"near_1#{segment}": _box(0, 0), f"near_2#{segment}": _box(200, 0)},
+            hypothesis={"a": _box(0, 0), "b": _box(200, 0)},
+        )
+    assert accumulator.score().idf1 < 0.75
+
+
+def test_cutting_both_sides_at_a_boundary_keeps_a_perfect_score():
+    """La frontiere ne doit rien couter : elle retire une question, pas des points."""
+    accumulator = TrackingAccumulator()
+    for frame in range(20):
+        segment = 0 if frame < 10 else 1
+        accumulator.add(
+            truth={f"near_1#{segment}": _box(0, 0), f"near_2#{segment}": _box(200, 0)},
+            hypothesis={f"a#{segment}": _box(0, 0), f"b#{segment}": _box(200, 0)},
+        )
+    score = accumulator.score()
+    assert score.idf1 == pytest.approx(1.0)
+    assert score.mota == pytest.approx(1.0)
+    assert score.id_switches == 0
