@@ -114,3 +114,29 @@ def test_a_very_long_hole_excuses_any_displacement():
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             600: [(4.0, 9.0), (-4.0, 9.0), (4.0, -9.0), (-4.0, -9.0)]}
     assert find_camera_cuts(_positions(rows)) == []
+
+
+def test_a_burst_of_splices_is_reported_once():
+    """Trois clips du meme instant font repondre trois fois a une seule question."""
+    rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            1: [(3.0, -8.0), (-3.0, -2.0), (-2.0, 5.0), (2.0, 5.0)],
+            2: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            3: [(4.0, 9.0), (-4.0, 9.0), (4.0, -9.0), (-4.0, -9.0)]}
+    cuts = find_camera_cuts(_positions(rows))
+    assert len(cuts) == 1
+    assert cuts[0].frame == 3  # le plus grand deplacement du groupe
+
+
+def test_a_burst_keeps_every_side_it_touched():
+    rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            1: [(3.0, -8.0), (-3.0, -2.0), (-2.0, 5.0), (2.0, 5.0)],
+            2: [(3.0, -8.0), (-3.0, -2.0), (3.0, 8.0), (-3.0, 2.0)]}
+    assert find_camera_cuts(_positions(rows))[0].sides == ("near", "far")
+
+
+def test_splices_far_apart_stay_separate():
+    rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
+            1: [(3.0, -8.0), (-3.0, -2.0), (-2.0, 5.0), (2.0, 5.0)],
+            60: [(3.0, -8.0), (-3.0, -2.0), (-2.0, 5.0), (2.0, 5.0)],
+            61: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
+    assert len(find_camera_cuts(_positions(rows))) == 2

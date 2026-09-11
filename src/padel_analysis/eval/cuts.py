@@ -23,6 +23,13 @@ allowance grows with the time elapsed, from the noise floor between adjacent fra
 to several metres across a second. Eight metres over three missing frames is a
 splice; ten metres over seventy-seven is a player running.
 
+Splices detected a frame or two apart are one splice seen twice, and each would be
+shown as its own clip over a window wide enough to hold the others. A human asked
+the same question three times answers it three times, and a single change of ends
+becomes three boundaries a fraction of a second apart. Bursts are therefore merged,
+keeping the largest displacement - a change of ends moves all four players, an
+ordinary reposition moves fewer, further apart.
+
 For the same reason `sides` is a hint and nothing more. Which pair actually swapped
 cannot be read from position: a clean exchange and a pair standing still are the same
 measurement. Only a human watching the clip can tell them apart.
@@ -45,6 +52,7 @@ def find_camera_cuts(
     threshold: float = 1.0,
     max_speed_ms: float = 6.0,
     fps: float = 30.0,
+    min_separation: int = 15,
 ) -> list[CameraCut]:
     """Frames where identity could have been exchanged by a splice.
 
@@ -56,6 +64,8 @@ def find_camera_cuts(
         max_speed_ms: fastest a player is credited with moving. Measured peaks sit
             near 3.9 m/s, so six leaves room without excusing a teleport.
         fps: frames per second, to turn a hole into an elapsed time.
+        min_separation: splices closer than this many frames are one splice, and
+            are reported once.
     """
     frames = sorted(positions)
     cuts: list[CameraCut] = []
@@ -84,4 +94,33 @@ def find_camera_cuts(
                     displacement_m=max(largest),
                 )
             )
-    return cuts
+    return _merge_bursts(cuts, min_separation)
+
+
+def _merge_bursts(cuts: list[CameraCut], min_separation: int) -> list[CameraCut]:
+    """Keep one entry per burst, the one carrying the largest displacement."""
+    merged: list[CameraCut] = []
+    burst: list[CameraCut] = []
+
+    for cut in cuts:
+        if burst and cut.frame - burst[-1].frame <= min_separation:
+            burst.append(cut)
+            continue
+        if burst:
+            merged.append(_representative(burst))
+        burst = [cut]
+    if burst:
+        merged.append(_representative(burst))
+    return merged
+
+
+def _representative(burst: list[CameraCut]) -> CameraCut:
+    strongest = max(burst, key=lambda c: c.displacement_m)
+    sides = tuple(
+        name for name, _ in SIDES if any(name in c.sides for c in burst)
+    )
+    return CameraCut(
+        frame=strongest.frame,
+        sides=sides,
+        displacement_m=strongest.displacement_m,
+    )
