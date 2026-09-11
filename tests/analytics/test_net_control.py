@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from padel_analysis.analytics.net_control import (
+    HYSTERESIS,
     NET_THRESHOLD,
     NetControl,
     at_net_states,
@@ -28,6 +29,12 @@ def _row(near_depth: float, far_depth: float) -> dict[str, tuple[float, float]]:
 def test_threshold_sits_in_the_measured_valley():
     """3,5-4,5 m en attaque, 6,5-9 m en defense : le seuil doit separer les deux."""
     assert 4.5 < NET_THRESHOLD < 6.5
+
+
+def test_the_default_hysteresis_is_not_zero():
+    """Sans cette garde, mettre la constante a zero ne casserait aucun test :
+    les autres passent leur propre valeur en argument."""
+    assert 0.0 < HYSTERESIS < 1.0
 
 
 def test_a_player_closer_than_the_threshold_is_at_the_net():
