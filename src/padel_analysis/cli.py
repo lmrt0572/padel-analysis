@@ -7,6 +7,7 @@ Usage:
 """
 
 import argparse
+import contextlib
 import time
 from pathlib import Path
 
@@ -27,8 +28,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", type=Path, required=True)
     parser.add_argument("--calibration", type=Path, required=True)
-    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--out", type=Path, default=None)
     parser.add_argument("--cache", type=Path, required=True)
+    parser.add_argument("--no-video", action="store_true",
+                        help="ne produire que le cache, sans ecrire de video")
     parser.add_argument("--frames", type=int, default=None,
                         help="nombre de frames a traiter ; toutes par defaut")
     parser.add_argument("--start", type=int, default=0)
@@ -39,6 +42,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    if not args.no_video and args.out is None:
+        raise SystemExit("--out is required unless --no-video is given")
 
     court = Court()
     projector = Calibration.load(args.calibration).projector
@@ -55,7 +60,12 @@ def main() -> None:
         stop = args.start + count
         started = time.perf_counter()
 
-        with VideoWriter(args.out, meta.fps, (meta.width, meta.height)) as writer:
+        with contextlib.ExitStack() as stack:
+            writer = None
+            if not args.no_video:
+                writer = stack.enter_context(
+                    VideoWriter(args.out, meta.fps, (meta.width, meta.height))
+                )
             for index, frame in source.iter_frames(start=args.start, stop=stop):
                 detections = detector.detect(frame)
 
@@ -81,9 +91,10 @@ def main() -> None:
                 }
                 cache.add(FramePositions(frame=index, positions=positions))
 
-                annotated = draw_people(frame, detections, assignment)
-                annotated = paste_minimap(annotated, minimap.draw(positions))
-                writer.write(annotated)
+                if writer is not None:
+                    annotated = draw_people(frame, detections, assignment)
+                    annotated = paste_minimap(annotated, minimap.draw(positions))
+                    writer.write(annotated)
 
                 done = index - args.start + 1
                 if done % 300 == 0:
@@ -93,7 +104,8 @@ def main() -> None:
     cache.save(args.cache, video=str(args.video), calibration=str(args.calibration))
     elapsed = time.perf_counter() - started
     complete = sum(1 for f in cache.frames() if len(cache.at(f).positions) == 4)
-    print(f"ecrit {args.out}")
+    if not args.no_video:
+        print(f"ecrit {args.out}")
     print(f"cache {args.cache}")
     print(f"{count} frames en {elapsed:.0f} s ({count / max(elapsed, 1e-9):.1f} fps)")
     print(f"frames a 4 joueurs identifies : {complete}/{count} "

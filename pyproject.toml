@@ -21,6 +21,7 @@ dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]
 padel-analysis = "padel_analysis.cli:main"
+padel-analyse = "padel_analysis.analyse:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
