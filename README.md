@@ -452,6 +452,52 @@ médiane des chevilles au même endroit. Mais sur 1 % des frames : sa contributi
 heatmap ou à une distance cumulée est marginale, alors qu'elle domine toute position
 instantanée mesurée pendant un smash.
 
+### Match tenu à l'écart
+
+Tout ce qui précède porte sur la finale féminine, qui a servi à régler le pipeline :
+résolution d'inférence, seuil du filet, bornes du court, stratégie de point au sol.
+La finale masculine n'a jamais servi à régler quoi que ce soit. Elle a été calibrée
+par transfert, annotée en identité, puis évaluée une fois.
+
+| | Finale féminine (réglage) | Finale masculine (tenue à l'écart) |
+|---|---|---|
+| Précision | 0,778 | **0,828** |
+| Rappel | 0,954 | 0,943 |
+| **F1 détection** | 0,857 | **0,882** |
+| Chevilles, global | 1,89 px | 2,00 px |
+| Bas de boîte, global | 19,61 px | 20,57 px |
+| MOTA, suivi contraint | 0,912 | **0,856** |
+| **IDF1, suivi contraint** | **0,819** | **0,764** |
+| **Permutations d'identité** | **4** | **28** |
+| IDF1, ByteTrack | 0,281 | 0,252 |
+| Permutations, ByteTrack | 67 | 101 |
+
+**La détection et la localisation transfèrent. Le suivi d'identité, non.**
+
+La détection est même meilleure sur le match tenu à l'écart — F1 de 0,882 contre
+0,857 — parce que sa précision monte de cinq points : le détecteur y trouve moins de
+personnes qui ne jouent pas. La localisation est à onze centièmes de pixel près
+identique, ce qui était attendu puisque la géométrie ne dépend pas des joueurs.
+
+L'identité, elle, se dégrade nettement : **4 permutations deviennent 28**. Le chiffre
+brut exagère l'écart, parce que le match masculin offre davantage d'occasions de
+décrocher sur la même durée. Normalisé, l'écart reste :
+
+| | Occasions | Permutations | Taux |
+|---|---|---|---|
+| Finale féminine | 21 — 18 raccords, 3 rapprochements | 4 | **19 %** |
+| Finale masculine | 38 — 24 raccords, 14 rapprochements | 28 | **74 %** |
+
+La cause tient dans la deuxième colonne : **14 rapprochements contre 3**, sur le même
+nombre de frames. Les hommes se croisent bien plus souvent et bien plus serré — le
+minimum de séparation entre partenaires descend à 0,41 m sur leur match contre 0,56 m
+sur celui des femmes. Le point faible du suivi contraint est là, et un match qui le
+sollicite cinq fois plus le met cinq fois plus en défaut.
+
+Ce que le changement de match ne remet pas en cause, c'est l'ablation : le suivi
+contraint garde un IDF1 trois fois supérieur à ByteTrack (0,764 contre 0,252) et ne
+dépasse jamais quatre pistes, là où ByteTrack le fait sur 3 231 frames.
+
 ## Limites connues
 
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
@@ -463,12 +509,20 @@ ni les visages ni les numéros. Les statistiques par emplacement restent valides
 match entier ; les statistiques **par joueur** ne le sont qu'à l'intérieur d'un
 segment entre deux changements de côté.
 
-**L'identité entre partenaires décroche quatre fois sur cinq minutes de jeu.** Ce
-n'est plus une inconnue mais une mesure, et elle a coûté 266 clips d'arbitrage humain.
-Le chiffre correspond à 21 occasions de décrocher — 18 raccords, 3 rapprochements —
-soit un taux d'échec de 19 %. Sur les 47 clips de la finale masculine dont la réponse
-a été tracée, 11 portaient une permutation réelle : **près d'un raccord sur quatre
-fait décrocher l'identité**.
+**Le suivi d'identité ne généralise pas aussi bien que la détection.** Sur le match
+de réglage il décroche 4 fois pour 21 occasions — 19 %. Sur le match tenu à l'écart,
+28 fois pour 38 occasions — **74 %**. La détection, elle, transfère sans perte, et la
+localisation aussi. Un pipeline jugé sur son seul F1 de détection paraîtrait
+généraliser ; il ne généralise que sur la moitié de ce qu'il fait.
+
+**Le point faible est le croisement serré entre partenaires**, pas le raccord. Sur le
+même nombre de frames, le match masculin compte 14 rapprochements contre 3, et ses
+partenaires descendent à 0,41 m l'un de l'autre contre 0,56 m. C'est là que se joue
+l'écart entre 19 % et 74 %, et c'est la piste à travailler en priorité.
+
+Mesurer tout cela a coûté 266 clips d'arbitrage humain. Sur les 47 clips de la finale
+masculine dont la réponse a été tracée, 11 portaient une permutation réelle : **près
+d'un raccord sur quatre fait décrocher l'identité**.
 
 **La vérité terrain d'identité dépend d'un jugement humain non reproductible.** Les
 266 arbitrages ont été rendus par une seule personne, sans second annotateur, donc
