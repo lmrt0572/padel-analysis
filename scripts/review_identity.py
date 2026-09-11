@@ -142,27 +142,19 @@ def review_cuts(source, annotations, truth, path) -> bool:
     print(f"coupures a arbitrer : {len(pending)}/{len(truth.cuts)}")
 
     for position, cut in enumerate(pending, start=1):
-        allowed = "nc"
-        wording = ["n = aucune"]
-        if "near" in cut.sides:
-            allowed += "p"
-            wording.append("p = proche")
-        if "far" in cut.sides:
-            allowed += "e"
-            wording.append("e = eloignee")
-        if len(cut.sides) == 2:
-            allowed += "b"
-            wording.append("b = les deux")
-        wording.append("c = CHANGEMENT DE COTE")
-        wording.append("q = quitter")
-
+        # Les cinq reponses sont toujours offertes. Le detecteur sert a trouver les
+        # clips a regarder ; ce qu'on y voit ne lui appartient pas. Deux partenaires
+        # proches qui echangent leurs places parcourent moins que le seuil, et la
+        # paire n'est donc pas annoncee - sans cesser d'avoir permute.
+        keys = ("n = aucune    p = proche    e = eloignee    b = les deux    "
+                "c = CHANGEMENT DE COTE    q = quitter")
         caption = (f"[coupure {position}/{len(pending)}] frame {cut.frame}  "
-                   f"paires en risque : {' + '.join(cut.sides)}  "
+                   f"paires signalees : {' + '.join(cut.sides)}  "
                    f"saut {cut.displacement_m:.1f} m")
         decision = ask(
             source, annotations, truth,
             cut.frame - MARGIN, cut.frame + MARGIN,
-            SLOTS, caption, "    ".join(wording), allowed,
+            SLOTS, caption, keys, "npebc",
         )
         if decision == "q":
             return False
