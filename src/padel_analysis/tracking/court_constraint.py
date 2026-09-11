@@ -71,7 +71,17 @@ class CourtSlotTracker:
         appearance_weight: float = 1.0,
         confidence_weight: float = 2.0,
         max_missing_frames: int = 30,
+        max_x: float = 9.0,
+        max_y: float = 14.0,
     ) -> None:
+        """Args:
+            max_x, max_y: half-extents beyond which an observation is refused, in
+                metres. The court is 10 by 20, so these allow four metres of overrun
+                on each side - padel players do leave through the side openings to
+                return a lob - while refusing spectators in the stands. Without this
+                bound, roughly one position in a hundred landed several metres past
+                the glass.
+        """
         self.slots = [
             Slot(name="near_1", side=-1),
             Slot(name="near_2", side=-1),
@@ -81,10 +91,16 @@ class CourtSlotTracker:
         self._appearance_weight = appearance_weight
         self._confidence_weight = confidence_weight
         self._max_missing_frames = max_missing_frames
+        self._max_x = max_x
+        self._max_y = max_y
 
     def cost(self, slot: Slot, observation: CourtObservation) -> float:
         """Cost of assigning `observation` to `slot`, in metres-equivalent."""
-        observed_side = 1 if observation.court_xy[1] >= 0 else -1
+        x, y = float(observation.court_xy[0]), float(observation.court_xy[1])
+        if abs(x) > self._max_x or abs(y) > self._max_y:
+            return IMPOSSIBLE
+
+        observed_side = 1 if y >= 0 else -1
         if observed_side != slot.side:
             return IMPOSSIBLE
 

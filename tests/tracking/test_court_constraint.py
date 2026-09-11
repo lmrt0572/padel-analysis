@@ -122,3 +122,29 @@ def test_low_confidence_observations_cost_more():
     confident = tracker.cost(tracker.slots[0], _observation(-2, -5, confidence=0.9))
     doubtful = tracker.cost(tracker.slots[0], _observation(-2, -5, confidence=0.1))
     assert doubtful > confident
+
+
+def test_a_spectator_in_the_stands_is_refused():
+    """Sans borne, un spectateur du bon cote peut voler un slot."""
+    tracker = CourtSlotTracker()
+    tracker.update([_observation(-2, -5), _observation(2, -5),
+                    _observation(-2, 5), _observation(2, 5)])
+    assignment = tracker.update(
+        [_observation(-2, -5), _observation(2, -5), _observation(-2, 5),
+         _observation(2, 5), _observation(11.0, 6.0)]
+    )
+    assert len(assignment) == 4
+    assert 4 not in assignment.values()
+
+
+def test_a_player_leaving_through_the_side_opening_is_still_accepted():
+    """Au padel on sort du court pour rattraper un lob : la borne doit etre large."""
+    tracker = CourtSlotTracker()
+    tracker.update([_observation(-2, -5), _observation(2, -5),
+                    _observation(-2, 5), _observation(2, 5)])
+    assignment = tracker.update(
+        [_observation(-7.5, -12.0), _observation(2, -5),
+         _observation(-2, 5), _observation(2, 5)]
+    )
+    assert len(assignment) == 4
+    assert 0 in assignment.values()
