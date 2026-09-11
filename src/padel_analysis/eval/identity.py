@@ -10,6 +10,8 @@ fourteen moments.
 """
 
 import json
+import os
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -69,8 +71,26 @@ class IdentityGroundTruth:
             ],
             "resolved": self.resolved,
         }
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        Path(path).write_text(json.dumps(payload), encoding="utf-8")
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        # Ecriture atomique. Le fichier est reecrit apres chaque episode arbitre, et
+        # une ecriture directe le tronque avant de le remplir : une coupure a cet
+        # instant laissait un fichier de zeros, effacant les quarante-cinq mille
+        # frames d'assignation et tous les arbitrages deja rendus. Le nouveau
+        # contenu n'est publie qu'une fois complet et sur le disque.
+        descriptor, temporary = tempfile.mkstemp(
+            dir=target.parent, prefix=f"{target.name}.", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, target)
+        except BaseException:
+            Path(temporary).unlink(missing_ok=True)
+            raise
 
     @classmethod
     def load(cls, path: Path) -> "IdentityGroundTruth":

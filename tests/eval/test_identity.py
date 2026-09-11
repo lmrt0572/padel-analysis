@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from padel_analysis.eval import identity
 from padel_analysis.eval.identity import (
     AmbiguousEpisode,
     IdentityGroundTruth,
@@ -125,3 +126,51 @@ def test_applying_a_swap_flips_two_slots_from_that_frame_onward():
     assert truth.assignments[3]["near_1"] == before["near_2"]
     assert truth.assignments[3]["near_2"] == before["near_1"]
     assert truth.assignments[5]["near_1"] == before["near_2"]
+
+
+def test_a_save_interrupted_at_the_last_moment_keeps_the_previous_file(
+    tmp_path, monkeypatch
+):
+    """Une coupure pendant l'ecriture ne doit pas detruire l'arbitrage deja rendu."""
+    path = tmp_path / "truth.json"
+    IdentityGroundTruth(
+        assignments={0: {"near_1": 0}}, episodes=[], resolved=[7]
+    ).save(path)
+
+    def interrupted(*args: object, **kwargs: object) -> None:
+        raise OSError("coupure de courant")
+
+    monkeypatch.setattr(identity.os, "replace", interrupted)
+    with pytest.raises(OSError):
+        IdentityGroundTruth(
+            assignments={1: {"near_1": 1}}, episodes=[], resolved=[]
+        ).save(path)
+
+    survivor = IdentityGroundTruth.load(path)
+    assert survivor.resolved == [7]
+    assert survivor.assignments == {0: {"near_1": 0}}
+
+
+def test_a_save_leaves_no_temporary_file_behind(tmp_path):
+    path = tmp_path / "truth.json"
+    IdentityGroundTruth(
+        assignments={0: {"near_1": 0}}, episodes=[], resolved=[]
+    ).save(path)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["truth.json"]
+
+
+def test_a_failed_save_leaves_no_temporary_file_behind(tmp_path, monkeypatch):
+    path = tmp_path / "truth.json"
+    IdentityGroundTruth(
+        assignments={0: {"near_1": 0}}, episodes=[], resolved=[]
+    ).save(path)
+
+    def interrupted(*args: object, **kwargs: object) -> None:
+        raise OSError("coupure de courant")
+
+    monkeypatch.setattr(identity.os, "replace", interrupted)
+    with pytest.raises(OSError):
+        IdentityGroundTruth(
+            assignments={1: {"near_1": 1}}, episodes=[], resolved=[]
+        ).save(path)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["truth.json"]
