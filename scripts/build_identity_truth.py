@@ -5,7 +5,7 @@ pour revue humaine.
 
 Usage:
     python scripts/build_identity_truth.py --annotations <pose.json> \
-        --calibration data/calibrations/<nom>.json --out data/identity/<nom>.json
+        --calibration ground_truth/calibrations/<nom>.json --out ground_truth/identity/<nom>.json
 """
 
 import argparse

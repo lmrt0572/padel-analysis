@@ -9,7 +9,7 @@ sont conserves.
 
 Usage:
     python scripts/detect_cuts.py --annotations <pose.json> \
-        --calibration data/calibrations/<nom>.json --identity data/identity/<nom>.json
+        --calibration ground_truth/calibrations/<nom>.json --identity ground_truth/identity/<nom>.json
 """
 
 import argparse

@@ -2,8 +2,8 @@
 
 Usage:
     python scripts/run_evaluation.py --video <video.mp4> --annotations <pose.json> \
-        --identity data/identity/<nom>.json \
-        --calibration data/calibrations/<nom>.json --out outputs/<nom>_eval.json \
+        --identity ground_truth/identity/<nom>.json \
+        --calibration ground_truth/calibrations/<nom>.json --out outputs/<nom>_eval.json \
         --frames 3000
 """
 

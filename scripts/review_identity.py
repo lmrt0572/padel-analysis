@@ -34,7 +34,7 @@ mieux qu'une impression generale.
 
 Usage:
     python scripts/review_identity.py --video <video.mp4> \
-        --annotations <pose.json> --identity data/identity/<nom>.json
+        --annotations <pose.json> --identity ground_truth/identity/<nom>.json
 """
 
 import argparse

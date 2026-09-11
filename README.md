@@ -40,21 +40,21 @@ Calibrer le court sur une frame. Treize points sont demandés ; un schéma du co
 une loupe 5× s'affichent dans la fenêtre pour guider chaque clic :
 
 ```bash
-python scripts/calibrate.py --video <video.mp4> --frame 200 --out data/calibrations/<nom>.json
+python scripts/calibrate.py --video <video.mp4> --frame 200 --out ground_truth/calibrations/<nom>.json
 ```
 
 Vérifier visuellement la calibration en superposant le modèle du court :
 
 ```bash
 python scripts/overlay_court.py --video <video.mp4> --frame 200 \
-    --calibration data/calibrations/<nom>.json --out outputs/overlay.png
+    --calibration ground_truth/calibrations/<nom>.json --out outputs/overlay.png
 ```
 
 Lancer la chaîne complète — vidéo annotée avec minimap, et positions mises en cache :
 
 ```bash
 python -m padel_analysis.cli --video <video.mp4> \
-    --calibration data/calibrations/<nom>.json \
+    --calibration ground_truth/calibrations/<nom>.json \
     --out outputs/annotated.mp4 --cache cache/<nom>.json --start 5000 --frames 1800
 ```
 
@@ -63,7 +63,7 @@ que le cache. Un match entier prend alors environ une heure sur une GTX 1650 :
 
 ```bash
 python -m padel_analysis.cli --video <video.mp4> \
-    --calibration data/calibrations/<nom>.json --cache cache/<nom>.json --no-video
+    --calibration ground_truth/calibrations/<nom>.json --cache cache/<nom>.json --no-video
 ```
 
 Puis calculer les statistiques et les figures depuis ce cache, sans réinférence :
@@ -87,13 +87,13 @@ les moments où la reconstruction est douteuse.
 
 ```bash
 python scripts/build_identity_truth.py --annotations <pose.json> \
-    --calibration data/calibrations/<nom>.json --out data/identity/<nom>.json
+    --calibration ground_truth/calibrations/<nom>.json --out ground_truth/identity/<nom>.json
 
 python scripts/detect_cuts.py --annotations <pose.json> \
-    --calibration data/calibrations/<nom>.json --identity data/identity/<nom>.json
+    --calibration ground_truth/calibrations/<nom>.json --identity ground_truth/identity/<nom>.json
 
 python scripts/review_identity.py --video <video.mp4> \
-    --annotations <pose.json> --identity data/identity/<nom>.json
+    --annotations <pose.json> --identity ground_truth/identity/<nom>.json
 ```
 
 Le premier associe au plus proche voisin sur tout le match et liste les rapprochements
@@ -121,7 +121,7 @@ seul passage sur la vidéo :
 
 ```bash
 python scripts/run_evaluation.py --video <video.mp4> --annotations <pose.json> \
-    --calibration data/calibrations/<nom>.json --identity data/identity/<nom>.json \
+    --calibration ground_truth/calibrations/<nom>.json --identity ground_truth/identity/<nom>.json \
     --out outputs/<nom>_eval.json --frames 9000
 ```
 
@@ -506,6 +506,30 @@ de balle et d'événements de frappe.
 Les annotations de pose n'utilisent pas l'ordre COCO standard : gauche et droite y
 sont inversés pour toutes les articulations appariées sauf les oreilles. Le module
 `perception/keypoints.py` effectue la conversion, et la teste.
+
+### Ce que ce dépôt versionne
+
+Aucune image, aucune vidéo, aucun poids de modèle. `data/` — où atterrit le dataset
+téléchargé — est exclu en bloc et sans exception.
+
+`ground_truth/` en revanche est versionné, parce que sans lui les chiffres de la
+section [Évaluation](#évaluation) ne seraient pas reproductibles :
+
+| Fichier | Contenu |
+|---|---|
+| `calibrations/*.json` | 13 points cliqués par vidéo, dont 4 de contrôle |
+| `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
+
+Ces fichiers dérivent des annotations du dataset, en CC-BY-4.0, et n'en contiennent
+aucune donnée d'image. Avec eux, reproduire l'évaluation demande de télécharger le
+dataset public et de lancer la campagne — pas de refaire l'arbitrage.
+
+**Les trois calibrations sont identiques**, et c'est intentionnel. Les deux matchs
+sont filmés depuis la même position au même tournoi, et l'extrait d'essai est tiré de
+la finale féminine. La calibration ajustée sur cette dernière a été transférée aux
+deux autres puis vérifiée par superposition du modèle de court sur une frame de
+chacune : contour, lignes de service, ligne centrale et filet tombent juste. Un seul
+jeu de points cliqués couvre donc tout le dataset.
 
 ## Licence
 
