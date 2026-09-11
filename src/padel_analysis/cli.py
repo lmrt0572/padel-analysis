@@ -32,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frames", type=int, default=None,
                         help="nombre de frames a traiter ; toutes par defaut")
     parser.add_argument("--start", type=int, default=0)
-    parser.add_argument("--imgsz", type=int, default=1280)
+    parser.add_argument("--imgsz", type=int, default=1600)
     parser.add_argument("--ground-point", choices=("ankles", "bbox"), default="ankles")
     return parser
 
