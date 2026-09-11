@@ -6,15 +6,19 @@ court en mètres, et statistiques tactiques.
 
 ## État
 
-Jalon 1 terminé : chaîne géométrique complète et validée. Détection, suivi et
-statistiques à venir.
+Jalon 2 terminé : chaîne complète de la vidéo à la minimap, avec identités stables.
+Statistiques tactiques et évaluation chiffrée à venir.
 
 ## Installation
 
 ```bash
 conda create -n padel python=3.11 -y
+conda run -n padel pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 conda run -n padel pip install -e ".[dev]"
 ```
+
+L'installation explicite de torch CUDA n'est pas optionnelle sous Windows : le torch
+tiré par défaut est une version CPU, et l'inférence passerait de minutes à heures.
 
 Les tests et le linter :
 
@@ -31,8 +35,8 @@ Télécharger le dataset PadelTracker100 (8,2 Go) :
 python scripts/download_dataset.py
 ```
 
-Calibrer le court sur une frame. Treize points sont demandés ; un schéma et une
-loupe 5× s'affichent dans la fenêtre pour guider chaque clic :
+Calibrer le court sur une frame. Treize points sont demandés ; un schéma du court et
+une loupe 5× s'affichent dans la fenêtre pour guider chaque clic :
 
 ```bash
 python scripts/calibrate.py --video <video.mp4> --frame 200 --out data/calibrations/<nom>.json
@@ -43,6 +47,14 @@ Vérifier visuellement la calibration en superposant le modèle du court :
 ```bash
 python scripts/overlay_court.py --video <video.mp4> --frame 200 \
     --calibration data/calibrations/<nom>.json --out outputs/overlay.png
+```
+
+Lancer la chaîne complète — vidéo annotée avec minimap, et positions mises en cache :
+
+```bash
+python -m padel_analysis.cli --video <video.mp4> \
+    --calibration data/calibrations/<nom>.json \
+    --out outputs/annotated.mp4 --cache cache/<nom>.json --start 5000 --frames 1800
 ```
 
 ## Résultats
@@ -95,10 +107,87 @@ toute estimation de position, quelle que soit la façon dont elle est obtenue.
 
 Deux conséquences pour la suite :
 
-- Les positions des joueurs de la moitié éloignée seront intrinsèquement quatre
-  fois plus bruitées que celles de la moitié proche.
+- Les positions des joueurs de la moitié éloignée sont intrinsèquement quatre fois
+  plus bruitées que celles de la moitié proche.
 - Le bruit gonfle les distances parcourues mesurées. La comparaison entre les deux
   équipes n'est donc pas symétrique à l'intérieur d'un même jeu.
+
+### Résolution d'inférence
+
+L'entrée du modèle est redimensionnée avant inférence. Mesuré sur 300 frames
+annotées, soit 1200 joueurs à retrouver, en comparant le milieu des chevilles
+prédit aux chevilles annotées :
+
+| imgsz | ms/frame | Erreur (px) | Moitié proche (cm) | Moitié éloignée (cm) | Joueurs retrouvés |
+|---|---|---|---|---|---|
+| 640 | 41 | 4,03 | 6,4 | 34,3 | 572 / 1200 |
+| 960 | 38 | 2,70 | 4,7 | 7,9 | 745 / 1200 |
+| 1280 | 59 | 2,46 | 4,4 | 7,1 | 1170 / 1200 |
+| **1600** | **90** | **2,06** | **3,8** | **6,2** | **1200 / 1200** |
+
+**La colonne décisive est la dernière.** La résolution ne gouverne pas seulement la
+précision, elle gouverne le **rappel** : à 640 pixels le modèle ne retrouve que 48 %
+des joueurs. Ceux du fond du court, hauts d'une centaine de pixels et fréquemment
+occultés par leur partenaire, disparaissent purement et simplement. L'erreur médiane
+de 4 px affichée à 640 ne le révèle pas, puisqu'elle ne porte que sur les joueurs
+effectivement trouvés.
+
+**Résolution retenue : 1600.** Elle retrouve tous les joueurs, et son erreur au fond
+du court (6,2 cm) passe sous l'erreur de calibration (9,9 cm) : affiner davantage la
+perception n'améliorerait plus rien, le plancher étant géométrique.
+
+### Perception et suivi
+
+Mesuré sur 1800 frames consécutives, soit une minute de jeu :
+
+| Mesure | Valeur |
+|---|---|
+| Cadence de la chaîne complète (GTX 1650, 4 Go) | 9,7 frames/s |
+| Frames à quatre joueurs identifiés | **96,50 %** |
+| Référence : frames à quatre personnes annotées | 99,94 % |
+| Positions hors du court en `x` | 0,00 % |
+
+Le même pipeline à `imgsz` 1280 n'atteignait que 92,33 % : la résolution explique
+l'essentiel de l'écart.
+
+Une observation dont la position projetée sort largement de l'enceinte est refusée.
+Sans cette borne le taux affiché montait à 97,94 %, mais la différence tenait à des
+frames où un spectateur du bon côté du filet occupait un emplacement libre : le
+chiffre était flatteur et faux. Le refus a aussi séparé les deux emplacements du
+fond, dont les positions moyennes étaient confondues parce que ces intrus les
+occupaient par intermittence.
+
+L'identité est maintenue par appariement hongrois sur quatre emplacements fixes, deux
+de chaque côté du filet. Le côté vient du signe de la coordonnée `y` après projection :
+la calibration alimente donc directement le suivi. Le coût d'assignation combine la
+distance à la position prédite par un modèle à vitesse constante, la signature de
+couleur de la tenue et la confiance des chevilles.
+
+Cette contrainte structurelle n'est pas décorative : **le détecteur trouve plus de
+quatre personnes dans 63 % des frames** — spectateurs, ramasseurs de balle, arbitre —
+et le suivi contraint retient systématiquement les quatre bonnes.
+
+La signature de couleur a été validée par la mesure avant d'être conservée : la
+dérive d'un même joueur d'une frame à l'autre vaut 0,031, contre 0,199 entre deux
+partenaires. Le rapport de 6,3 confirme qu'elle distingue bien des coéquipiers
+portant la même tenue, et pas seulement les deux équipes.
+
+## Limites connues
+
+**L'identité entre partenaires n'est pas encore vérifiée.** La contrainte de côté,
+elle, l'est : sur 7 137 positions enregistrées, aucune n'attribue un emplacement du
+côté proche à une observation du côté éloigné. Mais un échange d'identité *entre les
+deux partenaires d'une même paire* ne violerait aucune contrainte, et rien ici ne le
+détecterait. Les positions moyennes des quatre emplacements sont désormais bien
+séparées, ce qui est encourageant sans rien prouver. Trancher demande une vérité
+terrain d'identité, que le dataset ne fournit pas et qu'il faudra annoter à la main.
+
+**Les frames incomplètes sont des échecs de détection**, pas de suivi : ce sont
+exactement celles où le modèle ne trouve que trois personnes, toujours au fond du
+court, lorsque deux joueuses adjacentes s'occultent mutuellement.
+
+**Les parois latérales ne sont pas modélisées.** Seules les parois de fond le sont ;
+la géométrie en paliers des côtés demande une vérification dans le règlement FIP.
 
 ## Données
 
@@ -106,6 +195,10 @@ Ce projet utilise le dataset PadelTracker100 (Zenodo, DOI 10.5281/zenodo.1465370
 distribué sous licence CC-BY-4.0. Il contient deux matchs des World Padel Tour
 Finals 2022 en 1920×1080@30, avec annotations COCO de pose (17 keypoints),
 de balle et d'événements de frappe.
+
+Les annotations de pose n'utilisent pas l'ordre COCO standard : gauche et droite y
+sont inversés pour toutes les articulations appariées sauf les oreilles. Le module
+`perception/keypoints.py` effectue la conversion, et la teste.
 
 ## Licence
 
