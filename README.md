@@ -128,6 +128,13 @@ python scripts/run_evaluation.py --video <video.mp4> --annotations <pose.json> \
     --out outputs/<nom>_eval.json --frames 9000
 ```
 
+La balle est mesurée à part, les deux méthodes de trajectoire étant calculées en un
+seul passage sur la plage demandée :
+
+```bash
+python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 0 --stop 21472 --out outputs/<nom>_trajectory.json
+```
+
 ## Résultats
 
 ### Stabilité de la caméra
@@ -553,6 +560,77 @@ corrigeable. Sur 512 balles, le décalage entre le centre de la tache de mouveme
 le centre annoté vaut (−0,67, +0,88) px en moyenne, et −0,37 px une fois projeté sur
 la direction de déplacement. C'est de la dispersion, de norme médiane 3,3 px, pas un
 décalage systématique.
+
+### Trajectoire de la balle
+
+L'étage précédent rend une liste de candidats classés, la balle s'y trouvant 91 % du
+temps mais au sixième rang parmi 78. Cet étage doit en tirer **une position par
+frame**, ou l'absence de position. Deux méthodes sont implémentées et mesurées côte à
+côte.
+
+La **croissance gloutonne** est la ligne de base. Elle part d'un candidat, extrapole à
+vitesse constante, prend le candidat le plus proche de la prédiction, tolère deux
+frames manquées, et s'arrête. Les segments obtenus sont ensuite départagés, et les
+retenus concaténés.
+
+L'**optimisation globale** ne décide rien frame par frame. Elle garde les 8 meilleurs
+candidats de chaque frame, y ajoute un état « absent » à coût fixe, et cherche par
+programmation dynamique la suite qui minimise, sur toute la fenêtre, la somme d'un
+coût d'accélération et d'un coût d'émission. L'état porte le candidat courant **et le
+précédent**, ce qui suffit à connaître la vitesse, donc à pénaliser un changement
+brutal sans jamais avoir eu à « suivre » quoi que ce soit.
+
+Mesuré sur les deux matchs, la vérité terrain étant l'annotation de balle du dataset :
+
+| | | 5 px | 10 px | 20 px | Frames couvertes |
+|---|---|---|---|---|---|
+| **Réglage** (3 638 balles) | Croissance gloutonne | 0,074 | 0,162 | 0,203 | 2 042 / 4 100 |
+| | **Optimisation globale** | **0,534** | **0,716** | **0,764** | 4 100 / 4 100 |
+| **Tenu à l'écart** (19 259 balles) | Croissance gloutonne | 0,050 | 0,109 | 0,132 | 10 769 / 21 471 |
+| | **Optimisation globale** | **0,576** | **0,733** | **0,774** | 21 471 / 21 471 |
+
+Rappel ; la précision de l'optimisation globale lui est égale, le chemin répondant sur
+toutes les frames. Pour la gloutonne elle vaut 0,317 et 0,214 à 10 px.
+
+**Le facteur est de 4,4 sur le match de réglage et de 6,7 sur le match tenu à
+l'écart.** Les quatre paramètres du chemin ont été balayés sur 800 frames du seul match
+féminin et n'ont pas été retouchés ensuite ; le match masculin, cinq fois plus long,
+donne un résultat légèrement meilleur. La fraction du plafond capturée y est la même à
+un demi-point près — 79,0 % contre 78,5 %.
+
+**Pourquoi la ligne de base plafonne.** Trois mesures enchaînées le disent sans
+ambiguïté : la balle est dans la liste de candidats **93,9 %** du temps, un segment
+glouton la couvre **52,5 %** du temps, et il en reste **16,8 %** après arbitrage entre
+segments. La première chute est le prix de la décision locale — une extrapolation
+partie sur un mauvais candidat ne revient jamais. La seconde est le prix de
+l'arbitrage : il faut choisir entre des segments concurrents sans rien savoir de ce
+qui se passe ailleurs dans la séquence.
+
+**Départager les segments par leur longueur était à l'envers.** Les segments qui
+suivent réellement la balle font **27 frames** en médiane ; les autres en font **31**.
+Un arc de balle est court par nature — il se termine à chaque contact — tandis qu'une
+fausse piste accrochée à un élément lent peut courir indéfiniment. Le critère correct
+est la **vitesse** : 13,2 px/frame pour les bons segments contre 8,8 pour les autres.
+Ce seul changement fait passer la précision de 0,168 à 0,405.
+
+**Ce que le plafond d'accélération fait, et ne fait pas.** Il était présenté au départ
+comme le mécanisme central, celui qui autorise les changements de direction brutaux
+aux contacts. Le balayage le dément : de 40 à l'infini, le rappel bouge d'un millième.
+Il ne mord quasiment jamais, et il est conservé comme garde-fou contre une frame
+pathologique, pas comme le ressort de la méthode.
+
+**Ce qui reste à gagner.** 0,912 et 0,928 étaient disponibles dans la liste de
+candidats, 0,716 et 0,733 sont capturés. L'écart — un cinquième du plafond — est ce
+qui justifiera, ou non, de remplacer la détection par mouvement par un réseau.
+
+**Réserve de méthode : la métrique récompense le fait de toujours répondre.** Une frame
+sans prédiction compte comme un échec de rappel, alors qu'une position produite là où
+aucune balle n'est annotée n'est pas comptabilisable — 2 212 frames dans ce cas sur le
+match tenu à l'écart. Le balayage a donc trouvé optimal un coût d'absence si élevé que
+le chemin ne renonce jamais, ce qui est en partie un artefact de la mesure et non une
+qualité propre de la méthode. Le comparatif ci-dessus reste valide, les deux méthodes
+étant jugées à la même aune, mais le 0,733 ne doit pas se lire comme « la balle est
+localisée trois fois sur quatre en toute circonstance ».
 
 ## Limites connues
 

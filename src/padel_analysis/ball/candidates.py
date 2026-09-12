@@ -22,6 +22,7 @@ ball highest - sixth of the list against seventh and eighth. On the held-out mat
 19259 balls, the same spacing recovers 93 percent.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -102,3 +103,36 @@ class MotionCandidates:
 
         found.sort(key=lambda c: c.score, reverse=True)
         return found[: self._max_candidates]
+
+
+def demote_inside_boxes(
+    candidates: Sequence[Candidate],
+    boxes: Sequence[np.ndarray],
+    factor: float = 0.25,
+) -> list[Candidate]:
+    """Push candidates sitting on a player down the ranking, without removing them.
+
+    Three quarters of the candidates that outrank the ball are moving limbs, and
+    dropping them moves the ball from sixth of seventy-eight to second of nineteen.
+    Dropping them outright would also lose 4.9 percent of the balls - the ones
+    passing in front of a player - so the score is multiplied rather than the
+    candidate discarded: a demoted candidate is still reachable when the trajectory
+    asks for it.
+
+    Args:
+        candidates: ranked candidates, strongest first.
+        boxes: player boxes as xyxy arrays.
+        factor: what the score of a candidate inside a box is multiplied by.
+    """
+    adjusted: list[Candidate] = []
+    for candidate in candidates:
+        inside = any(
+            b[0] <= candidate.x <= b[2] and b[1] <= candidate.y <= b[3] for b in boxes
+        )
+        adjusted.append(
+            Candidate(candidate.x, candidate.y, candidate.score * factor)
+            if inside
+            else candidate
+        )
+    adjusted.sort(key=lambda c: c.score, reverse=True)
+    return adjusted
