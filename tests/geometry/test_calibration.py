@@ -74,3 +74,76 @@ def test_saved_file_is_human_readable_json(tmp_path):
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert len(payload["points"]) == 4
     assert payload["points"][0]["name"] == "corner_0"
+
+
+def test_a_point_sits_on_the_ground_by_default():
+    point = CalibrationPoint(name="corner", court_xy=(-5.0, -10.0), image_xy=(210.0, 960.0))
+    assert point.height == 0.0
+    assert point.court_xyz == (-5.0, -10.0, 0.0)
+
+
+def test_a_point_can_carry_a_height():
+    point = CalibrationPoint(
+        name="glass_top", court_xy=(-5.0, -10.0), image_xy=(168.0, 531.0), height=3.0
+    )
+    assert point.court_xyz == (-5.0, -10.0, 3.0)
+
+
+def test_the_homography_ignores_points_above_the_ground():
+    """Une homographie ne connait que le plan du sol : un point en hauteur la fausse."""
+    ground = _corner_points()
+    elevated = CalibrationPoint(
+        name="glass_top", court_xy=(-5.0, -10.0), image_xy=(168.0, 531.0), height=3.0
+    )
+    without = calibration_from_points(ground)
+    with_it = calibration_from_points([*ground, elevated])
+    np.testing.assert_allclose(
+        with_it.projector.court_to_image(np.array([[1.0, 2.0]])),
+        without.projector.court_to_image(np.array([[1.0, 2.0]])),
+        atol=1e-9,
+    )
+
+
+def test_an_elevated_control_point_does_not_enter_the_reported_error():
+    ground = _corner_points()
+    elevated = CalibrationPoint(
+        name="glass_top",
+        court_xy=(-5.0, -10.0),
+        image_xy=(168.0, 531.0),
+        is_control=True,
+        height=3.0,
+    )
+    assert calibration_from_points([*ground, elevated]).error is None
+
+
+def test_a_height_survives_a_save_and_a_load(tmp_path):
+    points = [
+        *_corner_points(),
+        CalibrationPoint(
+            name="glass_top", court_xy=(-5.0, -10.0), image_xy=(168.0, 531.0), height=3.0
+        ),
+    ]
+    path = tmp_path / "calibration.json"
+    calibration_from_points(points).save(path)
+    assert [p.height for p in Calibration.load(path).points] == [0.0, 0.0, 0.0, 0.0, 3.0]
+
+
+def test_an_old_file_without_heights_still_loads(tmp_path):
+    path = tmp_path / "old.json"
+    path.write_text(
+        json.dumps(
+            {
+                "points": [
+                    {
+                        "name": p.name,
+                        "court_xy": list(p.court_xy),
+                        "image_xy": list(p.image_xy),
+                        "is_control": p.is_control,
+                    }
+                    for p in _corner_points()
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert all(p.height == 0.0 for p in Calibration.load(path).points)

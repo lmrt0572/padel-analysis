@@ -11,9 +11,12 @@ All lengths in metres.
 Source
 ------
 Constants follow the FIP Rules of Padel. Court rectangle, service line, net heights
-and back wall composition are confirmed. The stepped side walls are not modelled
-here: secondary sources disagree on their geometry, so they need checking against
-the rulebook itself before being added.
+and back wall composition are confirmed.
+
+The side walls were left out at first, secondary sources disagreeing on whether they
+are stepped. The rulebook allows two variants, and a manual annotation of the wall
+panels on 2026-09-12 settled which one this court is: variant 2, "Crystal" - glass
+over four metres from each baseline, mesh between them, and no step.
 """
 
 from dataclasses import dataclass
@@ -36,6 +39,9 @@ class Court:
     # Back wall: 3 m of tempered glass with 1 m of metallic mesh above it.
     back_wall_glass_height: float = 3.0
     back_wall_total_height: float = 4.0
+    # Side walls: glass over this length from each baseline, mesh between the two.
+    side_wall_glass_length: float = 4.1
+    side_wall_total_height: float = 3.0
 
     @property
     def half_length(self) -> float:

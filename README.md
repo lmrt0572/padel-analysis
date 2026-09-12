@@ -728,6 +728,77 @@ produire pour classer les surfaces : sa campagne d'annotation enregistrera donc
 l'**instant** en plus de la surface, et servira rétroactivement de mesure de précision
 à cet étage-ci. C'est la seule que ce projet pourra produire.
 
+### Surfaces de contact
+
+Savoir *quand* la balle a été touchée ne dit pas *contre quoi*. Un court de padel est
+fermé : la balle rebondit sur le sol, sur du verre, sur du grillage et sur des
+raquettes. C'est ce que cet étage doit trancher — et c'est ce qu'un pipeline de tennis
+n'a pas à faire, un court ouvert n'ayant ni vitre ni grillage.
+
+**Pourquoi l'homographie ne suffit pas.** Elle projette sur le plan du sol. Elle est
+donc exacte pour un rebond au sol et fausse pour tout contact en hauteur. Mesuré sur
+194 contacts réels : **un tiers se projette hors du rectangle du court**, certains à
+23 m pour un court qui en fait 20. Et la distribution est presque identique entre
+frappes annotées et non-frappes — 67,3 % contre 64,3 % dans le rectangle. **La position
+projetée seule ne sépare rien.**
+
+**Ce qui la remplace.** Une caméra ne donne qu'un rayon : la balle est quelque part
+dessus, et rien ne dit où. C'est vrai en vol, et ça le reste. Mais **au moment d'un
+contact la balle est sur une surface**, et les surfaces d'un court sont cinq plans
+connus. Un rayon et un plan se coupent en un point. La hauteur, indéterminée en
+général, est déterminée précisément à l'instant qui nous intéresse.
+
+#### Retrouver la caméra
+
+Une homographie se contente de points au sol ; une pose de caméra ne le peut pas, un
+ensemble coplanaire laissant la direction verticale libre. Les repères manquants
+viennent d'une annotation manuelle des panneaux de mur : haut du verre à 3 m, haut du
+grillage à 4 m, haut du filet à 0,92 m.
+
+Résultat : caméra à **x = −0,06 m, y = −26,18 m, z = +7,86 m** — centrée sur l'axe du
+court, vingt-six mètres derrière le fond proche, à près de huit mètres de haut.
+
+Le chiffre qui engage quelque chose n'est pas celui de l'ajustement mais celui des
+**points de contrôle, qui n'entrent jamais dans l'ajustement** :
+
+| Points de contrôle | Écart médian |
+|---|---|
+| Au sol — filet, lignes de service | **4,2 px** |
+| **En hauteur — 0,92 m à 4 m, aux deux fonds** | **8,6 px** |
+| Maximum, au fond éloigné | 14,4 px |
+
+**Ce que 8,6 px valent en mètres dépend de la profondeur** : 13 cm près de la caméra,
+56 cm au fond éloigné, le facteur 4,3 déjà mesuré plus haut. Sur un seuil verre /
+grillage à 3 m, c'est une incertitude d'environ 20 % au pire.
+
+#### La règle
+
+**Raquette** — un poignet à proximité. Le dataset fournit dix-sept points par joueur,
+dont les deux poignets. Mesuré : la balle est à **50 px** du poignet le plus proche
+quand une frappe est annotée, contre **168 px** sinon.
+
+**Sol ou mur** — on coupe le rayon avec les cinq plans et on ne garde que les
+intersections physiquement admissibles : devant la caméra, et dans l'étendue réelle de
+la surface. La marge qui absorbe l'erreur de pose est exprimée **en mètres et jamais en
+pixels** — un pixel valant 1,51 cm près et 6,47 cm loin, une marge en pixels serait
+quatre fois plus laxiste au fond.
+
+**Verre ou grillage** — une table, une fois le point d'impact connu en trois
+dimensions. Fonds : verre sous 3 m. Côtés : verre à moins de 4,1 m d'un fond. Aucune
+heuristique.
+
+#### Ce qui n'est pas encore mesuré
+
+**Rien ne dit ici que la règle a raison.** Il n'existe aucune vérité terrain de surface
+— le dataset déclare une catégorie `Wall` et ne l'a jamais remplie, et aucun jeu de
+données public de padel ne l'étiquette. Le seul chiffre de cette section qui engage
+quelque chose est l'écart de contrôle de la pose, et il porte sur la géométrie, pas sur
+la classification.
+
+Cette vérité terrain reste à produire par annotation manuelle. Elle servira aussi,
+rétroactivement, à mesurer la précision de l'étage des contacts — la seule mesure de
+précision que ce projet pourra produire à cet endroit.
+
 ## Limites connues
 
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre

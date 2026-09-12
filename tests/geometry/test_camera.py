@@ -1,52 +1,13 @@
-import cv2
 import numpy as np
 import pytest
 
-from padel_analysis.geometry.camera import CameraPose, WallPlane, back_wall_planes
+from padel_analysis.geometry.camera import (
+    CameraPose,
+    Surface,
+    court_surfaces,
+    estimate_intrinsics,
+)
 from padel_analysis.geometry.court import Court
-
-
-@pytest.fixture
-def synthetic_pose() -> tuple[CameraPose, np.ndarray, np.ndarray]:
-    """A camera 7.6 m up, 6 m behind the negative baseline, looking down the court."""
-    court = Court()
-    image_size = (1920, 1080)
-    focal = 1400.0
-    intrinsics = np.array(
-        [[focal, 0.0, image_size[0] / 2], [0.0, focal, image_size[1] / 2], [0.0, 0.0, 1.0]]
-    )
-    # Points 3D : les 4 coins au sol, plus les 2 coins hauts du mur de fond eloigne.
-    h = court.back_wall_total_height
-    corners = court.corners()
-    object_points = np.array(
-        [
-            [corners[0][0], corners[0][1], 0.0],
-            [corners[1][0], corners[1][1], 0.0],
-            [corners[2][0], corners[2][1], 0.0],
-            [corners[3][0], corners[3][1], 0.0],
-            [corners[2][0], corners[2][1], h],
-            [corners[3][0], corners[3][1], h],
-        ]
-    )
-    # Rotation : camera regardant vers les y positifs, inclinee vers le bas.
-    tilt = np.deg2rad(20.0)
-    rotation = np.array(
-        [
-            [1.0, 0.0, 0.0],
-            [0.0, -np.sin(tilt), -np.cos(tilt)],
-            [0.0, np.cos(tilt), -np.sin(tilt)],
-        ]
-    )
-    camera_centre = np.array([0.0, -court.half_length - 6.0, 7.6])
-    translation = -rotation @ camera_centre
-
-    rvec, _ = cv2.Rodrigues(rotation)
-    projected, _ = cv2.projectPoints(object_points, rvec, translation, intrinsics, None)
-    return (
-        CameraPose(rotation=rotation, translation=translation, intrinsics=intrinsics),
-        object_points,
-        projected.reshape(-1, 2),
-    )
 
 
 def test_rotation_fixture_is_a_valid_rotation_matrix(synthetic_pose):
@@ -75,16 +36,15 @@ def test_camera_centre_is_above_the_ground_and_behind_the_baseline(synthetic_pos
     assert truth.camera_centre[1] < -court.half_length
 
 
-def test_back_wall_planes_are_vertical_and_at_the_baselines():
+def test_the_back_walls_are_vertical_and_at_the_baselines():
     court = Court()
-    planes = back_wall_planes(court)
-    assert len(planes) == 2
-    for plane in planes:
-        assert isinstance(plane, WallPlane)
+    walls = [s for s in court_surfaces(court) if s.name.startswith("back_wall")]
+    assert len(walls) == 2
+    for wall in walls:
+        assert isinstance(wall, Surface)
         # Normale horizontale : une paroi verticale a une normale sans composante z.
-        assert plane.normal[2] == pytest.approx(0.0)
-        assert abs(plane.offset) == pytest.approx(court.half_length)
-        assert plane.height == court.back_wall_total_height
+        assert wall.normal[2] == pytest.approx(0.0)
+        assert abs(wall.offset) == pytest.approx(court.half_length)
 
 
 def test_wall_top_edge_projects_above_its_ground_edge(synthetic_pose):
@@ -93,3 +53,103 @@ def test_wall_top_edge_projects_above_its_ground_edge(synthetic_pose):
     ground = np.array([[0.0, court.half_length, 0.0]])
     top = np.array([[0.0, court.half_length, court.back_wall_total_height]])
     assert truth.project(top)[0, 1] < truth.project(ground)[0, 1]
+
+
+def test_a_ray_starts_at_the_camera(synthetic_pose):
+    pose, _, _ = synthetic_pose
+    origin, _ = pose.ray((960.0, 540.0))
+    np.testing.assert_allclose(origin, pose.camera_centre, atol=1e-9)
+
+
+def test_a_ray_through_a_projected_point_returns_to_it(synthetic_pose):
+    pose, _, _ = synthetic_pose
+    point = np.array([2.0, -3.0, 1.5])
+    origin, direction = pose.ray(pose.project(point.reshape(1, 3))[0])
+    steps = (point[2] - origin[2]) / direction[2]
+    np.testing.assert_allclose(origin + steps * direction, point, atol=1e-6)
+
+
+def test_a_ray_meets_the_ground_where_the_point_was(synthetic_pose):
+    pose, _, _ = synthetic_pose
+    floor = court_surfaces(Court())[0]
+    assert floor.name == "floor"
+    pixel = pose.project(np.array([[1.0, 2.0, 0.0]]))[0]
+    np.testing.assert_allclose(floor.intersect(*pose.ray(pixel)), [1.0, 2.0, 0.0], atol=1e-6)
+
+
+def test_a_plane_the_ray_runs_along_is_never_met():
+    floor = court_surfaces(Court())[0]
+    assert floor.intersect(np.array([0.0, 0.0, 5.0]), np.array([1.0, 0.0, 0.0])) is None
+
+
+def test_a_surface_behind_the_camera_is_never_met(synthetic_pose):
+    pose, _, _ = synthetic_pose
+    floor = court_surfaces(Court())[0]
+    upwards = np.array([0.0, 0.0, 1.0])
+    assert floor.intersect(pose.camera_centre, upwards) is None
+
+
+def test_there_are_five_surfaces_and_they_are_named():
+    assert [s.name for s in court_surfaces(Court())] == [
+        "floor",
+        "back_wall_negative_y",
+        "back_wall_positive_y",
+        "side_wall_negative_x",
+        "side_wall_positive_x",
+    ]
+
+
+def test_a_point_outside_the_court_is_not_on_the_floor():
+    floor = court_surfaces(Court())[0]
+    assert floor.contains(np.array([0.0, 0.0, 0.0]))
+    assert not floor.contains(np.array([0.0, 12.0, 0.0]))
+
+
+def test_a_point_above_a_wall_is_not_on_it():
+    wall = court_surfaces(Court())[1]
+    assert wall.contains(np.array([0.0, -10.0, 2.0]))
+    assert not wall.contains(np.array([0.0, -10.0, 5.0]))
+
+
+def test_the_back_wall_is_glass_below_three_metres():
+    wall = court_surfaces(Court())[1]
+    assert wall.material_at(np.array([0.0, -10.0, 2.0])) == "verre"
+    assert wall.material_at(np.array([0.0, -10.0, 3.5])) == "grillage"
+
+
+def test_the_side_wall_is_glass_near_each_end():
+    wall = court_surfaces(Court())[3]
+    assert wall.material_at(np.array([-5.0, -9.0, 1.0])) == "verre"
+    assert wall.material_at(np.array([-5.0, 9.0, 1.0])) == "verre"
+    assert wall.material_at(np.array([-5.0, 0.0, 1.0])) == "grillage"
+
+
+def test_the_floor_has_no_material():
+    assert court_surfaces(Court())[0].material_at(np.array([0.0, 0.0, 0.0])) is None
+
+
+def test_the_swept_focal_recovers_a_synthetic_one(synthetic_pose):
+    """La focale n'est pas donnee : on la balaie, et le balayage doit la retrouver."""
+    pose, object_points, image_points = synthetic_pose
+    found = estimate_intrinsics(object_points, image_points, (1920, 1080))
+    assert found[0, 0] == pytest.approx(pose.intrinsics[0, 0], rel=0.05)
+
+
+def test_the_principal_point_sits_at_the_image_centre(synthetic_pose):
+    _, object_points, image_points = synthetic_pose
+    found = estimate_intrinsics(object_points, image_points, (1920, 1080))
+    assert (found[0, 2], found[1, 2]) == (960.0, 540.0)
+
+
+def test_a_point_on_a_wall_is_contained_without_any_margin(synthetic_pose):
+    """L'axe plat vient d'un calcul flottant : l'exiger exact le ferait echouer.
+
+    Le point est produit par une intersection reelle, pas ecrit a la main - c'est la
+    derive d'arrondi qui est en cause, et un litteral exact ne la reproduirait pas.
+    """
+    pose, _, _ = synthetic_pose
+    wall = court_surfaces(Court())[2]
+    pixel = pose.project(np.array([[1.0, 10.0, 2.0]]))[0]
+    meeting = wall.intersect(*pose.ray(pixel))
+    assert meeting[1] != 10.0
+    assert wall.contains(meeting, margin=0.0)

@@ -10,7 +10,8 @@
         210.0,
         960.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "corner_near_right",
@@ -22,7 +23,8 @@
         1722.0,
         959.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "corner_far_right",
@@ -34,7 +36,8 @@
         1326.0,
         315.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "corner_far_left",
@@ -46,7 +49,8 @@
         594.0,
         317.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "service_near_left",
@@ -58,7 +62,8 @@
         314.0,
         786.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "service_near_right",
@@ -70,7 +75,8 @@
         1615.0,
         784.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "service_far_left",
@@ -82,7 +88,8 @@
         564.0,
         372.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "service_far_right",
@@ -94,7 +101,8 @@
         1358.0,
         369.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "net_left",
@@ -106,7 +114,8 @@
         474.0,
         527.0
       ],
-      "is_control": false
+      "is_control": false,
+      "height": 0.0
     },
     {
       "name": "net_right",
@@ -118,7 +127,8 @@
         1451.0,
         527.0
       ],
-      "is_control": true
+      "is_control": true,
+      "height": 0.0
     },
     {
       "name": "service_near_centre",
@@ -130,7 +140,8 @@
         961.0,
         784.0
       ],
-      "is_control": true
+      "is_control": true,
+      "height": 0.0
     },
     {
       "name": "service_far_centre",
@@ -142,7 +153,8 @@
         960.0,
         372.0
       ],
-      "is_control": true
+      "is_control": true,
+      "height": 0.0
     },
     {
       "name": "net_centre",
@@ -154,7 +166,138 @@
         960.0,
         530.0
       ],
-      "is_control": true
+      "is_control": true,
+      "height": 0.0
+    },
+    {
+      "name": "glass_top_near_left",
+      "court_xy": [
+        -5.0,
+        -10.0
+      ],
+      "image_xy": [
+        168.0,
+        531.0
+      ],
+      "is_control": false,
+      "height": 3.0
+    },
+    {
+      "name": "glass_top_near_right",
+      "court_xy": [
+        5.0,
+        -10.0
+      ],
+      "image_xy": [
+        1764.0,
+        528.0
+      ],
+      "is_control": false,
+      "height": 3.0
+    },
+    {
+      "name": "mesh_top_near_left",
+      "court_xy": [
+        -5.0,
+        -10.0
+      ],
+      "image_xy": [
+        149.0,
+        369.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "mesh_top_near_right",
+      "court_xy": [
+        5.0,
+        -10.0
+      ],
+      "image_xy": [
+        1780.0,
+        362.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "glass_top_far_left",
+      "court_xy": [
+        -5.0,
+        10.0
+      ],
+      "image_xy": [
+        576.0,
+        95.0
+      ],
+      "is_control": true,
+      "height": 3.0
+    },
+    {
+      "name": "glass_top_far_right",
+      "court_xy": [
+        5.0,
+        10.0
+      ],
+      "image_xy": [
+        1345.0,
+        89.0
+      ],
+      "is_control": true,
+      "height": 3.0
+    },
+    {
+      "name": "mesh_top_far_left",
+      "court_xy": [
+        -5.0,
+        10.0
+      ],
+      "image_xy": [
+        578.0,
+        19.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "mesh_top_far_right",
+      "court_xy": [
+        5.0,
+        10.0
+      ],
+      "image_xy": [
+        1346.0,
+        10.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "net_top_left",
+      "court_xy": [
+        -5.0,
+        0.0
+      ],
+      "image_xy": [
+        469.0,
+        443.0
+      ],
+      "is_control": true,
+      "height": 0.92
+    },
+    {
+      "name": "net_top_right",
+      "court_xy": [
+        5.0,
+        0.0
+      ],
+      "image_xy": [
+        1455.0,
+        437.0
+      ],
+      "is_control": true,
+      "height": 0.92
     }
   ]
 }
