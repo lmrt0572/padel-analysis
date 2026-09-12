@@ -5,9 +5,12 @@ import pytest
 from padel_analysis.eval.ball_metrics import (
     BallScore,
     CandidateScore,
+    EventScore,
     ball_score,
     candidate_score,
+    event_score,
 )
+from padel_analysis.eval.shots import ShotEvent
 
 
 def test_a_perfect_prediction_scores_one_everywhere():
@@ -138,3 +141,57 @@ def test_an_empty_candidate_evaluation_reports_nan():
     score = candidate_score(candidates={}, annotated={})
     assert math.isnan(score.recall[10])
     assert math.isnan(score.median_rank)
+
+
+def test_a_contact_inside_an_event_finds_it():
+    score = event_score(
+        contacts=[15],
+        events=[ShotEvent(start_frame=10, end_frame=20, category="Smash")],
+    )
+    assert isinstance(score, EventScore)
+    assert score.recall == pytest.approx(1.0)
+    assert score.precision == pytest.approx(1.0)
+
+
+def test_an_event_without_any_contact_is_missed():
+    score = event_score(
+        contacts=[],
+        events=[ShotEvent(start_frame=10, end_frame=20, category="Smash")],
+    )
+    assert score.recall == pytest.approx(0.0)
+
+
+def test_a_contact_outside_every_event_lowers_precision():
+    score = event_score(
+        contacts=[15, 500],
+        events=[ShotEvent(start_frame=10, end_frame=20, category="Smash")],
+    )
+    assert score.recall == pytest.approx(1.0)
+    assert score.precision == pytest.approx(0.5)
+
+
+def test_two_contacts_in_one_event_count_that_event_once():
+    score = event_score(
+        contacts=[12, 18],
+        events=[ShotEvent(start_frame=10, end_frame=20, category="Smash")],
+    )
+    assert score.matched_events == 1
+    assert score.recall == pytest.approx(1.0)
+
+
+def test_the_event_counts_are_reported():
+    score = event_score(
+        contacts=[15, 500],
+        events=[
+            ShotEvent(start_frame=10, end_frame=20, category="Smash"),
+            ShotEvent(start_frame=60, end_frame=70, category="Serve"),
+        ],
+    )
+    assert score.events == 2
+    assert score.contacts == 2
+    assert score.matched_events == 1
+
+
+def test_an_evaluation_without_events_reports_nan_rather_than_crashing():
+    score = event_score(contacts=[10], events=[])
+    assert math.isnan(score.recall)

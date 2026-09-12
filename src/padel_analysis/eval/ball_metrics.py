@@ -13,6 +13,10 @@ those frames are counted apart, as `unscorable`, and left out of precision.
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .shots import ShotEvent
 
 TOLERANCES: tuple[int, ...] = (5, 10, 20)
 
@@ -131,4 +135,37 @@ def candidate_score(
         ),
         median_candidates=_median(counts),
         annotated=total,
+    )
+
+
+@dataclass(frozen=True)
+class EventScore:
+    """Detected contacts against the annotated shot intervals.
+
+    The annotation gives an interval, so a contact is credited when it falls
+    inside one. How close it lands to the true impact cannot be measured, and is
+    therefore not claimed.
+    """
+
+    recall: float
+    precision: float
+    events: int
+    contacts: int
+    matched_events: int
+
+
+def event_score(contacts: Sequence[int], events: Sequence["ShotEvent"]) -> EventScore:
+    """Args:
+        contacts: frames at which a contact was detected.
+        events: the annotated shot intervals to find.
+    """
+    matched = sum(1 for e in events if any(e.contains(c) for c in contacts))
+    inside = sum(1 for c in contacts if any(e.contains(c) for e in events))
+
+    return EventScore(
+        recall=matched / len(events) if events else float("nan"),
+        precision=inside / len(contacts) if contacts else float("nan"),
+        events=len(events),
+        contacts=len(contacts),
+        matched_events=matched,
     )
