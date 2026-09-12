@@ -1,7 +1,11 @@
 import pytest
 
 from padel_analysis.ball.candidates import Candidate
-from padel_analysis.ball.trajectory import Segment, grow
+from padel_analysis.ball.trajectory import (
+    Segment,
+    build_segments,
+    grow,
+)
 
 
 def _straight(start_frame, count, x0=100.0, y0=100.0, dx=20.0, dy=0.0, noise=0.0):
@@ -95,3 +99,46 @@ def test_the_default_gate_absorbs_the_measured_wobble():
     segment = grow(candidates, first=10, second=11)
     assert segment is not None
     assert segment.length >= 6
+
+
+def test_a_single_straight_run_gives_one_segment():
+    segments = build_segments(_straight(10, 12))
+    assert len(segments) == 1
+    assert segments[0].start == 10
+    assert segments[0].stop == 21
+
+
+def test_two_separated_runs_give_two_segments():
+    candidates = _straight(10, 8)
+    candidates.update(_straight(60, 8, x0=900.0))
+    segments = build_segments(candidates)
+    assert len(segments) == 2
+    assert [s.start for s in segments] == [10, 60]
+
+
+def test_a_run_shorter_than_the_minimum_is_dropped():
+    candidates = _straight(10, 3)
+    assert build_segments(candidates, min_length=5) == []
+
+
+def test_the_longer_segment_wins_an_overlap():
+    """Un segment long a survecu a plus de contraintes qu'un court."""
+    candidates = _straight(10, 12)
+    for frame in range(14, 18):
+        candidates[frame] = list(candidates[frame]) + [
+            Candidate(400.0 + 5 * frame, 600.0, 500.0)
+        ]
+    segments = build_segments(candidates, min_length=3)
+    covered = [f for s in segments for f in s.positions]
+    assert len(covered) == len(set(covered))
+
+
+def test_segments_come_back_in_order():
+    candidates = _straight(60, 8, x0=900.0)
+    candidates.update(_straight(10, 8))
+    segments = build_segments(candidates)
+    assert [s.start for s in segments] == [10, 60]
+
+
+def test_no_candidate_at_all_gives_no_segment():
+    assert build_segments({}) == []

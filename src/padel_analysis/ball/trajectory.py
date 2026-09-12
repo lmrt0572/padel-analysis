@@ -130,3 +130,41 @@ def grow(
     _extend(candidates, positions, confirmed, +1, gate, max_misses)
     _extend(candidates, positions, confirmed, -1, gate, max_misses)
     return Segment(positions=positions, confirmed=confirmed)
+
+
+def build_segments(
+    candidates: dict[int, Sequence[Candidate]],
+    gate: float = 30.0,
+    max_step: float = 60.0,
+    max_misses: int = 2,
+    min_length: int = 5,
+) -> list[Segment]:
+    """Seed on every pair of consecutive frames and keep what survives.
+
+    Two segments may claim the same frame. The longer one wins: it survived more
+    continuity constraints, so it is the better explanation of what was seen.
+
+    Args:
+        candidates: ranked candidates per frame.
+        gate, max_step, max_misses: passed through to `grow`.
+        min_length: a segment shorter than this is noise, not a trajectory.
+    """
+    frames = sorted(candidates)
+    grown: list[Segment] = []
+    for frame in frames:
+        if frame + 1 not in candidates:
+            continue
+        segment = grow(candidates, frame, frame + 1, gate, max_step, max_misses)
+        if segment is not None and segment.length >= min_length:
+            grown.append(segment)
+
+    grown.sort(key=lambda s: s.length, reverse=True)
+    taken: set[int] = set()
+    kept: list[Segment] = []
+    for segment in grown:
+        if taken.isdisjoint(segment.positions):
+            kept.append(segment)
+            taken.update(segment.positions)
+
+    kept.sort(key=lambda s: s.start)
+    return kept
