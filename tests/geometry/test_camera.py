@@ -139,3 +139,17 @@ def test_the_principal_point_sits_at_the_image_centre(synthetic_pose):
     _, object_points, image_points = synthetic_pose
     found = estimate_intrinsics(object_points, image_points, (1920, 1080))
     assert (found[0, 2], found[1, 2]) == (960.0, 540.0)
+
+
+def test_a_point_on_a_wall_is_contained_without_any_margin(synthetic_pose):
+    """L'axe plat vient d'un calcul flottant : l'exiger exact le ferait echouer.
+
+    Le point est produit par une intersection reelle, pas ecrit a la main - c'est la
+    derive d'arrondi qui est en cause, et un litteral exact ne la reproduirait pas.
+    """
+    pose, _, _ = synthetic_pose
+    wall = court_surfaces(Court())[2]
+    pixel = pose.project(np.array([[1.0, 10.0, 2.0]]))[0]
+    meeting = wall.intersect(*pose.ray(pixel))
+    assert meeting[1] != 10.0
+    assert wall.contains(meeting, margin=0.0)

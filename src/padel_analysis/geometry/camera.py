@@ -58,10 +58,14 @@ class Surface:
                 pixels: a pixel is 1.51 cm near the camera and 6.47 cm at the far
                 baseline, so a pixel margin would be four times looser at depth.
         """
-        return all(
-            low - margin <= value <= high + margin
-            for value, (low, high) in zip(point, self.bounds)
-        )
+        for value, (low, high) in zip(point, self.bounds):
+            if low == high:
+                # L'axe plat du plan : l'equation du plan le garantit deja, et le
+                # verifier ici echouerait sur un arrondi flottant.
+                continue
+            if not low - margin <= value <= high + margin:
+                return False
+        return True
 
     def material_at(self, point: np.ndarray) -> str | None:
         """Glass or mesh at that point, or None for the floor."""
