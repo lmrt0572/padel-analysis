@@ -9,6 +9,10 @@ pour rendre le changement de direction lisible.
     f  une FRAPPE, donc une raquette
     x  illisible, je ne peux pas trancher
 
+Le clip peut contenir plusieurs evenements - un rebond puis une frappe. Celui qui est
+soumis au jugement est le seul marque par la croix magenta, et la lecture s'y attarde
+en affichant CONTACT. Les autres sont du contexte.
+
     r  revenir au clip precedent et annuler sa reponse
     q  quitter en conservant les reponses rendues
 
@@ -40,29 +44,45 @@ from padel_analysis.io.video_source import VideoSource
 WINDOW = "contre quoi la balle a-t-elle rebondi ?"
 KEYS = "s sol   v vitre   g grillage   f frappe   x illisible   r retour   q quitter"
 ANSWER_KEYS = {"s": "sol", "v": "verre", "g": "grillage", "f": "raquette", "x": "x"}
-SPAN = 20
+SPAN = 12
 TRAIL = (60, 200, 255)
 BALL = (0, 220, 255)
+MARK = (255, 80, 255)
 
 
 def draw(frame, centres, index, contact, caption):
-    """La frame, la trace de la balle autour du contact, et les touches."""
+    """La frame, la trace de la balle, et le marqueur fixe de l'instant a juger.
+
+    Le marqueur ne bouge pas : il reste sur la position de la balle a la frame du
+    contact. Sans lui, un clip contenant a la fois un rebond et une frappe ne dit
+    pas lequel des deux est soumis au jugement.
+    """
     canvas = frame.copy()
     for offset in range(-SPAN, SPAN + 1):
         point = centres.get(contact + offset)
         if point is None:
             continue
-        here = contact + offset == index
-        cv2.circle(
-            canvas,
-            (int(point[0]), int(point[1])),
-            9 if here else 3,
-            BALL if here else TRAIL,
-            2,
-        )
+        cv2.circle(canvas, (int(point[0]), int(point[1])), 3, TRAIL, 2)
+
+    impact = centres.get(contact)
+    if impact is not None:
+        x, y = int(impact[0]), int(impact[1])
+        cv2.circle(canvas, (x, y), 30, MARK, 2)
+        cv2.line(canvas, (x - 48, y), (x - 16, y), MARK, 2)
+        cv2.line(canvas, (x + 16, y), (x + 48, y), MARK, 2)
+        cv2.line(canvas, (x, y - 48), (x, y - 16), MARK, 2)
+        cv2.line(canvas, (x, y + 16), (x, y + 48), MARK, 2)
+
     current = centres.get(index)
     if current is not None:
-        cv2.circle(canvas, (int(current[0]), int(current[1])), 26, BALL, 2)
+        cv2.circle(canvas, (int(current[0]), int(current[1])), 10, BALL, 2)
+
+    if index == contact:
+        cv2.putText(canvas, "CONTACT", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1.1,
+                    (0, 0, 0), 6)
+        cv2.putText(canvas, "CONTACT", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1.1,
+                    MARK, 2)
+
     for text, y, scale in ((caption, 44, 0.9), (KEYS, 82, 0.65)):
         cv2.putText(
             canvas, text, (20, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 5
@@ -81,7 +101,8 @@ def ask(source, centres, contact, caption):
             start=max(0, contact - SPAN), stop=contact + SPAN + 1
         ):
             cv2.imshow(WINDOW, draw(frame, centres, index, contact, caption))
-            key = cv2.waitKey(45) & 0xFF
+            # On s'attarde sur l'instant a juger : c'est celui-la que l'oeil doit voir.
+            key = cv2.waitKey(320 if index == contact else 55) & 0xFF
             if key != 255 and chr(key) in accepted:
                 return chr(key)
 

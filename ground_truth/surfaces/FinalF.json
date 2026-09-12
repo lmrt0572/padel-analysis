@@ -787,5 +787,7 @@
    "stratum": "tranche"
   }
  ],
- "answers": {}
+ "answers": {
+  "16046": "raquette"
+ }
 }
