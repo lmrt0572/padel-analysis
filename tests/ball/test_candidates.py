@@ -110,3 +110,8 @@ def test_an_object_that_arrives_and_stays_is_not_a_candidate():
     finder = MotionCandidates(spacing=1)
     arrived = _with_disc(_blank(), 150, 100)
     assert finder({9: _blank(), 10: arrived, 11: arrived}, 10) == []
+
+
+def test_the_default_spacing_is_not_one():
+    """Un ecart d'une frame perdait un tiers des balles : la valeur par defaut compte."""
+    assert MotionCandidates().frames_needed(100) != [99, 100, 101]

@@ -13,8 +13,13 @@ moves in the picture really moves.
 
 The spacing between the compared frames matters more than it looks. At 30 frames a
 second a slow ball travels less than its own diameter between adjacent frames, so
-it overlaps itself and the difference cancels: on 120 annotated balls, a spacing of
-one frame found 67 percent of them and a spacing of two found 98 percent.
+it overlaps itself and the difference cancels.
+
+Measured over the whole evaluation slice, 3638 annotated balls: a spacing of one
+frame recovers 61 percent of them within ten pixels, a spacing of two 91 percent.
+Spacings of two, three and four tie on recall, and two is kept because it ranks the
+ball highest - sixth of the list against seventh and eighth. On the held-out match,
+19259 balls, the same spacing recovers 93 percent.
 """
 
 from dataclasses import dataclass
