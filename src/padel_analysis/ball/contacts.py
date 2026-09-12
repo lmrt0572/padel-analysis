@@ -10,6 +10,7 @@ That ratio is what this module thresholds.
 """
 
 import math
+from dataclasses import dataclass
 
 Point = tuple[float, float]
 
@@ -51,3 +52,52 @@ def sharpness_of(incoming: Point, outgoing: Point) -> float:
     if speed <= 0.0:
         return 0.0
     return turn_of(incoming, outgoing) / speed
+
+
+@dataclass(frozen=True)
+class Contact:
+    """One instant where the ball changed direction, and how."""
+
+    frame: int
+    incoming: Point
+    outgoing: Point
+    turn: float
+    sharpness: float
+
+
+def find_contacts(
+    path: dict[int, Point | None],
+    span: int = 2,
+    sharpness: float = 0.5,
+    suppression: int = 5,
+) -> list[Contact]:
+    """The frames where the path bends sharply enough to be a contact.
+
+    Args:
+        path: one position per frame, as `best_path` returns.
+        span: frames each side used to measure velocity.
+        sharpness: least turn-over-speed ratio to accept. 0.5 was swept.
+        suppression: least distance between two kept contacts. A real rally cannot
+            place two contacts closer, so a burst of frames around one bend must
+            yield one contact and not five.
+    """
+    scored: list[Contact] = []
+    for frame in sorted(path):
+        pair = velocities(path, frame, span)
+        if pair is None:
+            continue
+        incoming, outgoing = pair
+        ratio = sharpness_of(incoming, outgoing)
+        if ratio < sharpness:
+            continue
+        bend = turn_of(incoming, outgoing)
+        scored.append(Contact(frame, incoming, outgoing, bend, ratio))
+
+    kept: list[Contact] = []
+    # Le plus net d'abord, et a nettete egale le plus ample : autour d'un rebond les
+    # deux flancs sont aussi nets que le sommet, seule l'amplitude les separe.
+    for contact in sorted(scored, key=lambda c: (c.sharpness, c.turn), reverse=True):
+        if any(abs(contact.frame - k.frame) <= suppression for k in kept):
+            continue
+        kept.append(contact)
+    return sorted(kept, key=lambda c: c.frame)
