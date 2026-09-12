@@ -1,5 +1,9 @@
 """Compare la croissance gloutonne et l'optimisation globale, sur les memes candidats.
 
+--weights echange le detecteur par mouvement contre le reseau entraine du jalon B.4.
+C'est l'ablation : une seule piece change, l'etage de trajectoire ne sait pas d'ou
+viennent ses candidats.
+
 Un seul passage sur la video alimente les deux : aucune difference d'echantillon ne
 peut fausser l'ecart.
 
@@ -26,9 +30,25 @@ from padel_analysis.io.video_source import VideoSource
 from padel_analysis.perception.pose_detector import PoseDetector
 
 
-def collect(video, start, stop, spacing, factor):
-    """Les candidats de chaque frame, penalises par les boites du detecteur."""
-    finder = MotionCandidates(spacing=spacing)
+def collect(video, start, stop, spacing, factor, weights=None):
+    """Les candidats de chaque frame, penalises par les boites du detecteur.
+
+    `weights` echange le detecteur par mouvement contre le reseau entraine. Rien
+    d'autre ne change - meme `best_path`, memes couts, memes tolerances - donc
+    l'ecart mesure est imputable au detecteur et a rien d'autre.
+    """
+    if weights is None:
+        finder = MotionCandidates(spacing=spacing)
+    else:
+        if spacing != 3:
+            raise SystemExit(
+                "le reseau a ete entraine avec un espacement de 3 : passer "
+                "--spacing 3. Sans cela la fenetre de frames serait trop courte "
+                "et le detecteur rendrait une liste vide, sans rien signaler."
+            )
+        from padel_analysis.ball.heatmap_net import NetCandidates
+
+        finder = NetCandidates(weights, spacing=spacing)
     detector = PoseDetector()
     candidates: dict[int, list] = {}
     window: dict[int, object] = {}
@@ -81,6 +101,11 @@ def main() -> None:
     parser.add_argument("--gate", type=float, default=320.0)
     parser.add_argument("--weight", type=float, default=240.0)
     parser.add_argument("--absent-cost", type=float, default=1200.0)
+    parser.add_argument(
+        "--weights",
+        type=Path,
+        help="poids du reseau ; sans cette option, detection par mouvement",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -90,7 +115,9 @@ def main() -> None:
     }
     print(f"balles annotees dans la plage : {len(annotated)}", flush=True)
 
-    candidates = collect(args.video, args.start, args.stop, args.spacing, args.factor)
+    candidates = collect(
+        args.video, args.start, args.stop, args.spacing, args.factor, args.weights
+    )
     print(f"frames avec des candidats : {len(candidates)}", flush=True)
 
     segments = build_segments(candidates)
