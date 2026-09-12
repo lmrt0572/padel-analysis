@@ -15,7 +15,9 @@ zero. Les pixels positifs sont donc ponderes.
 
 Les poids sont ecrits apres chaque epoque, de facon atomique : deux heures de calcul ne
 doivent pas dependre de la fin du script, et on peut arreter des que la validation
-cesse de descendre sans rien perdre.
+cesse de descendre sans rien perdre. Deux fichiers : le dernier etat, et celui de la
+meilleure validation - un pic passager, comme celui de l'epoque 8 du premier
+entrainement, ne doit pas pouvoir faire perdre le meilleur modele.
 
 Le debit mesure est de 10,7 frames/s, contre 15,1 en synthetique : le decodage JPEG est
 devenu le goulot, chaque frame etant lue trois fois - une par position dans la pile.
@@ -138,6 +140,7 @@ def main() -> None:
         for name, group in (("train", trained), ("held", held))
     }
 
+    best = float("inf")
     for epoch in range(1, args.epochs + 1):
         net.train()
         started, total, seen = time.time(), 0.0, 0
@@ -172,8 +175,17 @@ def main() -> None:
             flush=True,
         )
         save_atomically(net.state_dict(), args.out.with_suffix(".pt"))
+        held_loss = validation / max(checked, 1)
+        if held_loss < best:
+            best = held_loss
+            save_atomically(
+                net.state_dict(), args.out.with_name(args.out.name + "_best.pt")
+            )
+            print(f"          meilleure validation jusqu'ici, epoque {epoch} conservee",
+                  flush=True)
 
-    print(f"poids ecrits : {args.out.with_suffix('.pt')}")
+    print(f"poids ecrits : {args.out.with_suffix('.pt')} (dernier), "
+          f"{args.out.name}_best.pt (meilleure validation {best:.4f})")
 
 
 if __name__ == "__main__":
