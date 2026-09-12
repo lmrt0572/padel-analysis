@@ -5,6 +5,7 @@ from padel_analysis.ball.trajectory import (
     Segment,
     build_segments,
     grow,
+    positions_of,
 )
 
 
@@ -142,3 +143,29 @@ def test_segments_come_back_in_order():
 
 def test_no_candidate_at_all_gives_no_segment():
     assert build_segments({}) == []
+
+
+def test_every_covered_frame_carries_a_position():
+    segments = build_segments(_straight(10, 8))
+    positions = positions_of(segments, start=10, stop=17)
+    assert set(positions) == set(range(10, 18))
+    assert all(p is not None for p in positions.values())
+
+
+def test_a_frame_outside_every_segment_carries_none():
+    segments = build_segments(_straight(10, 8))
+    positions = positions_of(segments, start=8, stop=19)
+    assert positions[8] is None
+    assert positions[19] is None
+    assert positions[12] is not None
+
+
+def test_the_requested_range_is_respected():
+    segments = build_segments(_straight(10, 20))
+    positions = positions_of(segments, start=12, stop=15)
+    assert sorted(positions) == [12, 13, 14, 15]
+
+
+def test_no_segment_gives_none_everywhere():
+    positions = positions_of([], start=0, stop=3)
+    assert positions == {0: None, 1: None, 2: None, 3: None}

@@ -168,3 +168,17 @@ def build_segments(
 
     kept.sort(key=lambda s: s.start)
     return kept
+
+
+def positions_of(
+    segments: Sequence[Segment], start: int, stop: int
+) -> dict[int, Point | None]:
+    """One position per frame of [start, stop], None where no segment covers it.
+
+    This is the shape `ball_score` expects: a frame the trajectory never reached is
+    a miss, not a wrong answer.
+    """
+    found: dict[int, Point] = {}
+    for segment in segments:
+        found.update(segment.positions)
+    return {frame: found.get(frame) for frame in range(start, stop + 1)}
