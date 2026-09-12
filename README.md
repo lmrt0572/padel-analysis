@@ -135,6 +135,13 @@ seul passage sur la plage demandée :
 python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 0 --stop 21472 --out outputs/<nom>_trajectory.json
 ```
 
+Les contacts se mesurent de la même façon, sur le chemin reconstruit et sur la balle
+annotée en un seul passage :
+
+```bash
+python scripts/measure_contacts.py --video <video.mp4> --annotations <ball.json>     --shots <shots.csv> --identity ground_truth/identity/<nom>.json     --start 0 --stop 20099 --out outputs/<nom>_contacts.json
+```
+
 ## Résultats
 
 ### Stabilité de la caméra
@@ -631,6 +638,95 @@ le chemin ne renonce jamais, ce qui est en partie un artefact de la mesure et no
 qualité propre de la méthode. Le comparatif ci-dessus reste valide, les deux méthodes
 étant jugées à la même aune, mais le 0,733 ne doit pas se lire comme « la balle est
 localisée trois fois sur quatre en toute circonstance ».
+
+### Instants de contact
+
+L'étage précédent rend une position par frame et **ne renonce jamais** : il n'y a donc
+aucun trou où lire un contact. Le critère doit porter sur la forme du chemin.
+
+Ce qui marque un contact est un changement de direction. Mesuré en pixels il n'est pas
+comparable d'un lob à un smash, donc le virage est **divisé par la vitesse qui l'a
+produit** : un écart de 40 px est un coude à 5 px/frame et une broutille à 30. Les
+contacts retenus sont les maxima locaux de ce rapport, un seul par fenêtre de 5 frames.
+
+Mesuré sur les deux matchs, avec le même détecteur appliqué au chemin reconstruit et à
+la balle annotée — l'écart entre les deux lignes est donc imputable à la trajectoire et
+à rien d'autre :
+
+| | Contacts | Rappel des frappes | Rebonds par échange |
+|---|---|---|---|
+| **Réglage** (92 frappes) — balle annotée | 192 | 0,891 | 0,89 |
+| — chemin reconstruit | 244 | 0,902 | 1,23 |
+| **Tenu à l'écart** (475 frappes) — balle annotée | 874 | 0,806 | 0,86 |
+| — **chemin reconstruit** | **1 257** | **0,895** | **1,38** |
+
+**Le chemin reconstruit obtient un meilleur rappel que la balle annotée. Ce n'est pas
+une qualité, c'est un symptôme :** il produit 44 % de contacts en plus, et détecter
+davantage fait mécaniquement monter le rappel. La colonne qui compte est la troisième.
+
+**Une trajectoire juste à 73 % ne coûte que quelques points.** Le nombre de rebonds par
+échange passe de 0,86 à 1,38 — l'excédent est l'erreur de trajectoire, et il est
+mesurable comme tel plutôt que caché dans un rappel flatteur.
+
+#### La précision ne peut pas être rapportée comme une performance
+
+L'annotation ne marque que les contacts avec une **raquette**, sous forme
+d'intervalles. Ces intervalles couvrent **48,2 %** des frames annotées du match de
+réglage. Un détecteur tirant ses instants **au hasard** y obtient donc une précision de
+0,485 — et le détecteur de virages appliqué à la balle parfaitement annotée en obtient
+0,573. L'écart est trop mince pour démontrer quoi que ce soit.
+
+Deux corrections ont été essayées et n'ont rien changé : un appariement un pour un
+entre contacts et frappes donne le même gain, et resserrer la cible autour du centre de
+l'intervalle échoue parce que l'impact ne s'y concentre pas — il se disperse sur
+presque toute la largeur, écart-type 0,48 en demi-largeur.
+
+**Le match tenu à l'écart est le meilleur instrument**, ses intervalles ne couvrant que
+31,0 % des frames :
+
+| | Précision | Au hasard | Gain |
+|---|---|---|---|
+| Réglage, chemin reconstruit | 0,537 | 0,428 | 1,25× |
+| **Tenu à l'écart, chemin reconstruit** | **0,429** | **0,285** | **1,51×** |
+| Tenu à l'écart, balle annotée | 0,501 | 0,308 | 1,63× |
+
+Sur l'instrument le moins complaisant, le détecteur bat le hasard d'un facteur 1,5.
+C'est une mesure, mais faible — et elle le restera tant que la vérité terrain manquera.
+Le témoin aléatoire est calculé par le code et affiché à côté de chaque précision, pour
+qu'aucun de ces chiffres ne puisse être lu isolément.
+
+#### Ce qui remplace la précision
+
+La physique du padel. Entre deux frappes, la balle rebondit **0 fois** (volée), **1**
+(sol) ou **2** (sol puis vitre, ou l'inverse). C'est un critère que l'annotation ne
+fournit pas et qu'elle ne peut pas fausser. Sur le match tenu à l'écart, la
+distribution obtenue est 0 : 170, 1 : 138, 2 : 78, 3 : 40, au-delà 42 — soit **82 % des
+échanges dans ce que le jeu prédit**.
+
+C'est aussi ce critère qui a fixé le réglage, et non la métrique d'événements.
+
+#### L'encadrement du virage absolu
+
+Le critère relatif ne connaît que des rapports, ce qui le rend aveugle à une erreur
+propre au chemin reconstruit : sa vitesse au 95ᵉ centile vaut **512 px** contre **186**
+pour la balle annotée. Il fait des sauts qu'aucune balle ne fait, et chaque saut
+fabrique un virage. Le virage absolu est donc encadré entre 25 et 300 px.
+
+| | Contacts | Rappel | Rebonds par échange |
+|---|---|---|---|
+| Seuil relatif seul | 317 | 0,957 | 1,85 |
+| **Virage encadré** | **246** | **0,902** | **1,24** |
+
+La longue traîne — jusqu'à dix contacts entre deux frappes — disparaît avec le plafond.
+C'étaient des erreurs de chemin, pas des rebonds.
+
+#### Ce qui manque
+
+Une vérité terrain d'instants de contact, toutes surfaces confondues. Elle n'existe
+dans aucun jeu de données public de padel. C'est celle que le sous-projet C doit
+produire pour classer les surfaces : sa campagne d'annotation enregistrera donc
+l'**instant** en plus de la surface, et servira rétroactivement de mesure de précision
+à cet étage-ci. C'est la seule que ce projet pourra produire.
 
 ## Limites connues
 
