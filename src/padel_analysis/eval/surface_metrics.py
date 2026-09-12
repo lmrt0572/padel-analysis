@@ -9,15 +9,17 @@ So every rate is reported per class and per stratum, and the single overall figu
 reweighted to the real mix with the weights declared. A weighted figure whose weights
 are not stated is a figure whose sampling has been hidden.
 
-An unreadable contact - the annotator could not tell - is excluded rather than scored.
-It is neither a success nor a failure of the rule, and counting it either way would
-assert something the data does not support. Its rate is reported separately.
+Two answers name no surface and are both excluded from these rates, for opposite
+reasons. `x` is a non-measurement - the annotator could not tell - and scoring it
+either way would assert something the data does not support. `aucun` is a measurement
+of a different thing: the trajectory ran straight through, so stage B.3 invented that
+event. Both rates are reported, and never added together.
 """
 
 import math
 from dataclasses import dataclass
 
-UNREADABLE = "x"
+from .surface_truth import NOT_A_SURFACE
 
 
 @dataclass(frozen=True)
@@ -42,7 +44,7 @@ class ClassScore:
 def _readable(predicted: list[str], truth: list[str]) -> list[tuple[str, str]]:
     if len(predicted) != len(truth):
         raise ValueError("predicted and truth must have the same length")
-    return [(p, t) for p, t in zip(predicted, truth) if t != UNREADABLE]
+    return [(p, t) for p, t in zip(predicted, truth) if t not in NOT_A_SURFACE]
 
 
 def per_class(predicted: list[str], truth: list[str]) -> dict[str, ClassScore]:
@@ -61,11 +63,16 @@ def per_class(predicted: list[str], truth: list[str]) -> dict[str, ClassScore]:
     return scores
 
 
-def unreadable_rate(truth: list[str]) -> float:
-    """Share of contacts the annotator could not settle."""
+def share_of(truth: list[str], marker: str) -> float:
+    """Share of answers equal to `marker`.
+
+    Used for the two answers that name no surface, which are reported apart and
+    never added together: `x` is what the eye could not settle, `aucun` is what the
+    contact stage should not have flagged at all.
+    """
     if not truth:
         return math.nan
-    return sum(1 for t in truth if t == UNREADABLE) / len(truth)
+    return sum(1 for t in truth if t == marker) / len(truth)
 
 
 def weighted_accuracy(

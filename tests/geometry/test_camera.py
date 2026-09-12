@@ -89,14 +89,32 @@ def test_a_surface_behind_the_camera_is_never_met(synthetic_pose):
     assert floor.intersect(pose.camera_centre, upwards) is None
 
 
-def test_there_are_five_surfaces_and_they_are_named():
+def test_there_are_six_surfaces_and_they_are_named():
     assert [s.name for s in court_surfaces(Court())] == [
         "floor",
         "back_wall_negative_y",
         "back_wall_positive_y",
         "side_wall_negative_x",
         "side_wall_positive_x",
+        "net",
     ]
+
+
+def test_the_net_stops_at_the_post_height():
+    net = court_surfaces(Court())[-1]
+    assert net.name == "net"
+    assert net.contains(np.array([0.0, 0.0, 0.5]))
+    assert not net.contains(np.array([0.0, 0.0, 1.5]))
+
+
+def test_a_ball_passing_over_the_net_does_not_touch_it():
+    """Le filet est borne en hauteur : une balle qui passe au-dessus n'est pas dessus."""
+    net = court_surfaces(Court())[-1]
+    assert not net.contains(np.array([0.0, 0.0, 2.0]), margin=0.30)
+
+
+def test_the_net_is_neither_glass_nor_mesh():
+    assert court_surfaces(Court())[-1].material_at(np.array([0.0, 0.0, 0.5])) is None
 
 
 def test_a_point_outside_the_court_is_not_on_the_floor():

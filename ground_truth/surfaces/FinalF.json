@@ -1,0 +1,986 @@
+{
+ "video": "FinalF",
+ "frame_range": [
+  16000,
+  20099
+ ],
+ "parameters": {
+  "wrist_distance": 80.0,
+  "margin": 0.3,
+  "focal": 2690.0
+ },
+ "tasks": [
+  {
+   "frame": 16046,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16072,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16083,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16120,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 16129,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16144,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16170,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16177,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16194,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16223,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16243,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16249,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16257,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16298,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16309,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16321,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16336,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16375,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16385,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16399,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 16460,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16485,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16491,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16556,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16565,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16595,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16652,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16668,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16697,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16705,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16717,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16782,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 16791,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16830,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16841,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16873,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16901,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16908,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 16962,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 16971,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16994,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17029,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17053,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17111,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17119,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17128,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17136,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17143,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17171,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17180,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17199,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17210,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17217,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17255,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17266,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17283,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17307,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17315,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17330,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17354,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17376,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17384,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17403,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17448,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17455,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17468,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17490,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17514,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17525,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17550,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17556,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17580,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17611,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17622,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17628,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17640,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17646,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17679,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17694,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17703,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17717,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17727,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17736,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17743,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17769,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17775,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17796,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17807,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17814,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17845,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17854,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17862,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17875,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17887,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17903,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17914,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17936,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17944,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17952,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17966,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 17972,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 18002,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18026,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18032,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18039,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18052,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18083,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18097,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18104,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18126,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18133,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18161,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18177,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18223,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18234,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18260,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18270,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18286,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 18323,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 18333,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 18350,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18365,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18373,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18386,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 18426,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18450,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18459,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18469,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18476,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18500,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18529,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18544,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18595,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18635,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18659,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18688,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18694,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18703,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18727,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18765,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18785,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18805,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18826,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18891,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18924,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18943,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18962,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18982,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19013,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 19023,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19039,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19084,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 19093,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19111,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19134,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19141,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19155,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19183,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19241,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19277,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19285,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19296,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 19352,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19365,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19380,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19425,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 19435,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19466,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19473,
+   "stratum": "tranche"
+  },
+  {
+   "frame": 19520,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19528,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19547,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19569,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19582,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19616,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19629,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19692,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19709,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19717,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19730,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19741,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19759,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19765,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19781,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19835,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19867,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19942,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19973,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19990,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 20000,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 20026,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 20051,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 20059,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 20077,
+   "stratum": "tranche"
+  }
+ ],
+ "answers": {
+  "16046": "raquette",
+  "16072": "sol",
+  "16083": "raquette",
+  "16120": "aucun",
+  "16129": "aucun",
+  "16144": "sol",
+  "16170": "raquette",
+  "16177": "aucun",
+  "16194": "sol",
+  "16223": "raquette",
+  "16243": "aucun",
+  "16249": "sol",
+  "16257": "raquette",
+  "16298": "sol",
+  "16309": "verre",
+  "16321": "verre",
+  "16336": "sol",
+  "16375": "sol",
+  "16385": "raquette",
+  "16399": "aucun",
+  "16460": "raquette",
+  "16485": "raquette",
+  "16491": "aucun",
+  "16556": "aucun",
+  "16565": "raquette",
+  "16595": "verre",
+  "16652": "aucun",
+  "16668": "sol",
+  "16697": "aucun",
+  "16705": "sol",
+  "16717": "raquette",
+  "16782": "aucun",
+  "16791": "sol",
+  "16830": "raquette",
+  "16841": "raquette",
+  "16873": "sol",
+  "16901": "raquette",
+  "16908": "aucun",
+  "16962": "aucun",
+  "16971": "raquette",
+  "16994": "sol",
+  "17029": "raquette",
+  "17053": "sol",
+  "17111": "aucun",
+  "17119": "raquette",
+  "17128": "aucun",
+  "17136": "sol",
+  "17143": "verre",
+  "17171": "aucun",
+  "17180": "raquette",
+  "17199": "sol",
+  "17210": "raquette",
+  "17217": "aucun",
+  "17255": "aucun",
+  "17266": "raquette",
+  "17283": "raquette",
+  "17307": "aucun",
+  "17315": "verre",
+  "17330": "raquette",
+  "17354": "raquette",
+  "17376": "sol",
+  "17384": "raquette",
+  "17403": "aucun",
+  "17448": "raquette",
+  "17455": "sol",
+  "17468": "verre",
+  "17490": "sol",
+  "17514": "sol",
+  "17525": "raquette",
+  "17550": "sol",
+  "17556": "raquette",
+  "17580": "raquette",
+  "17611": "sol",
+  "17622": "raquette",
+  "17628": "aucun",
+  "17640": "aucun",
+  "17646": "aucun",
+  "17679": "aucun",
+  "17694": "sol",
+  "17703": "verre",
+  "17717": "verre",
+  "17727": "raquette",
+  "17736": "aucun",
+  "17743": "aucun",
+  "17769": "raquette",
+  "17775": "aucun",
+  "17796": "verre",
+  "17807": "raquette",
+  "17814": "aucun",
+  "17845": "sol",
+  "17854": "verre",
+  "17862": "raquette",
+  "17875": "filet",
+  "17887": "sol",
+  "17903": "sol",
+  "17914": "raquette",
+  "17936": "sol",
+  "17944": "verre",
+  "17952": "raquette",
+  "17966": "aucun",
+  "17972": "aucun",
+  "18002": "raquette",
+  "18026": "sol",
+  "18032": "verre",
+  "18039": "verre",
+  "18052": "raquette",
+  "18083": "raquette",
+  "18097": "sol",
+  "18104": "grillage",
+  "18126": "raquette",
+  "18133": "aucun",
+  "18161": "raquette",
+  "18177": "raquette",
+  "18223": "sol",
+  "18234": "raquette",
+  "18260": "sol",
+  "18270": "raquette",
+  "18286": "aucun",
+  "18323": "aucun",
+  "18333": "aucun",
+  "18350": "sol",
+  "18365": "verre",
+  "18373": "raquette",
+  "18386": "aucun",
+  "18426": "raquette",
+  "18450": "sol",
+  "18459": "verre",
+  "18469": "raquette",
+  "18476": "aucun",
+  "18500": "raquette",
+  "18529": "sol",
+  "18544": "raquette",
+  "18595": "sol",
+  "18635": "raquette",
+  "18659": "sol",
+  "18688": "raquette",
+  "18694": "aucun",
+  "18703": "raquette",
+  "18727": "raquette",
+  "18765": "raquette",
+  "18785": "raquette",
+  "18805": "sol",
+  "18826": "raquette",
+  "18891": "sol",
+  "18924": "raquette",
+  "18943": "raquette",
+  "18962": "raquette",
+  "18982": "raquette",
+  "19013": "aucun",
+  "19023": "raquette",
+  "19039": "sol",
+  "19084": "aucun",
+  "19093": "raquette",
+  "19111": "raquette",
+  "19134": "sol",
+  "19141": "raquette",
+  "19155": "aucun",
+  "19183": "sol",
+  "19241": "sol",
+  "19277": "sol",
+  "19285": "raquette",
+  "19296": "aucun",
+  "19352": "aucun",
+  "19365": "sol",
+  "19380": "raquette",
+  "19425": "aucun",
+  "19435": "sol",
+  "19466": "raquette",
+  "19473": "aucun",
+  "19520": "aucun",
+  "19528": "raquette",
+  "19547": "filet",
+  "19569": "sol",
+  "19582": "sol",
+  "19616": "sol",
+  "19629": "raquette",
+  "19692": "raquette",
+  "19709": "sol",
+  "19717": "raquette",
+  "19730": "aucun",
+  "19741": "raquette",
+  "19759": "aucun",
+  "19765": "sol",
+  "19781": "raquette",
+  "19835": "sol",
+  "19867": "raquette",
+  "19942": "sol",
+  "19973": "raquette",
+  "19990": "aucun",
+  "20000": "aucun",
+  "20026": "raquette",
+  "20051": "verre",
+  "20059": "raquette",
+  "20077": "aucun"
+ }
+}

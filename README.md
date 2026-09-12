@@ -142,6 +142,32 @@ annotée en un seul passage :
 python scripts/measure_contacts.py --video <video.mp4> --annotations <ball.json>     --shots <shots.csv> --identity ground_truth/identity/<nom>.json     --start 0 --stop 20099 --out outputs/<nom>_contacts.json
 ```
 
+Les surfaces demandent une vérité terrain qui n'existe pas : elle se produit à la main.
+Le premier script dresse la liste des contacts à juger, le second les rejoue un par un.
+
+```bash
+python scripts/build_surface_tasks.py --annotations <ball.json> --poses <pose.json>     --calibration ground_truth/calibrations/<nom>.json --start 16000 --stop 20099     --video <nom> --out ground_truth/surfaces/<nom>.json
+
+python scripts/review_surfaces.py --video <video.mp4>     --annotations <ball.json> --truth ground_truth/surfaces/<nom>.json
+```
+
+| Touche | Réponse |
+|---|---|
+| `s` `v` `g` `t` | le sol, une vitre, le grillage, le filet |
+| `f` | une frappe, donc une raquette |
+| `n` | aucun contact : la trajectoire passe tout droit |
+| `x` | illisible, je ne peux pas trancher |
+| `r` / `q` | revenir au clip précédent / quitter en conservant |
+
+`n` et `x` ne disent pas la même chose et ne sont jamais additionnés. `x` est une
+non-mesure ; `n` est un faux positif constaté de l'étage des contacts.
+
+La pose de caméra se contrôle sur les repères qu'elle n'a jamais ajustés :
+
+```bash
+python scripts/check_camera_pose.py --calibration ground_truth/calibrations/<nom>.json
+```
+
 ## Résultats
 
 ### Stabilité de la caméra
@@ -787,17 +813,78 @@ quatre fois plus laxiste au fond.
 dimensions. Fonds : verre sous 3 m. Côtés : verre à moins de 4,1 m d'un fond. Aucune
 heuristique.
 
-#### Ce qui n'est pas encore mesuré
+#### La vérité terrain, qui n'existait nulle part
 
-**Rien ne dit ici que la règle a raison.** Il n'existe aucune vérité terrain de surface
-— le dataset déclare une catégorie `Wall` et ne l'a jamais remplie, et aucun jeu de
-données public de padel ne l'étiquette. Le seul chiffre de cette section qui engage
-quelque chose est l'écart de contrôle de la pose, et il porte sur la géométrie, pas sur
-la classification.
+Aucun jeu de données public de padel n'étiquette les surfaces de contact — le dataset
+utilisé ici déclare une catégorie `Wall` et ne l'a jamais remplie. Elle a donc été
+produite à la main : **les 194 contacts détectés sur la balle annotée de la tranche
+d'évaluation**, tous jugés, sans échantillonnage.
 
-Cette vérité terrain reste à produire par annotation manuelle. Elle servira aussi,
-rétroactivement, à mesurer la précision de l'étage des contacts — la seule mesure de
-précision que ce projet pourra produire à cet endroit.
+L'outil rejoue chaque instant en boucle, la balle marquée d'une croix fixe, et
+**n'affiche jamais ce que la règle prédit**. Une vérité terrain construite sur
+l'hypothèse qu'elle doit juger ne mesure que deux erreurs qui s'accordent : au
+sous-projet A, corriger ce défaut avait fait passer l'IDF1 de 0,956 à 0,819.
+
+| Réponse | Contacts |
+|---|---|
+| raquette | 75 |
+| sol | 51 |
+| vitre | 16 |
+| **aucun contact** | **49** |
+| filet | 2 |
+| grillage | 1 |
+| illisible | **0** |
+
+**Aucun contact illisible sur 194.** Le risque de conception — un contact bas contre
+une vitre latérale que l'œil ne tranche pas — ne s'est pas matérialisé.
+
+#### Ce que l'annotation mesure de l'étage précédent
+
+**49 des 194 contacts détectés n'ont pas eu lieu** : la trajectoire passait tout droit.
+La précision de l'étage des contacts vaut donc **0,747**, sur la balle parfaitement
+annotée — donc hors de toute erreur de trajectoire.
+
+C'est la mesure que la section précédente déclarait impossible. L'annotation de frappes
+ne pouvait pas la donner : ses intervalles couvrent la moitié des frames, si bien qu'un
+détecteur tirant au hasard y obtenait déjà 0,480. Celle-ci est directe.
+
+#### Ce que la règle vaut
+
+Les seuils ont été figés **avant** que cette vérité terrain existe. Ces chiffres sont
+donc un premier tir, non un résultat ajusté.
+
+| Classe | Effectif | Précision | Rappel | F1 |
+|---|---|---|---|---|
+| raquette | 75 | 0,830 | **0,973** | 0,896 |
+| sol | 51 | 0,720 | 0,706 | 0,713 |
+| mur | 17 | **1,000** | 0,412 | 0,583 |
+| filet | 2 | — | — | — |
+
+**Exactitude globale 0,800** sur les 145 contacts réels. Deux erreurs dominent :
+
+- **15 rebonds au sol pris pour des frappes.** La proximité au poignet sur-revendique :
+  elle rattrape presque toutes les frappes, au prix de quelques rebonds bas près d'un
+  joueur.
+- **10 contacts de mur pris pour du sol.** Conséquence directe de la règle d'arbitrage
+  écrite dans le code : quand plusieurs surfaces sont admissibles, le sol l'emporte.
+  L'hypothèse est désormais mesurée, et elle coûte 10 murs sur 17. Quand la règle dit
+  « mur », en revanche, elle a toujours raison.
+
+**Grillage et filet ne sont pas mesurables ici** : un exemple et deux. C'était prévu —
+le grillage n'occupe que le haut des fonds et le milieu des côtés. Aucun taux n'est
+publié pour eux, et leurs effectifs sont donnés plutôt que tus.
+
+#### Une strate nommée à l'envers
+
+Les contacts où **une seule** surface est admissible avaient été étiquetés « tranchés »,
+en supposant qu'une réponse unique valait confiance. La campagne dit l'inverse :
+**les 24 cas concernés sont 24 non-événements, vingt-quatre sur vingt-quatre.**
+
+L'explication est géométrique. Un contact réel se produit dans le volume de jeu, où le
+fond proche est toujours admissible aussi, la caméra étant derrière lui — il est
+candidat pour 140 des 194 contacts. Un rayon qui ne rencontre qu'une seule surface est
+donc un rayon qui pointe hors du jeu. Ce n'est pas une mesure de confiance mais un
+**détecteur de faux positifs**, et sur cet échantillon il ne se trompe jamais.
 
 ## Limites connues
 
@@ -872,8 +959,16 @@ section [Évaluation](#évaluation) ne seraient pas reproductibles :
 
 | Fichier | Contenu |
 |---|---|
-| `calibrations/*.json` | 13 points cliqués par vidéo, dont 4 de contrôle |
+| `calibrations/*.json` | 23 points cliqués par vidéo — 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
 | `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
+| `surfaces/*.json` | les 194 contacts à juger et les 194 jugements rendus |
+
+**`surfaces/` est le seul de ces fichiers qui ne dérive de rien.** Les surfaces de
+contact ne sont étiquetées dans aucun jeu de données public de padel : ce fichier est
+la mesure elle-même, et sans lui la section sur les surfaces ne serait qu'une règle
+sans juge. Les points en hauteur de `calibrations/` sont dans le même cas — ils sont
+relevés à la main sur les panneaux de mur, et sans eux la pose de caméra ne se
+résoudrait pas.
 
 Ces fichiers dérivent des annotations du dataset, en CC-BY-4.0, et n'en contiennent
 aucune donnée d'image. Avec eux, reproduire l'évaluation demande de télécharger le
