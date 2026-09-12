@@ -2,7 +2,8 @@ import math
 
 import pytest
 
-from padel_analysis.eval.surface_metrics import per_class, weighted_accuracy
+from padel_analysis.eval.surface_metrics import per_class, share_of, weighted_accuracy
+from padel_analysis.eval.surface_truth import NO_CONTACT, UNREADABLE
 
 
 def test_a_perfect_prediction_scores_one():
@@ -71,3 +72,20 @@ def test_every_stratum_needs_a_weight():
         weighted_accuracy(
             {"a": (["sol"], ["sol"]), "b": (["sol"], ["sol"])}, weights={"a": 1.0}
         )
+
+
+def test_an_absent_contact_is_excluded_from_the_surface_rates():
+    """Un faux positif de detection n'est pas une erreur de classification."""
+    score = per_class(["sol", "mur"], ["sol", NO_CONTACT])
+    assert score["sol"].support == 1
+    assert NO_CONTACT not in score
+
+
+def test_the_two_exclusions_are_counted_apart():
+    truth = ["sol", NO_CONTACT, NO_CONTACT, UNREADABLE]
+    assert share_of(truth, NO_CONTACT) == pytest.approx(0.5)
+    assert share_of(truth, UNREADABLE) == pytest.approx(0.25)
+
+
+def test_a_share_of_nothing_is_not_a_number():
+    assert math.isnan(share_of([], NO_CONTACT))

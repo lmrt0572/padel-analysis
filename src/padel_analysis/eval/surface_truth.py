@@ -18,7 +18,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 UNREADABLE = "x"
-ANSWERS = ("sol", "verre", "grillage", "raquette", UNREADABLE)
+NO_CONTACT = "aucun"
+ANSWERS = ("sol", "verre", "grillage", "raquette", NO_CONTACT, UNREADABLE)
+
+NOT_A_SURFACE = (NO_CONTACT, UNREADABLE)
+"""Answers that name no surface, and are therefore excluded from the surface rates.
+
+They are excluded for opposite reasons and must never be merged. `x` is a
+non-measurement: the annotator could not tell, and scoring it either way would
+assert what the data does not support. `aucun` is a measurement: the trajectory ran
+straight through, so the contact stage invented this event. That one is a false
+positive of stage B.3, and the only way this project can measure its precision -
+the shot annotation being too coarse to do it."""
 
 _CLASS_OF = {
     "sol": "sol",
@@ -29,7 +40,7 @@ _CLASS_OF = {
 
 
 def class_of(answer: str) -> str | None:
-    """The three-way class an answer belongs to, or None if unreadable.
+    """The three-way class an answer belongs to, or None if it names no surface.
 
     Glass and mesh are both walls. They are asked apart because the eye can tell
     them apart, which is what makes the geometric deduction testable rather than

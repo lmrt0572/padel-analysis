@@ -7,11 +7,17 @@ pour rendre le changement de direction lisible.
     v  une VITRE
     g  le GRILLAGE
     f  une FRAPPE, donc une raquette
+    n  AUCUN contact : la trajectoire passe tout droit
     x  illisible, je ne peux pas trancher
 
 Le clip peut contenir plusieurs evenements - un rebond puis une frappe. Celui qui est
 soumis au jugement est le seul marque par la croix magenta, et la lecture s'y attarde
 en affichant CONTACT. Les autres sont du contexte.
+
+`n` et `x` ne disent pas la meme chose et ne doivent pas etre confondus. `x` veut dire
+"je ne peux pas trancher" : c'est une non-mesure, ecartee du calcul. `n` veut dire "il
+ne s'est rien passe ici" : c'est un faux positif de l'etage des contacts, et c'est la
+seule facon de mesurer sa precision, l'annotation de frappes etant trop grossiere.
 
     r  revenir au clip precedent et annuler sa reponse
     q  quitter en conservant les reponses rendues
@@ -42,8 +48,18 @@ from padel_analysis.eval.surface_truth import SurfaceGroundTruth
 from padel_analysis.io.video_source import VideoSource
 
 WINDOW = "contre quoi la balle a-t-elle rebondi ?"
-KEYS = "s sol   v vitre   g grillage   f frappe   x illisible   r retour   q quitter"
-ANSWER_KEYS = {"s": "sol", "v": "verre", "g": "grillage", "f": "raquette", "x": "x"}
+KEYS = (
+    "s sol   v vitre   g grillage   f frappe   n aucun contact   x illisible"
+    "   r retour   q quitter"
+)
+ANSWER_KEYS = {
+    "s": "sol",
+    "v": "verre",
+    "g": "grillage",
+    "f": "raquette",
+    "n": "aucun",
+    "x": "x",
+}
 SPAN = 12
 TRAIL = (60, 200, 255)
 BALL = (0, 220, 255)

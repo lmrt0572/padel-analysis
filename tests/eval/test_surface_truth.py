@@ -3,6 +3,8 @@ import pytest
 
 from padel_analysis.eval.surface_truth import (
     ANSWERS,
+    NO_CONTACT,
+    NOT_A_SURFACE,
     UNREADABLE,
     SurfaceGroundTruth,
     SurfaceTask,
@@ -33,8 +35,31 @@ def test_an_unreadable_answer_has_no_class():
     assert class_of(UNREADABLE) is None
 
 
+def test_an_absent_contact_has_no_class_either():
+    assert class_of(NO_CONTACT) is None
+
+
+def test_the_two_non_surfaces_stay_distinct():
+    """L'un est une non-mesure, l'autre est un faux positif mesure : jamais confondus."""
+    assert NO_CONTACT != UNREADABLE
+    assert set(NOT_A_SURFACE) == {NO_CONTACT, UNREADABLE}
+
+
 def test_the_answer_vocabulary_is_closed():
-    assert set(ANSWERS) == {"sol", "verre", "grillage", "raquette", UNREADABLE}
+    assert set(ANSWERS) == {
+        "sol",
+        "verre",
+        "grillage",
+        "raquette",
+        NO_CONTACT,
+        UNREADABLE,
+    }
+
+
+def test_an_absent_contact_can_be_recorded():
+    truth = _truth()
+    truth.answer(100, NO_CONTACT)
+    assert truth.answers[100] == NO_CONTACT
 
 
 def test_a_fresh_truth_has_everything_pending():
