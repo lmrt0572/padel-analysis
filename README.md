@@ -6,9 +6,12 @@ court en mètres, et statistiques tactiques.
 
 ## État
 
-Jalon 3B terminé : statistiques tactiques sur un match complet, évaluation chiffrée
-contre les annotations du dataset, deux ablations, et validation sur un second match
-jamais utilisé pour régler quoi que ce soit.
+Sous-projet A terminé : géométrie, suivi des quatre joueurs, statistiques tactiques,
+évaluation chiffrée et deux ablations, validées sur un second match jamais utilisé
+pour régler quoi que ce soit.
+
+Sous-projet B en cours : détection de la balle et de ses contacts. Premier étage
+livré — les candidats par mouvement et leur plafond de rappel.
 
 ## Installation
 
@@ -497,6 +500,59 @@ sollicite cinq fois plus le met cinq fois plus en défaut.
 Ce que le changement de match ne remet pas en cause, c'est l'ablation : le suivi
 contraint garde un IDF1 trois fois supérieur à ByteTrack (0,764 contre 0,252) et ne
 dépasse jamais quatre pistes, là où ByteTrack le fait sur 3 231 frames.
+
+### Candidats de balle
+
+La balle mesure **10 px de côté** en médiane, sur une image de deux millions de
+pixels. Sur une frame figée, une ligne peinte, un logo ou un reflet lui ressemblent
+exactement. Ce qui la distingue n'est pas son apparence mais son **mouvement** : la
+caméra étant fixe, ce qui bouge dans l'image bouge réellement.
+
+L'étage de détection ne tranche donc pas. Il compare chaque frame à ses deux voisines,
+retient ce qui est plus clair que les deux, et renvoie une **liste de candidats
+classés**. Choisir lequel est la balle revient à l'étage de trajectoire.
+
+Mesuré sur la tranche d'évaluation du match de réglage, 3 638 balles annotées :
+
+| Écart temporel | Rappel 5 px | 10 px | 20 px | Rang médian | Dans le top 10 | Candidats par frame |
+|---|---|---|---|---|---|---|
+| 1 frame | 0,445 | 0,611 | 0,658 | 4 | 52,3 % | 59 |
+| **2 frames** | **0,662** | **0,912** | **0,989** | **6** | **70,2 %** | 78 |
+| 3 frames | 0,661 | 0,913 | 0,991 | 7 | 63,7 % | 81 |
+| 4 frames | 0,653 | 0,907 | 0,990 | 8 | 59,9 % | 81 |
+
+**Comparer à une frame d'écart perd un tiers des balles.** À 30 images par seconde,
+une balle lente parcourt moins que son propre diamètre entre deux frames
+consécutives : elle se recouvre elle-même et la différence s'annule. À deux frames
+d'écart elle a bougé assez pour ne plus se chevaucher, et le rappel passe de 0,611 à
+0,912.
+
+Les écarts 2, 3 et 4 se valent sur le rappel. **L'écart 2 est retenu parce qu'il place
+la balle plus haut dans la liste** — rang 6 contre 7 et 8, et 70 % de présence dans
+les dix premiers contre 64 % et 60 %. À rappel égal, c'est celui qui facilite le plus
+l'étage suivant.
+
+Sur le match tenu à l'écart, 19 259 balles annotées, avec l'écart retenu :
+
+| | Rappel 5 px | 10 px | 20 px | Rang médian | Dans le top 10 | Candidats par frame |
+|---|---|---|---|---|---|---|
+| Match de réglage | 0,662 | 0,912 | 0,989 | 6 | 70,2 % | 78 |
+| **Match tenu à l'écart** | **0,718** | **0,928** | **0,986** | 7 | 67,5 % | 87 |
+
+**Le rappel transfère sans perte**, et se trouve même légèrement meilleur sur le match
+jamais utilisé pour régler quoi que ce soit.
+
+**Ce chiffre est un plafond, pas une performance.** Il dit que la balle est disponible
+dans la liste, jamais que quoi que ce soit l'a choisie. La difficulté réelle est dans
+les deux dernières colonnes : la balle est le sixième candidat parmi **78**, et une
+fois sur trois elle n'est même pas dans les dix premiers. La départager est le travail
+de l'étage de trajectoire, et il n'est pas entamé ici.
+
+La chute du rappel à 5 px — 0,662 contre 0,912 à 10 px — ne vient pas d'un biais
+corrigeable. Sur 512 balles, le décalage entre le centre de la tache de mouvement et
+le centre annoté vaut (−0,67, +0,88) px en moyenne, et −0,37 px une fois projeté sur
+la direction de déplacement. C'est de la dispersion, de norme médiane 3,3 px, pas un
+décalage systématique.
 
 ## Limites connues
 
