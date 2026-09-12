@@ -44,6 +44,7 @@ def classify(
     surfaces: list[Surface],
     wrist_distance: float = 80.0,
     margin: float = 0.30,
+    depth_cut: float | None = -7.5,
 ) -> Verdict:
     """What the ball hit at this contact.
 
@@ -57,6 +58,16 @@ def classify(
             8.6 px in median on the elevated control points, which is 13 cm near the
             camera and 56 cm at the far baseline. Metres and never pixels: the two
             are not comparable across a 4.3x depth asymmetry.
+        depth_cut: how deep a floor candidate may sit, in metres of court `y`, before
+            another admissible surface is preferred. The camera stands at y = -26.18
+            and z = 7.86, so a contact on the near glass at height h projects onto
+            the floor at -9.4 m for h = 0.3, -7.6 m for h = 1.0 and -4.5 m for
+            h = 2.0. A floor point deeper than this cut is therefore more likely a
+            low wall contact than a bounce. Measured on the tuning match: wall recall
+            goes from 0.412 to 0.882, for 0.789 precision instead of 1.000. Above
+            roughly 1.05 m the two become indistinguishable, which is why wall recall
+            stops at 0.882 rather than reaching one - that is a limit of the geometry,
+            not of the threshold.
     """
     if wrists:
         nearest = min(math.dist(ball, wrist) for wrist in wrists)
@@ -74,6 +85,14 @@ def classify(
         return Verdict(None, None, None, candidates=0)
 
     surface, meeting = admissible[0]
+    if (
+        depth_cut is not None
+        and surface.name == "floor"
+        and len(admissible) > 1
+        and meeting[1] <= depth_cut
+    ):
+        surface, meeting = admissible[1]
+
     return Verdict(
         surface=surface.name,
         point=meeting,
