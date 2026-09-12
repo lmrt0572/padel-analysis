@@ -1,4 +1,7 @@
-"""Mesure la position de balle produite par la trajectoire.
+"""Compare la croissance gloutonne et l'optimisation globale, sur les memes candidats.
+
+Un seul passage sur la video alimente les deux : aucune difference d'echantillon ne
+peut fausser l'ecart.
 
 Les boites de joueurs viennent du detecteur, pas des annotations : la penalite
 mesuree sur les boites annotees etait un plafond, celle-ci est ce que le pipeline
@@ -15,11 +18,55 @@ import json
 from pathlib import Path
 
 from padel_analysis.ball.candidates import MotionCandidates, demote_inside_boxes
+from padel_analysis.ball.path import best_path
 from padel_analysis.ball.trajectory import build_segments, positions_of
 from padel_analysis.eval.ball_dataset import BallAnnotations
 from padel_analysis.eval.ball_metrics import ball_score
 from padel_analysis.io.video_source import VideoSource
 from padel_analysis.perception.pose_detector import PoseDetector
+
+
+def collect(video, start, stop, spacing, factor):
+    """Les candidats de chaque frame, penalises par les boites du detecteur."""
+    finder = MotionCandidates(spacing=spacing)
+    detector = PoseDetector()
+    candidates: dict[int, list] = {}
+    window: dict[int, object] = {}
+
+    with VideoSource(video) as source:
+        for index, frame in source.iter_frames(
+            start=max(0, start - spacing), stop=stop + spacing + 1
+        ):
+            window[index] = frame
+            for old in [f for f in window if f < index - 2 * spacing]:
+                del window[old]
+            middle = index - spacing
+            if middle < start or middle > stop:
+                continue
+            found = finder(window, middle)
+            if not found:
+                continue
+            boxes = [d.bbox for d in detector.detect(window[middle])]
+            candidates[middle] = demote_inside_boxes(found, boxes, factor)
+            if middle % 2000 == 0:
+                print(f"  frame {middle}", flush=True)
+    return candidates
+
+
+def report(name, predicted, annotated):
+    score = ball_score(predicted, annotated)
+    covered = sum(1 for p in predicted.values() if p is not None)
+    print(f"\n{name}  ({covered} frames couvertes)")
+    print(f"{'tolerance':>10} {'rappel':>8} {'precision':>10}")
+    for tolerance in (5, 10, 20):
+        print(f"{tolerance:>9}px {score.recall[tolerance]:>8.3f} "
+              f"{score.precision[tolerance]:>10.3f}")
+    return {
+        "covered_frames": covered,
+        "recall": score.recall,
+        "precision": score.precision,
+        "unscorable": score.unscorable,
+    }
 
 
 def main() -> None:
@@ -29,8 +76,11 @@ def main() -> None:
     parser.add_argument("--start", type=int, required=True)
     parser.add_argument("--stop", type=int, required=True)
     parser.add_argument("--spacing", type=int, default=2)
-    parser.add_argument("--gate", type=float, default=30.0)
     parser.add_argument("--factor", type=float, default=0.25)
+    parser.add_argument("--width", type=int, default=8)
+    parser.add_argument("--gate", type=float, default=80.0)
+    parser.add_argument("--weight", type=float, default=30.0)
+    parser.add_argument("--absent-cost", type=float, default=150.0)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -40,61 +90,37 @@ def main() -> None:
     }
     print(f"balles annotees dans la plage : {len(annotated)}", flush=True)
 
-    finder = MotionCandidates(spacing=args.spacing)
-    detector = PoseDetector()
-    candidates: dict[int, list] = {}
-    window: dict[int, object] = {}
+    candidates = collect(args.video, args.start, args.stop, args.spacing, args.factor)
+    print(f"frames avec des candidats : {len(candidates)}", flush=True)
 
-    with VideoSource(args.video) as source:
-        for index, frame in source.iter_frames(
-            start=max(0, args.start - args.spacing),
-            stop=args.stop + args.spacing + 1,
-        ):
-            window[index] = frame
-            for old in [f for f in window if f < index - 2 * args.spacing]:
-                del window[old]
+    segments = build_segments(candidates)
+    greedy = positions_of(segments, args.start, args.stop)
+    global_ = best_path(
+        candidates,
+        args.start,
+        args.stop,
+        width=args.width,
+        gate=args.gate,
+        weight=args.weight,
+        absent_cost=args.absent_cost,
+    )
 
-            middle = index - args.spacing
-            if middle < args.start or middle > args.stop:
-                continue
-            found = finder(window, middle)
-            if not found:
-                continue
-            boxes = [d.bbox for d in detector.detect(window[middle])]
-            candidates[middle] = demote_inside_boxes(found, boxes, args.factor)
-            if middle % 2000 == 0:
-                print(f"  frame {middle}", flush=True)
-
-    segments = build_segments(candidates, gate=args.gate)
-    predicted = positions_of(segments, args.start, args.stop)
-    score = ball_score(predicted, annotated)
-
-    covered = sum(1 for p in predicted.values() if p is not None)
     results = {
         "frames": args.stop - args.start + 1,
+        "annotated": len(annotated),
         "segments": len(segments),
-        "median_segment_length": (
-            sorted(s.length for s in segments)[len(segments) // 2] if segments else 0
-        ),
-        "covered_frames": covered,
-        "recall": score.recall,
-        "precision": score.precision,
-        "annotated": score.annotated,
-        "predicted": score.predicted,
-        "unscorable": score.unscorable,
+        "greedy": report("LIGNE DE BASE - croissance gloutonne", greedy, annotated),
+        "global": report("OPTIMISATION GLOBALE", global_, annotated),
+        "settings": {
+            "width": args.width,
+            "gate": args.gate,
+            "weight": args.weight,
+            "absent_cost": args.absent_cost,
+        },
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=2), encoding="utf-8")
-
-    print(f"\n{len(segments)} segments, longueur mediane "
-          f"{results['median_segment_length']} frames")
-    print(f"couverture : {covered}/{results['frames']} frames")
-    print(f"\n{'tolerance':>10} {'rappel':>8} {'precision':>10}")
-    for tolerance in (5, 10, 20):
-        print(f"{tolerance:>9}px {score.recall[tolerance]:>8.3f} "
-              f"{score.precision[tolerance]:>10.3f}")
-    print(f"\nnon scorables (frames sans annotation) : {score.unscorable}")
-    print(f"resultats : {args.out}")
+    print(f"\nresultats : {args.out}")
 
 
 if __name__ == "__main__":
