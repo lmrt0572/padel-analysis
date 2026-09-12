@@ -135,3 +135,23 @@ def test_a_bounce_is_allowed_by_the_capped_cost():
         candidates[f] = [Candidate(200.0 - 20.0 * (f - 6), 100.0, 100.0)]
     found = best_path(candidates, start=0, stop=11)
     assert found[8] == pytest.approx((160.0, 100.0))
+
+
+def test_the_default_costs_still_follow_a_bounce():
+    """Un rebond franc doit rester payable au tarif par defaut."""
+    candidates = {}
+    for f in range(6):
+        candidates[f] = [Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
+    for f in range(6, 12):
+        candidates[f] = [Candidate(200.0 - 20.0 * (f - 6), 100.0, 100.0)]
+    found = best_path(candidates, start=0, stop=11)
+    assert all(found[f] is not None for f in range(12))
+
+
+def test_the_default_weight_does_not_let_a_strong_decoy_win():
+    """Le poids d'emission a un optimum interieur ; trop haut, le score l'emporte
+    sur la continuite."""
+    candidates = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(10)}
+    candidates[5] = [Candidate(800.0, 700.0, 900.0)] + candidates[5]
+    found = best_path(candidates, start=0, stop=9)
+    assert found[5] == pytest.approx((200.0, 100.0))

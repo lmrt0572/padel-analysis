@@ -11,11 +11,15 @@ plus the option of holding no ball at all, and the cheapest path through all of 
 is found by dynamic programming. The state carries two frames rather than one,
 because velocity is what makes a trajectory predictable and velocity needs a pair.
 
-The acceleration cost is capped, and that cap is the whole trick. A padel ball
-bounces off the floor, the glass, the mesh and the rackets, so a cost that grew
-without bound would make the cheapest path one that never bounces - which is to say,
-never a ball. Capped, a contact costs a known amount and the path takes it when the
-evidence is worth the price.
+The acceleration cost is capped, so that a contact costs a known amount rather than
+an unaffordable one - a padel ball bounces off the floor, the glass, the mesh and the
+rackets, and a path that could never afford to bounce would never be a ball.
+
+That was the reasoning. The measurement does not support it: removing the cap
+entirely costs one thousandth of the recall. The cap almost never binds, because the
+emission weight dominates and the deviations at a real contact stay under it. It is
+kept as a safeguard against a pathological frame, not as the mechanism it was
+believed to be.
 """
 
 import math
@@ -75,9 +79,9 @@ def best_path(
     start: int,
     stop: int,
     width: int = 8,
-    gate: float = 80.0,
-    weight: float = 30.0,
-    absent_cost: float = 150.0,
+    gate: float = 320.0,
+    weight: float = 240.0,
+    absent_cost: float = 1200.0,
 ) -> dict[int, Point | None]:
     """The cheapest explanation of the whole sequence, frame by frame.
 
@@ -95,9 +99,15 @@ def best_path(
         width: how many candidates of each frame are considered. The ball sits in
             the top ten 96 percent of the time, and the cost grows with the cube of
             this number.
-        gate: ceiling on the acceleration cost - what a contact is allowed to cost.
+        gate: ceiling on the acceleration cost. Swept over 40 to infinity: the
+            recall moves by a thousandth, so this bounds a pathological frame
+            rather than shaping the answer.
         weight: what the weakest candidate of a frame costs, in pixel-equivalents.
-        absent_cost: what holding no ball costs for one frame. Keep it above `gate`.
+            This one does shape the answer, and its optimum is interior: the recall
+            runs 0.739, 0.764, 0.748, 0.712 at 120, 240, 480 and 960.
+        absent_cost: what holding no ball costs for one frame. Above about a
+            thousand the recall saturates, which is to say the path stops giving up
+            at all - and giving up is what the greedy baseline did too much of.
     """
     frames = list(range(start, stop + 1))
     kept: dict[int, list[Candidate]] = {

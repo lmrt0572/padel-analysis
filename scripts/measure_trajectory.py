@@ -78,9 +78,9 @@ def main() -> None:
     parser.add_argument("--spacing", type=int, default=2)
     parser.add_argument("--factor", type=float, default=0.25)
     parser.add_argument("--width", type=int, default=8)
-    parser.add_argument("--gate", type=float, default=80.0)
-    parser.add_argument("--weight", type=float, default=30.0)
-    parser.add_argument("--absent-cost", type=float, default=150.0)
+    parser.add_argument("--gate", type=float, default=320.0)
+    parser.add_argument("--weight", type=float, default=240.0)
+    parser.add_argument("--absent-cost", type=float, default=1200.0)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
