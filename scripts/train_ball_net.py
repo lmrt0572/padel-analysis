@@ -14,7 +14,12 @@ La cible etant nulle presque partout, une entropie croisee nue apprendrait a rep
 zero. Les pixels positifs sont donc ponderes.
 
 Les poids sont ecrits apres chaque epoque, de facon atomique : deux heures de calcul ne
-doivent pas dependre de la fin du script.
+doivent pas dependre de la fin du script, et on peut arreter des que la validation
+cesse de descendre sans rien perdre.
+
+Le debit mesure est de 10,7 frames/s, contre 15,1 en synthetique : le decodage JPEG est
+devenu le goulot, chaque frame etant lue trois fois - une par position dans la pile.
+Augmenter le nombre de processus de chargement n'a pas aide.
 
 Usage:
     python scripts/train_ball_net.py --cache cache/FinalF --epochs 10 --out weights/ball_net
@@ -101,6 +106,7 @@ def main() -> None:
     parser.add_argument("--positive-weight", type=float, default=200.0)
     parser.add_argument("--validation", type=float, default=0.05)
     parser.add_argument("--limit", type=int, help="sonde : ne garder que N frames")
+    parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -125,8 +131,9 @@ def main() -> None:
             CachedBalls(args.cache, args.spacing, args.sigma, group),
             batch_size=args.batch,
             shuffle=name == "train",
-            num_workers=2,
+            num_workers=args.workers,
             pin_memory=True,
+            persistent_workers=args.workers > 0,
         )
         for name, group in (("train", trained), ("held", held))
     }
