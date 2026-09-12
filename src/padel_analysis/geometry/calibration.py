@@ -23,6 +23,15 @@ class CalibrationPoint:
     court_xy: tuple[float, float]
     image_xy: tuple[float, float]
     is_control: bool = False
+    height: float = 0.0
+    """Metres above the ground. Zero for the court markings, non-zero for the wall
+    and net references that make a camera pose solvable - a set of coplanar points
+    leaves the vertical direction unconstrained, so a pose needs points off it."""
+
+    @property
+    def court_xyz(self) -> tuple[float, float, float]:
+        """The point in three dimensions, which a camera pose needs."""
+        return (self.court_xy[0], self.court_xy[1], self.height)
 
 
 @dataclass(frozen=True)
@@ -42,6 +51,7 @@ class Calibration:
                     "court_xy": list(p.court_xy),
                     "image_xy": list(p.image_xy),
                     "is_control": p.is_control,
+                    "height": p.height,
                 }
                 for p in self.points
             ]
@@ -57,6 +67,7 @@ class Calibration:
                 court_xy=tuple(entry["court_xy"]),
                 image_xy=tuple(entry["image_xy"]),
                 is_control=entry.get("is_control", False),
+                height=entry.get("height", 0.0),
             )
             for entry in payload["points"]
         ]
@@ -75,9 +86,15 @@ class Calibrator(Protocol):
 
 
 def calibration_from_points(points: list[CalibrationPoint]) -> Calibration:
-    """Fit a projector on the non-control points and measure it on the control ones."""
-    fit = [p for p in points if not p.is_control]
-    control = [p for p in points if p.is_control]
+    """Fit a projector on the non-control points and measure it on the control ones.
+
+    Points above the ground take no part in either. A homography maps one plane to
+    another, so feeding it a point at height would not merely ignore it - it would
+    bend the fit towards a correspondence that cannot hold.
+    """
+    ground = [p for p in points if p.height == 0.0]
+    fit = [p for p in ground if not p.is_control]
+    control = [p for p in ground if p.is_control]
 
     if len(fit) < 4:
         raise ValueError("need at least 4 non-control points to fit a homography")
