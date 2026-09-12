@@ -8,6 +8,13 @@ distinctes - celle du jalon B.3, deja mesuree, et celle de C.
 La strate enregistree dit si la regle a hesite, jamais ce qu'elle a conclu. Elle sert a
 decouper les resultats par difficulte, et l'outil d'arbitrage ne la montre pas.
 
+Trois strates. "raquette" : un poignet est proche. "isole" : le rayon ne rencontre
+qu'une seule surface admissible - ce qui semblait un signe de confiance et s'est revele
+l'inverse, les 24 cas du match de reglage etant 24 non-evenements. Un contact reel se
+produit dans le volume de jeu, ou le fond proche est toujours admissible aussi puisque
+la camera est derriere lui ; un rayon qui ne rencontre qu'une surface pointe donc hors
+du jeu. "ambigu" : plusieurs surfaces restent possibles.
+
 --refresh recalcule les strates en conservant les reponses deja rendues. Les reponses
 portent sur des instants, que la regle ne change pas ; seule leur strate bouge.
 
@@ -98,7 +105,7 @@ def main() -> None:
         if verdict.surface == RACKET:
             stratum = "raquette"
         elif verdict.candidates == 1:
-            stratum = "tranche"
+            stratum = "isole"
         else:
             stratum = "ambigu"
         tasks.append(SurfaceTask(frame=contact.frame, stratum=stratum))

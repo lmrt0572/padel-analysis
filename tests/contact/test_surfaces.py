@@ -107,11 +107,18 @@ def test_a_shallow_floor_candidate_keeps_the_floor(synthetic_pose):
 
 
 def test_the_cut_needs_another_candidate_to_yield_to(synthetic_pose):
-    """Sans second candidat, le sol reste : on ne remplace pas une reponse par rien."""
+    """Sans second candidat, le sol reste : on ne remplace pas une reponse par rien.
+
+    Juste au-dela de la ligne de fond, la marge admet encore le sol mais plus le mur,
+    dont l'intersection passe alors sous le niveau zero. Le point-sol y est plus
+    profond que le seuil : sans garde-fou, l'arbitrage irait chercher un second
+    candidat qui n'existe pas.
+    """
     pose, _, _ = synthetic_pose
-    ball = pose.project(np.array([[0.0, -9.5, 0.0]]))[0]
-    verdict = classify(ball, [], pose, _surfaces(), depth_cut=-7.5, margin=0.0)
-    assert verdict.surface is not None
+    ball = pose.project(np.array([[0.0, -10.28, 0.0]]))[0]
+    verdict = classify(ball, [], pose, _surfaces(), depth_cut=-7.5)
+    assert verdict.candidates == 1
+    assert verdict.surface == "floor"
 
 
 def test_a_racket_is_decided_before_any_depth_question(synthetic_pose):

@@ -24,7 +24,7 @@
   },
   {
    "frame": 16120,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 16129,
@@ -88,7 +88,7 @@
   },
   {
    "frame": 16399,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 16460,
@@ -136,7 +136,7 @@
   },
   {
    "frame": 16782,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 16791,
@@ -160,11 +160,11 @@
   },
   {
    "frame": 16908,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 16962,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 16971,
@@ -184,7 +184,7 @@
   },
   {
    "frame": 17111,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17119,
@@ -220,11 +220,11 @@
   },
   {
    "frame": 17217,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17255,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17266,
@@ -260,7 +260,7 @@
   },
   {
    "frame": 17403,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17448,
@@ -312,11 +312,11 @@
   },
   {
    "frame": 17640,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17646,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17679,
@@ -344,7 +344,7 @@
   },
   {
    "frame": 17743,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17769,
@@ -408,11 +408,11 @@
   },
   {
    "frame": 17966,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 17972,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 18002,
@@ -480,15 +480,15 @@
   },
   {
    "frame": 18286,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 18323,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 18333,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 18350,
@@ -504,7 +504,7 @@
   },
   {
    "frame": 18386,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 18426,
@@ -604,7 +604,7 @@
   },
   {
    "frame": 19013,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 19023,
@@ -616,7 +616,7 @@
   },
   {
    "frame": 19084,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 19093,
@@ -656,7 +656,7 @@
   },
   {
    "frame": 19296,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 19352,
@@ -672,7 +672,7 @@
   },
   {
    "frame": 19425,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 19435,
@@ -684,7 +684,7 @@
   },
   {
    "frame": 19473,
-   "stratum": "tranche"
+   "stratum": "isole"
   },
   {
    "frame": 19520,
@@ -784,7 +784,7 @@
   },
   {
    "frame": 20077,
-   "stratum": "tranche"
+   "stratum": "isole"
   }
  ],
  "answers": {
