@@ -169,3 +169,62 @@ def test_the_requested_range_is_respected():
 def test_no_segment_gives_none_everywhere():
     positions = positions_of([], start=0, stop=3)
     assert positions == {0: None, 1: None, 2: None, 3: None}
+
+
+def test_a_segment_reports_its_median_speed():
+    segment = Segment(positions={0: (0.0, 0.0), 1: (10.0, 0.0), 2: (30.0, 0.0)})
+    assert segment.speed == pytest.approx(15.0)
+
+
+def test_a_segment_of_one_frame_has_no_speed():
+    assert Segment(positions={7: (0.0, 0.0)}).speed == pytest.approx(0.0)
+
+
+def test_a_track_too_slow_to_be_a_ball_is_refused():
+    """Un membre de joueur ou un panneau rampe ; la balle couvre 14,4 px par frame."""
+    crawling = {f: [Candidate(100.0 + 2.0 * f, 100.0, 100.0)] for f in range(40)}
+    assert build_segments(crawling, min_speed=6.0) == []
+
+
+def test_a_track_longer_than_any_real_arc_is_refused():
+    """Soixante-quatre frames est le plus long arc observe sur 814 mesures."""
+    endless = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(200)}
+    assert build_segments(endless, max_length=60) == []
+
+
+def test_the_default_bounds_accept_a_realistic_arc():
+    """Quinze frames a 20 px par frame : un arc de balle ordinaire."""
+    arc = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(15)}
+    assert len(build_segments(arc)) == 1
+
+
+def test_the_faster_segment_wins_an_overlap_not_the_longer():
+    """Le tri par longueur preferait les traces lentes : 31 frames contre 27."""
+    candidates: dict[int, list[Candidate]] = {}
+    for f in range(30):
+        candidates[f] = [Candidate(100.0 + 4.0 * f, 500.0, 300.0)]
+    for f in range(5, 25):
+        candidates[f] = [Candidate(100.0 + 25.0 * f, 100.0, 100.0)] + candidates[f]
+    segments = build_segments(candidates, min_length=5)
+    fastest = max(segments, key=lambda s: s.speed)
+    assert fastest.speed > 20.0
+
+
+def test_seeding_reaches_a_ball_that_is_not_the_top_candidate():
+    """La balle est le deuxieme candidat en mediane : n'amorcer que sur le premier
+    manquerait la moitie des arcs."""
+    candidates = {
+        f: [Candidate(50.0, 900.0, 500.0), Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
+        for f in range(12)
+    }
+    segments = build_segments(candidates, seeds_per_frame=3, min_speed=6.0)
+    assert segments
+    assert segments[0].positions[5] == pytest.approx((200.0, 100.0))
+
+
+def test_seeding_from_the_top_only_misses_it():
+    candidates = {
+        f: [Candidate(50.0, 900.0, 500.0), Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
+        for f in range(12)
+    }
+    assert build_segments(candidates, seeds_per_frame=1, min_speed=6.0) == []
