@@ -10,6 +10,7 @@ That ratio is what this module thresholds.
 """
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 Point = tuple[float, float]
@@ -72,6 +73,7 @@ def find_contacts(
     floor: float = 25.0,
     ceiling: float = 300.0,
     suppression: int = 5,
+    cuts: Sequence[int] = (),
 ) -> list[Contact]:
     """The frames where the path bends sharply enough to be a contact.
 
@@ -88,9 +90,15 @@ def find_contacts(
         suppression: least distance between two kept contacts. A real rally cannot
             place two contacts closer, so a burst of frames around one bend must
             yield one contact and not five.
+        cuts: frames where the broadcast splices two clips together. The velocity
+            window straddles a splice for `span` frames each side, so that whole
+            window is refused - a splice is not a contact, and without this every
+            one of them would produce one.
     """
     scored: list[Contact] = []
     for frame in sorted(path):
+        if any(abs(frame - cut) <= span for cut in cuts):
+            continue
         pair = velocities(path, frame, span)
         if pair is None:
             continue

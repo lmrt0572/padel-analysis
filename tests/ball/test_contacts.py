@@ -1,6 +1,12 @@
 import pytest
 
-from padel_analysis.ball.contacts import find_contacts, sharpness_of, turn_of, velocities
+from padel_analysis.ball.contacts import (
+    Contact,
+    find_contacts,
+    sharpness_of,
+    turn_of,
+    velocities,
+)
 
 
 def test_velocities_reads_both_sides_of_a_frame():
@@ -56,7 +62,7 @@ def _bounce():
     aussi le plancher ajoute a la tache 3 - sans quoi la suppression ne serait plus
     testee par la suite.
     """
-    path = {f: (f * 30.0, 0.0) for f in range(0, 21)}
+    path = {f: (f * 30.0, 0.0) for f in range(21)}
     for f in range(21, 41):
         path[f] = (600.0 - (f - 20) * 30.0, 0.0)
     return path
@@ -71,7 +77,7 @@ def _two_bounces():
 
 
 def test_a_straight_path_holds_no_contact():
-    assert find_contacts({f: (f * 30.0, 0.0) for f in range(0, 40)}) == []
+    assert find_contacts({f: (f * 30.0, 0.0) for f in range(40)}) == []
 
 
 def test_a_bounce_is_found_at_its_frame():
@@ -131,3 +137,25 @@ def test_the_ceiling_can_be_raised_to_accept_it():
 def test_a_real_bounce_sits_inside_the_bracket():
     path = {0: (0.0, 0.0), 2: (60.0, 0.0), 4: (0.0, 0.0)}
     assert [c.frame for c in find_contacts(path, floor=25.0, ceiling=300.0)] == [2]
+
+
+def test_a_contact_on_a_splice_is_dropped():
+    assert find_contacts(_bounce(), cuts=[20]) == []
+
+
+def test_a_splice_only_shadows_its_own_window():
+    assert [c.frame for c in find_contacts(_bounce(), cuts=[200])] == [20]
+
+
+def test_the_shadow_covers_the_velocity_window():
+    """Un raccord contamine les frames dont la fenetre de vitesse l'enjambe.
+
+    Un raccord en 22 enjambe la fenetre de la frame 20, qui va de 18 a 22. Le sommet
+    du rebond disparait donc ; son flanc en 19, dont la fenetre s'arrete en 21, reste.
+    """
+    assert 20 not in [c.frame for c in find_contacts(_bounce(), span=2, cuts=[22])]
+    assert [c.frame for c in find_contacts(_bounce(), span=2, cuts=[23])] == [20]
+
+
+def test_a_contact_is_the_type_it_claims_to_be():
+    assert all(isinstance(c, Contact) for c in find_contacts(_two_bounces()))
