@@ -88,3 +88,51 @@ def test_a_racket_verdict_names_no_material(synthetic_pose):
     ball = pose.project(np.array([[0.0, -5.0, 1.0]]))[0]
     wrist = (ball[0], ball[1])
     assert classify(ball, [wrist], pose, _surfaces()).material is None
+
+
+def test_a_deep_floor_candidate_yields_to_a_wall(synthetic_pose):
+    """Un point-sol trop profond trahit un contact bas contre la vitre proche."""
+    pose, _, _ = synthetic_pose
+    ball = pose.project(np.array([[0.0, -10.0, 0.6]]))[0]
+    without = classify(ball, [], pose, _surfaces(), depth_cut=None)
+    with_cut = classify(ball, [], pose, _surfaces(), depth_cut=-7.5)
+    assert without.surface == "floor"
+    assert with_cut.surface == "back_wall_negative_y"
+
+
+def test_a_shallow_floor_candidate_keeps_the_floor(synthetic_pose):
+    pose, _, _ = synthetic_pose
+    ball = pose.project(np.array([[0.0, 2.0, 0.0]]))[0]
+    assert classify(ball, [], pose, _surfaces(), depth_cut=-7.5).surface == "floor"
+
+
+def test_the_cut_needs_another_candidate_to_yield_to(synthetic_pose):
+    """Sans second candidat, le sol reste : on ne remplace pas une reponse par rien.
+
+    Juste au-dela de la ligne de fond, la marge admet encore le sol mais plus le mur,
+    dont l'intersection passe alors sous le niveau zero. Le point-sol y est plus
+    profond que le seuil : sans garde-fou, l'arbitrage irait chercher un second
+    candidat qui n'existe pas.
+    """
+    pose, _, _ = synthetic_pose
+    ball = pose.project(np.array([[0.0, -10.28, 0.0]]))[0]
+    verdict = classify(ball, [], pose, _surfaces(), depth_cut=-7.5)
+    assert verdict.candidates == 1
+    assert verdict.surface == "floor"
+
+
+def test_a_racket_is_decided_before_any_depth_question(synthetic_pose):
+    pose, _, _ = synthetic_pose
+    ball = pose.project(np.array([[0.0, -10.0, 0.6]]))[0]
+    verdict = classify(ball, [tuple(ball)], pose, _surfaces(), depth_cut=-7.5)
+    assert verdict.surface == RACKET
+
+
+def test_the_cut_leaves_the_candidate_count_alone(synthetic_pose):
+    """L'arbitrage choisit parmi les admissibles ; il n'en ajoute ni n'en retire."""
+    pose, _, _ = synthetic_pose
+    ball = pose.project(np.array([[0.0, -10.0, 0.6]]))[0]
+    assert (
+        classify(ball, [], pose, _surfaces(), depth_cut=-7.5).candidates
+        == classify(ball, [], pose, _surfaces(), depth_cut=None).candidates
+    )

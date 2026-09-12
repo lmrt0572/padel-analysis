@@ -817,32 +817,29 @@ heuristique.
 
 Aucun jeu de données public de padel n'étiquette les surfaces de contact — le dataset
 utilisé ici déclare une catégorie `Wall` et ne l'a jamais remplie. Elle a donc été
-produite à la main : **les 194 contacts détectés sur la balle annotée de la tranche
-d'évaluation**, tous jugés, sans échantillonnage.
+produite à la main, sur les deux matchs.
+
+| | Match de réglage | Match tenu à l'écart |
+|---|---|---|
+| Contacts soumis | **194**, recensement complet | **150**, tirés de 886 |
+| Contacts réels | 145 | 112 |
+| Illisibles | 0 | 2 |
 
 L'outil rejoue chaque instant en boucle, la balle marquée d'une croix fixe, et
 **n'affiche jamais ce que la règle prédit**. Une vérité terrain construite sur
 l'hypothèse qu'elle doit juger ne mesure que deux erreurs qui s'accordent : au
 sous-projet A, corriger ce défaut avait fait passer l'IDF1 de 0,956 à 0,819.
 
-| Réponse | Contacts |
-|---|---|
-| raquette | 75 |
-| sol | 51 |
-| vitre | 16 |
-| **aucun contact** | **49** |
-| filet | 2 |
-| grillage | 1 |
-| illisible | **0** |
-
-**Aucun contact illisible sur 194.** Le risque de conception — un contact bas contre
-une vitre latérale que l'œil ne tranche pas — ne s'est pas matérialisé.
+Le match masculin compte 886 contacts, soit deux heures d'arbitrage. L'échantillon est
+**stratifié**, et sa taille comme sa graine sont enregistrées dans le fichier — un
+tirage qu'on ne peut pas refaire ne serait pas une mesure.
 
 #### Ce que l'annotation mesure de l'étage précédent
 
-**49 des 194 contacts détectés n'ont pas eu lieu** : la trajectoire passait tout droit.
-La précision de l'étage des contacts vaut donc **0,747**, sur la balle parfaitement
-annotée — donc hors de toute erreur de trajectoire.
+**Un quart des contacts détectés n'ont pas eu lieu** : la trajectoire passait tout
+droit. La précision de l'étage des contacts vaut donc **0,747** sur le match de réglage
+et **0,760** sur le match tenu à l'écart — sur la balle parfaitement annotée, donc hors
+de toute erreur de trajectoire.
 
 C'est la mesure que la section précédente déclarait impossible. L'annotation de frappes
 ne pouvait pas la donner : ses intervalles couvrent la moitié des frames, si bien qu'un
@@ -850,41 +847,81 @@ détecteur tirant au hasard y obtenait déjà 0,480. Celle-ci est directe.
 
 #### Ce que la règle vaut
 
-Les seuils ont été figés **avant** que cette vérité terrain existe. Ces chiffres sont
-donc un premier tir, non un résultat ajusté.
+| | Réglage | | | Tenu à l'écart | | |
+|---|---|---|---|---|---|---|
+| **Classe** | **n** | **Précision** | **F1** | **n** | **Précision** | **F1** |
+| raquette | 75 | 0,830 | 0,896 | 58 | 0,806 | **0,892** |
+| sol | 51 | 0,842 | 0,719 | 42 | 0,923 | **0,706** |
+| mur | 17 | 0,789 | 0,833 | 12 | 0,714 | **0,769** |
 
-| Classe | Effectif | Précision | Rappel | F1 |
-|---|---|---|---|---|
-| raquette | 75 | 0,830 | **0,973** | 0,896 |
-| sol | 51 | 0,720 | 0,706 | 0,713 |
-| mur | 17 | **1,000** | 0,412 | 0,583 |
-| filet | 2 | — | — | — |
+**Exactitude globale 0,828 en réglage, 0,821 tenu à l'écart.** Sept millièmes d'écart :
+les seuils n'ont pas été surajustés au match qui a servi à les choisir.
 
-**Exactitude globale 0,800** sur les 145 contacts réels. Deux erreurs dominent :
+**Grillage et filet ne sont pas mesurables.** Un exemple et deux sur le match de
+réglage, aucun des deux dans l'échantillon tenu à l'écart. C'était prévu — le grillage
+n'occupe que le haut des fonds et le milieu des côtés. Aucun taux n'est publié pour
+eux, et leurs effectifs sont donnés plutôt que tus.
 
-- **15 rebonds au sol pris pour des frappes.** La proximité au poignet sur-revendique :
-  elle rattrape presque toutes les frappes, au prix de quelques rebonds bas près d'un
-  joueur.
-- **10 contacts de mur pris pour du sol.** Conséquence directe de la règle d'arbitrage
-  écrite dans le code : quand plusieurs surfaces sont admissibles, le sol l'emporte.
-  L'hypothèse est désormais mesurée, et elle coûte 10 murs sur 17. Quand la règle dit
-  « mur », en revanche, elle a toujours raison.
+#### L'arbitrage par la profondeur
 
-**Grillage et filet ne sont pas mesurables ici** : un exemple et deux. C'était prévu —
-le grillage n'occupe que le haut des fonds et le milieu des côtés. Aucun taux n'est
-publié pour eux, et leurs effectifs sont donnés plutôt que tus.
+Quand le sol et un mur sont tous deux admissibles, lequel choisir ? La première version
+préférait le sol, systématiquement. Mesuré, ce choix coûtait **dix murs sur dix-sept**.
+
+La règle retenue préfère le mur lorsque le point-sol candidat tombe au-delà de
+`y = −7,5 m`. Ce seuil n'est pas un nombre ajusté : la caméra étant à `y = −26,18` et
+`z = 7,86`, un contact sur la vitre proche se projette au sol en
+
+| Hauteur du contact | 0,3 m | 0,5 m | 0,8 m | **1,0 m** | 1,6 m | 2,0 m |
+|---|---|---|---|---|---|---|
+| y projeté | −9,36 | −8,90 | −8,17 | **−7,64** | −5,86 | −4,48 |
+
+Le seuil sépare donc les contacts de vitre **sous 1,05 m environ**. Au-delà, la
+projection entre dans le court et plus rien ne la distingue d'un rebond au sol.
+
+| Rappel des murs | Avant | Après |
+|---|---|---|
+| Match de réglage | 0,412 | **0,882** |
+| Match tenu à l'écart | — | **0,833** |
+
+**Le plafond n'est pas celui du seuil mais celui de la géométrie** : les murs manqués
+sont les murs hauts, et une seule caméra ne peut pas les distinguer d'un rebond.
+
+#### Ce qui n'a pas été corrigé, et pourquoi
+
+Deux erreurs ont été mesurées, une seule est corrigible.
+
+La seconde est que **des rebonds au sol sont pris pour des frappes** — quinze sur le
+match de réglage. Le seuil de proximité au poignet a été balayé de 50 à 120 px :
+
+| Seuil | 50 | 60 | 70 | **80** | 90 | 100 | 120 |
+|---|---|---|---|---|---|---|---|
+| Exactitude | 0,745 | 0,793 | 0,828 | **0,828** | 0,828 | 0,834 | 0,786 |
+
+C'est un plateau. Le déplacer échange des frappes contre des rebonds à somme nulle : il
+faudrait un autre signal, pas un autre seuil. **Le seuil est donc resté à 80 px**, et
+corriger quand même, pour annoncer deux corrections plutôt qu'une, aurait été ajuster
+du bruit.
 
 #### Une strate nommée à l'envers
 
 Les contacts où **une seule** surface est admissible avaient été étiquetés « tranchés »,
-en supposant qu'une réponse unique valait confiance. La campagne dit l'inverse :
-**les 24 cas concernés sont 24 non-événements, vingt-quatre sur vingt-quatre.**
+en supposant qu'une réponse unique valait confiance. Les deux campagnes disent
+l'inverse :
+
+| | Cas isolés | Dont sans contact |
+|---|---|---|
+| Match de réglage | 24 | **24 (100 %)** |
+| Match tenu à l'écart | 16 | **14 (88 %)** |
 
 L'explication est géométrique. Un contact réel se produit dans le volume de jeu, où le
 fond proche est toujours admissible aussi, la caméra étant derrière lui — il est
-candidat pour 140 des 194 contacts. Un rayon qui ne rencontre qu'une seule surface est
-donc un rayon qui pointe hors du jeu. Ce n'est pas une mesure de confiance mais un
-**détecteur de faux positifs**, et sur cet échantillon il ne se trompe jamais.
+candidat pour 140 des 194 contacts du match de réglage. Un rayon qui ne rencontre
+qu'une seule surface est donc un rayon qui pointe hors du jeu.
+
+Ce n'est pas une mesure de confiance mais un **détecteur de faux positifs**, et la
+strate porte désormais ce nom. Il n'est pas appliqué comme filtre : 88 % sur seize cas
+ne justifie pas encore de supprimer des détections, et ce serait une décision à mesurer
+pour elle-même.
 
 ## Limites connues
 
