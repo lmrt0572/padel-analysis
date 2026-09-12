@@ -19,7 +19,7 @@ from pathlib import Path
 
 UNREADABLE = "x"
 NO_CONTACT = "aucun"
-ANSWERS = ("sol", "verre", "grillage", "raquette", NO_CONTACT, UNREADABLE)
+ANSWERS = ("sol", "verre", "grillage", "filet", "raquette", NO_CONTACT, UNREADABLE)
 
 NOT_A_SURFACE = (NO_CONTACT, UNREADABLE)
 """Answers that name no surface, and are therefore excluded from the surface rates.
@@ -35,6 +35,7 @@ _CLASS_OF = {
     "sol": "sol",
     "verre": "mur",
     "grillage": "mur",
+    "filet": "filet",
     "raquette": "raquette",
 }
 

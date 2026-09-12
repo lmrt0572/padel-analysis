@@ -50,10 +50,16 @@ def test_the_answer_vocabulary_is_closed():
         "sol",
         "verre",
         "grillage",
+        "filet",
         "raquette",
         NO_CONTACT,
         UNREADABLE,
     }
+
+
+def test_the_net_is_its_own_class():
+    """Ni sol ni mur : le filet amortit autrement, et la balle en repart autrement."""
+    assert class_of("filet") == "filet"
 
 
 def test_an_absent_contact_can_be_recorded():

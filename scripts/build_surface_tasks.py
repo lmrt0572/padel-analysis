@@ -8,6 +8,9 @@ distinctes - celle du jalon B.3, deja mesuree, et celle de C.
 La strate enregistree dit si la regle a hesite, jamais ce qu'elle a conclu. Elle sert a
 decouper les resultats par difficulte, et l'outil d'arbitrage ne la montre pas.
 
+--refresh recalcule les strates en conservant les reponses deja rendues. Les reponses
+portent sur des instants, que la regle ne change pas ; seule leur strate bouge.
+
 Aucune video n'est decodee : balle, poses et calibration sont des fichiers JSON.
 
 Usage:
@@ -62,6 +65,11 @@ def main() -> None:
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="recalculer les strates en conservant les reponses deja rendues",
+    )
     args = parser.parse_args()
 
     fit = [p for p in Calibration.load(args.calibration).points if not p.is_control]
@@ -99,6 +107,18 @@ def main() -> None:
     if not tasks:
         raise SystemExit("aucun contact detecte sur cette plage")
 
+    kept: dict[int, str] = {}
+    if args.refresh and args.out.exists():
+        previous = SurfaceGroundTruth.load(args.out)
+        frames = {t.frame for t in tasks}
+        kept = {f: a for f, a in previous.answers.items() if f in frames}
+        lost = len(previous.answers) - len(kept)
+        print(f"reprise : {len(kept)} reponses conservees, {lost} perdues")
+    elif args.out.exists():
+        raise SystemExit(
+            f"{args.out} existe deja - utiliser --refresh pour conserver ses reponses"
+        )
+
     SurfaceGroundTruth(
         video=args.video,
         frame_range=(args.start, args.stop),
@@ -108,6 +128,7 @@ def main() -> None:
             "focal": float(pose.intrinsics[0, 0]),
         },
         tasks=tasks,
+        answers=kept,
     ).save(args.out)
 
     print(f"{len(tasks)} contacts a juger, ecrits dans {args.out}")

@@ -6,6 +6,7 @@ pour rendre le changement de direction lisible.
     s  le SOL
     v  une VITRE
     g  le GRILLAGE
+    t  le FILET
     f  une FRAPPE, donc une raquette
     n  AUCUN contact : la trajectoire passe tout droit
     x  illisible, je ne peux pas trancher
@@ -49,13 +50,14 @@ from padel_analysis.io.video_source import VideoSource
 
 WINDOW = "contre quoi la balle a-t-elle rebondi ?"
 KEYS = (
-    "s sol   v vitre   g grillage   f frappe   n aucun contact   x illisible"
+    "s sol   v vitre   g grillage   t filet   f frappe   n aucun   x illisible"
     "   r retour   q quitter"
 )
 ANSWER_KEYS = {
     "s": "sol",
     "v": "verre",
     "g": "grillage",
+    "t": "filet",
     "f": "raquette",
     "n": "aucun",
     "x": "x",

@@ -143,7 +143,7 @@ class CameraPose:
 
 
 def court_surfaces(court: Court) -> list[Surface]:
-    """The five surfaces a ball can bounce off, the floor first.
+    """The six surfaces a ball can bounce off, the floor first and the net last.
 
     The order matters: when a ray admits more than one surface, the caller takes the
     first. The floor leads because a floor bounce is at zero height, so its position
@@ -189,6 +189,22 @@ def court_surfaces(court: Court) -> list[Surface]:
                 glass_from_ends=glass_from_ends,
             )
         )
+    # Le filet en dernier : c'est la plus petite cible et la plus rare, donc celle
+    # dont un faux positif couterait le plus. Il ne l'emporte que s'il est seul.
+    # La hauteur retenue est celle des poteaux ; le filet s'affaisse de 4 cm en son
+    # milieu, bien sous l'erreur de pose.
+    surfaces.append(
+        Surface(
+            name="net",
+            normal=np.array([0.0, 1.0, 0.0]),
+            offset=0.0,
+            bounds=(
+                (-half_width, half_width),
+                (0.0, 0.0),
+                (0.0, court.net_height_posts),
+            ),
+        )
+    )
     return surfaces
 
 
