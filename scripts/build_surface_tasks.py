@@ -15,6 +15,10 @@ produit dans le volume de jeu, ou le fond proche est toujours admissible aussi p
 la camera est derriere lui ; un rayon qui ne rencontre qu'une surface pointe donc hors
 du jeu. "ambigu" : plusieurs surfaces restent possibles.
 
+--sample tire au sort un sous-ensemble en conservant la proportion de chaque strate.
+Le match masculin compte 886 contacts, soit deux heures d'arbitrage ; un echantillon
+suffit a separer 0,83 de 0,75, et sa graine est enregistree.
+
 --refresh recalcule les strates en conservant les reponses deja rendues. Les reponses
 portent sur des instants, que la regle ne change pas ; seule leur strate bouge.
 
@@ -28,6 +32,7 @@ Usage:
 """
 
 import argparse
+import random
 from collections import Counter
 from pathlib import Path
 
@@ -59,6 +64,25 @@ def wrists_on(poses: PoseAnnotations, frame: int) -> list[tuple[float, float]]:
     ]
 
 
+def _stratified(tasks: list[SurfaceTask], size: int, seed: int) -> list[SurfaceTask]:
+    """Tire `size` taches en conservant la proportion de chaque strate.
+
+    La taille et la graine sont enregistrees dans le fichier : sans elles le tirage
+    ne serait pas reproductible, et un resultat qu'on ne peut pas refaire n'est pas
+    une mesure.
+    """
+    by_stratum: dict[str, list[SurfaceTask]] = {}
+    for task in tasks:
+        by_stratum.setdefault(task.stratum, []).append(task)
+
+    generator = random.Random(seed)
+    drawn: list[SurfaceTask] = []
+    for stratum, group in sorted(by_stratum.items()):
+        share = max(1, round(size * len(group) / len(tasks)))
+        drawn += generator.sample(group, min(share, len(group)))
+    return sorted(drawn, key=lambda t: t.frame)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--annotations", type=Path, required=True)
@@ -72,6 +96,12 @@ def main() -> None:
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--sample",
+        type=int,
+        help="ne retenir que N taches, tirees au sort a proportion de chaque strate",
+    )
+    parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--refresh",
         action="store_true",
@@ -114,6 +144,10 @@ def main() -> None:
     if not tasks:
         raise SystemExit("aucun contact detecte sur cette plage")
 
+    if args.sample and args.sample < len(tasks):
+        tasks = _stratified(tasks, args.sample, args.seed)
+        strata = Counter(t.stratum for t in tasks)
+
     kept: dict[int, str] = {}
     if args.refresh and args.out.exists():
         previous = SurfaceGroundTruth.load(args.out)
@@ -133,6 +167,7 @@ def main() -> None:
             "wrist_distance": args.wrist_distance,
             "margin": args.margin,
             "focal": float(pose.intrinsics[0, 0]),
+            **({"sample": args.sample, "seed": args.seed} if args.sample else {}),
         },
         tasks=tasks,
         answers=kept,

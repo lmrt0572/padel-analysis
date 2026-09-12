@@ -1,0 +1,617 @@
+{
+ "video": "FinalM",
+ "frame_range": [
+  0,
+  20099
+ ],
+ "parameters": {
+  "wrist_distance": 80.0,
+  "margin": 0.3,
+  "focal": 2690.0,
+  "sample": 150,
+  "seed": 0
+ },
+ "tasks": [
+  {
+   "frame": 29,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 568,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 671,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 1020,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 1067,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 1190,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 1783,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 1795,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 1810,
+   "stratum": "isole"
+  },
+  {
+   "frame": 1887,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 1902,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 2140,
+   "stratum": "isole"
+  },
+  {
+   "frame": 2227,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 2253,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 2269,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 2411,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 2467,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 2639,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 3005,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 3067,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 3085,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 3199,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 3279,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 3343,
+   "stratum": "isole"
+  },
+  {
+   "frame": 3395,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 3710,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 3743,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 4141,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 4502,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 4513,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 4543,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 4585,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 4597,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 4678,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 4687,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 5052,
+   "stratum": "isole"
+  },
+  {
+   "frame": 5323,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 5415,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 5729,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 5859,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 5886,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 6179,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 6233,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 6371,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 6443,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 6616,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 6659,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 6843,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 6861,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 7344,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 7417,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 7448,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 7687,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 7805,
+   "stratum": "isole"
+  },
+  {
+   "frame": 7834,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 7849,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 7865,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 7984,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 8256,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 8340,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 8497,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 8741,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 8764,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 8781,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 8808,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 9342,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 9434,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 9628,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 10028,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 10037,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 10146,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 10196,
+   "stratum": "isole"
+  },
+  {
+   "frame": 10403,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 10462,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 10505,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 10535,
+   "stratum": "isole"
+  },
+  {
+   "frame": 10663,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 10837,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 10857,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 10904,
+   "stratum": "isole"
+  },
+  {
+   "frame": 10990,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 11072,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 11111,
+   "stratum": "isole"
+  },
+  {
+   "frame": 11554,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 11646,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 11934,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 12026,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 12148,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 12369,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 12432,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 12469,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 12572,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 12590,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 12686,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 13094,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 13339,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 13499,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 13746,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 13814,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 13957,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 14082,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 14175,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 14475,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 14589,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 14620,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 14638,
+   "stratum": "isole"
+  },
+  {
+   "frame": 14995,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 15140,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 15148,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 15228,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 15619,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 15877,
+   "stratum": "isole"
+  },
+  {
+   "frame": 16122,
+   "stratum": "isole"
+  },
+  {
+   "frame": 16203,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16346,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16561,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16581,
+   "stratum": "isole"
+  },
+  {
+   "frame": 16618,
+   "stratum": "isole"
+  },
+  {
+   "frame": 16624,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16809,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 16909,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 16986,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17062,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 17259,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17308,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17403,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17501,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17607,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17686,
+   "stratum": "isole"
+  },
+  {
+   "frame": 17757,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17851,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17906,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 17927,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18074,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18231,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18457,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 18599,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 18768,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19106,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19130,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19153,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19190,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19216,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19421,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19463,
+   "stratum": "isole"
+  },
+  {
+   "frame": 19521,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19609,
+   "stratum": "raquette"
+  },
+  {
+   "frame": 19674,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 19900,
+   "stratum": "ambigu"
+  },
+  {
+   "frame": 20050,
+   "stratum": "raquette"
+  }
+ ],
+ "answers": {}
+}
