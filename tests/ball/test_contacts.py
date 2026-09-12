@@ -104,3 +104,30 @@ def test_a_gentler_bend_needs_a_lower_threshold():
     path = {0: (0.0, 0.0), 2: (60.0, 0.0), 4: (120.0, 30.0)}
     assert find_contacts(path, sharpness=0.9) == []
     assert len(find_contacts(path, sharpness=0.05)) == 1
+
+
+def test_a_microscopic_wobble_is_not_a_contact():
+    """Un virage de 2 px est du bruit, meme s'il retourne la vitesse."""
+    path = {0: (0.0, 0.0), 2: (1.0, 0.0), 4: (0.0, 0.0)}
+    assert find_contacts(path, floor=25.0) == []
+
+
+def test_the_floor_can_be_lowered_to_accept_it():
+    path = {0: (0.0, 0.0), 2: (1.0, 0.0), 4: (0.0, 0.0)}
+    assert len(find_contacts(path, floor=0.5)) == 1
+
+
+def test_an_impossible_jump_is_not_a_contact():
+    """Une balle ne saute pas de 600 px en deux frames : c'est le chemin qui a rate."""
+    path = {0: (0.0, 0.0), 2: (600.0, 0.0), 4: (0.0, 0.0)}
+    assert find_contacts(path, ceiling=300.0) == []
+
+
+def test_the_ceiling_can_be_raised_to_accept_it():
+    path = {0: (0.0, 0.0), 2: (600.0, 0.0), 4: (0.0, 0.0)}
+    assert len(find_contacts(path, ceiling=10_000.0)) == 1
+
+
+def test_a_real_bounce_sits_inside_the_bracket():
+    path = {0: (0.0, 0.0), 2: (60.0, 0.0), 4: (0.0, 0.0)}
+    assert [c.frame for c in find_contacts(path, floor=25.0, ceiling=300.0)] == [2]

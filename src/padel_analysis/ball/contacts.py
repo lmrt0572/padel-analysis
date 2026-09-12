@@ -69,6 +69,8 @@ def find_contacts(
     path: dict[int, Point | None],
     span: int = 2,
     sharpness: float = 0.5,
+    floor: float = 25.0,
+    ceiling: float = 300.0,
     suppression: int = 5,
 ) -> list[Contact]:
     """The frames where the path bends sharply enough to be a contact.
@@ -77,6 +79,12 @@ def find_contacts(
         path: one position per frame, as `best_path` returns.
         span: frames each side used to measure velocity.
         sharpness: least turn-over-speed ratio to accept. 0.5 was swept.
+        floor: least turn in pixels. Below it the bend is annotation noise rather
+            than a contact, whatever the ratio says.
+        ceiling: most turn in pixels. Above it the path jumped further than a ball
+            can travel, so the bend is a tracking error and not a contact. Measured:
+            the reconstructed path reaches 512 px at the ninety-fifth percentile of
+            speed where the annotated ball reaches 186.
         suppression: least distance between two kept contacts. A real rally cannot
             place two contacts closer, so a burst of frames around one bend must
             yield one contact and not five.
@@ -91,6 +99,8 @@ def find_contacts(
         if ratio < sharpness:
             continue
         bend = turn_of(incoming, outgoing)
+        if bend < floor or bend > ceiling:
+            continue
         scored.append(Contact(frame, incoming, outgoing, bend, ratio))
 
     kept: list[Contact] = []
