@@ -1,7 +1,11 @@
 import numpy as np
 import pytest
 
-from padel_analysis.ball.candidates import Candidate, MotionCandidates
+from padel_analysis.ball.candidates import (
+    Candidate,
+    MotionCandidates,
+    demote_inside_boxes,
+)
 
 
 def _blank(height=200, width=300, value=40):
@@ -115,3 +119,44 @@ def test_an_object_that_arrives_and_stays_is_not_a_candidate():
 def test_the_default_spacing_is_not_one():
     """Un ecart d'une frame perdait un tiers des balles : la valeur par defaut compte."""
     assert MotionCandidates().frames_needed(100) != [99, 100, 101]
+
+
+def test_a_candidate_inside_a_box_is_demoted_but_kept():
+    """Une balle passant devant un joueur doit rester atteignable."""
+    inside = Candidate(x=100.0, y=100.0, score=200.0)
+    outside = Candidate(x=500.0, y=500.0, score=100.0)
+    ranked = demote_inside_boxes(
+        [inside, outside], boxes=[np.array([50.0, 50.0, 150.0, 150.0])], factor=0.25
+    )
+    assert [c.x for c in ranked] == [500.0, 100.0]
+    assert ranked[1].score == pytest.approx(50.0)
+
+
+def test_a_candidate_outside_every_box_is_untouched():
+    candidate = Candidate(x=500.0, y=500.0, score=100.0)
+    ranked = demote_inside_boxes(
+        [candidate], boxes=[np.array([0.0, 0.0, 10.0, 10.0])], factor=0.25
+    )
+    assert ranked[0] == candidate
+
+
+def test_without_any_box_the_order_is_unchanged():
+    given = [Candidate(1.0, 1.0, 10.0), Candidate(2.0, 2.0, 30.0)]
+    ranked = demote_inside_boxes(given, boxes=[], factor=0.25)
+    assert [c.score for c in ranked] == [30.0, 10.0]
+
+
+def test_the_border_of_a_box_counts_as_inside():
+    candidate = Candidate(x=150.0, y=150.0, score=100.0)
+    ranked = demote_inside_boxes(
+        [candidate], boxes=[np.array([50.0, 50.0, 150.0, 150.0])], factor=0.5
+    )
+    assert ranked[0].score == pytest.approx(50.0)
+
+
+def test_a_factor_of_one_changes_nothing():
+    given = [Candidate(100.0, 100.0, 10.0), Candidate(500.0, 500.0, 30.0)]
+    ranked = demote_inside_boxes(
+        given, boxes=[np.array([50.0, 50.0, 150.0, 150.0])], factor=1.0
+    )
+    assert [c.score for c in ranked] == [30.0, 10.0]
