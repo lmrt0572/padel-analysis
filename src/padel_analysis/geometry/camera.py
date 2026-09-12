@@ -186,3 +186,46 @@ def court_surfaces(court: Court) -> list[Surface]:
             )
         )
     return surfaces
+
+
+def estimate_intrinsics(
+    object_points: np.ndarray,
+    image_points: np.ndarray,
+    image_size: tuple[int, int],
+    focal_range: range = range(700, 4001, 5),
+) -> np.ndarray:
+    """The focal length that reprojects these correspondences best.
+
+    The principal point is assumed at the image centre and distortion ignored. Both
+    are approximations, and their cost is not hidden: it shows up in the error on the
+    references the pose never fitted, which is the figure to trust.
+
+    Args:
+        object_points: 3D court points, including some off the ground.
+        image_points: the matching pixels.
+        image_size: (width, height), to place the principal point.
+        focal_range: focal lengths to try, in pixels.
+    """
+    width, height = image_size
+    best: tuple[float, np.ndarray] | None = None
+    for focal in focal_range:
+        intrinsics = np.array(
+            [
+                [float(focal), 0.0, width / 2],
+                [0.0, float(focal), height / 2],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+        try:
+            pose = CameraPose.from_correspondences(
+                object_points, image_points, intrinsics
+            )
+        except ValueError:
+            continue
+        gaps = pose.project(object_points) - np.asarray(image_points, dtype=np.float64)
+        error = float(np.sqrt((gaps**2).sum(axis=1).mean()))
+        if best is None or error < best[0]:
+            best = (error, intrinsics)
+    if best is None:
+        raise ValueError("no focal length fitted these correspondences")
+    return best[1]

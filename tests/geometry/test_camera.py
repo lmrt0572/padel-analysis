@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
 
-from padel_analysis.geometry.camera import CameraPose, Surface, court_surfaces
+from padel_analysis.geometry.camera import (
+    CameraPose,
+    Surface,
+    court_surfaces,
+    estimate_intrinsics,
+)
 from padel_analysis.geometry.court import Court
 
 
@@ -121,3 +126,16 @@ def test_the_side_wall_is_glass_near_each_end():
 
 def test_the_floor_has_no_material():
     assert court_surfaces(Court())[0].material_at(np.array([0.0, 0.0, 0.0])) is None
+
+
+def test_the_swept_focal_recovers_a_synthetic_one(synthetic_pose):
+    """La focale n'est pas donnee : on la balaie, et le balayage doit la retrouver."""
+    pose, object_points, image_points = synthetic_pose
+    found = estimate_intrinsics(object_points, image_points, (1920, 1080))
+    assert found[0, 0] == pytest.approx(pose.intrinsics[0, 0], rel=0.05)
+
+
+def test_the_principal_point_sits_at_the_image_centre(synthetic_pose):
+    _, object_points, image_points = synthetic_pose
+    found = estimate_intrinsics(object_points, image_points, (1920, 1080))
+    assert (found[0, 2], found[1, 2]) == (960.0, 540.0)
