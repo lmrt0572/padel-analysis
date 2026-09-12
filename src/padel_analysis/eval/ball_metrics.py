@@ -64,3 +64,71 @@ def ball_score(
         predicted=len(found),
         unscorable=unscorable,
     )
+
+
+@dataclass(frozen=True)
+class CandidateScore:
+    """How often the ball is in the list at all, and how far down it sits.
+
+    This is a ceiling, not a performance: it says the ball is available to be
+    picked, never that anything picked it.
+    """
+
+    recall: dict[int, float]
+    median_rank: float
+    within_top: float
+    median_candidates: float
+    annotated: int
+
+
+def _median(values: list[int]) -> float:
+    if not values:
+        return float("nan")
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return float(ordered[middle])
+    return (ordered[middle - 1] + ordered[middle]) / 2
+
+
+def candidate_score(
+    candidates: dict[int, Sequence[Point]],
+    annotated: dict[int, Point],
+    tolerances: Sequence[int] = TOLERANCES,
+    top: int = 10,
+) -> CandidateScore:
+    """Measure whether the annotated ball appears among the candidates.
+
+    Args:
+        candidates: ranked positions per frame, best first.
+        annotated: the annotated position, for annotated frames only.
+        tolerances: pixel distances under which a candidate counts as the ball.
+        top: rank under which a candidate is considered easy to pick.
+    """
+    widest = max(tolerances)
+    ranks: list[int] = []
+    counts: list[int] = []
+    hits: dict[int, int] = dict.fromkeys(tolerances, 0)
+
+    for frame, truth in annotated.items():
+        listed = list(candidates.get(frame, []))
+        counts.append(len(listed))
+
+        for tolerance in tolerances:
+            for position, candidate in enumerate(listed, start=1):
+                if _distance(candidate, truth) <= tolerance:
+                    hits[tolerance] += 1
+                    if tolerance == widest:
+                        ranks.append(position)
+                    break
+
+    total = len(annotated)
+    return CandidateScore(
+        recall={t: (hits[t] / total if total else float("nan")) for t in tolerances},
+        median_rank=_median(ranks),
+        within_top=(
+            sum(1 for r in ranks if r <= top) / total if total else float("nan")
+        ),
+        median_candidates=_median(counts),
+        annotated=total,
+    )
