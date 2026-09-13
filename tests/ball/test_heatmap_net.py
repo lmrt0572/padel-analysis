@@ -107,3 +107,10 @@ def test_a_size_the_network_cannot_halve_three_times_is_refused(tmp_path):
     path = _weights(tmp_path, 8, {"size": [960, 540], "width": 8, "spacing": 3})
     with pytest.raises(ValueError):
         NetCandidates(path, spacing=3, device="cpu")
+
+
+def test_suppression_scales_with_the_resolution(tmp_path):
+    small = NetCandidates(_weights(tmp_path, 16), spacing=3, device="cpu")
+    path = _weights(tmp_path, 8, {"size": [1280, 720], "width": 8, "spacing": 3})
+    large = NetCandidates(path, spacing=3, device="cpu")
+    assert large.suppression == 2 * small.suppression

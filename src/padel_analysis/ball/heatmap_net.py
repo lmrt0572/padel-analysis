@@ -127,7 +127,7 @@ class NetCandidates:
         width: int | None = None,
         size: tuple[int, int] | None = None,
         threshold: float = 0.1,
-        suppression: int = 6,
+        suppression: int | None = None,
         limit: int = 20,
         device: str = "cuda",
     ) -> None:
@@ -142,6 +142,10 @@ class NetCandidates:
         width = width or meta.get("width", 16)
         if size[0] % 8 or size[1] % 8:
             raise ValueError("the network needs a size whose sides are multiples of 8")
+        # La suppression est en pixels de carte : a 1280 de large, une balle y est deux
+        # fois plus grosse qu'a 640, et la meme distance reelle vaut deux fois plus.
+        if suppression is None:
+            suppression = round(6 * size[0] / 640)
         self.spacing = spacing
         self.size = size
         self.threshold = threshold
