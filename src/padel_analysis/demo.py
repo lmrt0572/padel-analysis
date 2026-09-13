@@ -158,8 +158,17 @@ def main() -> None:
         saved.write_bytes(pickle.dumps(analysis))
 
     court = Court()
-    frames, path = analysis["frames"], analysis["path"]
-    scores = path_scores(path, {f: v["raw"] for f, v in frames.items()})
+    frames = analysis["frames"]
+    raw = {f: v["raw"] for f, v in frames.items()}
+    # Le chemin d'affichage lit les scores du reseau tels quels, et peut donc renoncer
+    # la ou la balle n'est pas. Mesure sur une minute annotee, avec le filtre de
+    # confiance : 1 374 positions justes, 87 fausses, 2 fantomes, contre 1 174, 199 et
+    # 27 avec le chemin relatif regle pour le rappel.
+    path = best_path(
+        raw, analysis["start"], analysis["stop"], weight=960.0, absent_cost=150.0,
+        absolute=True,
+    )
+    scores = path_scores(path, raw)
     # Pour l'affichage seulement : confiance, puis retrait des points isoles aberrants.
     shown = despike(confident_path(path, scores, args.threshold, args.min_run))
 
