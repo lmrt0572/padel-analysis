@@ -1,4 +1,4 @@
-"""Demonstration video: players, minimap, ball, and the zone each contact lit.
+"""Demonstration video: players, minimap, ball, and the court zone each contact lit.
 
 Two passes, and they cannot be one. The ball is chosen over the whole sequence at
 once, so nothing can be drawn while frames are still being read. The first pass
@@ -8,8 +8,9 @@ paying for the analysis again.
 
 What is shown is filtered, and the filter is for display only. The path answers on
 every frame, so when the ball leaves the picture or rests in a server's hand it still
-invents a trajectory. Points the detector was not confident about are hidden, and so
-are contacts found on them. The figures in the evaluation report are computed without
+invents a trajectory. Points the detector was not confident about are hidden, lone
+aberrant points are dropped, and each piece between two contacts is smoothed so the
+trail reads fluidly without rounding the bounces. The figures in the evaluation report are computed without
 this filter and are not affected by it.
 
 Usage:
@@ -28,6 +29,7 @@ from .ball.candidates import demote_inside_boxes
 from .ball.confidence import confident_path, path_scores
 from .ball.contacts import find_contacts
 from .ball.path import best_path
+from .ball.smoothing import despike, smooth_path
 from .contact.surfaces import classify
 from .geometry.calibration import Calibration
 from .geometry.camera import court_surfaces, pose_from_calibration
@@ -43,7 +45,7 @@ from .render.ball_overlay import (
     trail,
     visible_events,
 )
-from .render.court_zones import zone_of
+from .render.court_zones import draw_zone, zone_of
 from .render.minimap import Minimap
 from .render.overlay import draw_people, paste_minimap
 from .render.video_writer import VideoWriter
@@ -156,7 +158,8 @@ def main() -> None:
     court = Court()
     frames, path = analysis["frames"], analysis["path"]
     scores = path_scores(path, {f: v["raw"] for f, v in frames.items()})
-    shown = confident_path(path, scores, args.threshold, args.min_run)
+    # Pour l'affichage seulement : confiance, puis retrait des points isoles aberrants.
+    shown = despike(confident_path(path, scores, args.threshold, args.min_run))
 
     pose = pose_from_calibration(Calibration.load(args.calibration).points, analysis["size"])
     surfaces = court_surfaces(court)
@@ -167,6 +170,7 @@ def main() -> None:
         label = contact_label(verdict)
         if label is not None:
             events.append(ContactEvent(contact.frame, label, ball, zone_of(verdict, court)))
+    drawn = smooth_path(shown, cuts=[e.frame for e in events])
     hidden = sum(1 for f in path if path[f] is not None and shown[f] is None)
     print(
         f"balle masquee sur {hidden} images par manque de confiance ; "
@@ -184,13 +188,12 @@ def main() -> None:
         ):
             data = frames.get(index, {})
             canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}))
-            canvas = draw_ball(canvas, trail(shown, index), visible_events(events, index, 20))
-            lit = [
-                (e.zone, 1.0 - (index - e.frame) / args.glow)
-                for e in visible_events(events, index, args.glow)
-                if e.zone is not None
-            ]
-            canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {}), lit=lit))
+            for event in visible_events(events, index, args.glow):
+                if event.zone is not None:
+                    strength = 1.0 - (index - event.frame) / args.glow
+                    canvas = draw_zone(canvas, event.zone, pose, strength)
+            canvas = draw_ball(canvas, trail(drawn, index), visible_events(events, index, 20))
+            canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {})))
             writer.write(canvas)
     print(f"ecrit {args.out}")
 

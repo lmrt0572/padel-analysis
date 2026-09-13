@@ -42,3 +42,46 @@ def test_a_racket_lights_no_zone():
 
 def test_an_undecided_contact_lights_no_zone():
     assert zone_of(Verdict(None, None, None, candidates=0), Court()) is None
+
+
+def test_a_floor_zone_lies_on_the_ground():
+    zone = zone_of(_v("floor", (2.0, 3.0, 0.0)), Court())
+    assert all(corner[2] == 0.0 for corner in zone.corners)
+
+
+def test_a_back_wall_mesh_panel_sits_above_the_glass():
+    zone = zone_of(_v("back_wall_positive_y", (1.0, 10.0, 3.5), "grillage"), Court())
+    assert sorted({corner[2] for corner in zone.corners}) == [3.0, 4.0]
+    assert all(corner[1] == 10.0 for corner in zone.corners)
+
+
+def test_a_side_glass_panel_spans_the_end_of_its_wall():
+    zone = zone_of(_v("side_wall_negative_x", (-5.0, -8.0, 1.0), "verre"), Court())
+    assert {corner[0] for corner in zone.corners} == {-5.0}
+    assert sorted({corner[1] for corner in zone.corners}) == [-10.0, -5.9]
+
+
+def test_lighting_a_zone_draws_on_a_copy(synthetic_pose):
+    from padel_analysis.render.court_zones import draw_zone
+
+    pose, _, _ = synthetic_pose
+    frame = np.zeros((1080, 1920, 3), dtype=np.uint8)
+    zone = zone_of(_v("floor", (2.0, 3.0, 0.0)), Court())
+    lit = draw_zone(frame, zone, pose, strength=1.0)
+    assert frame.sum() == 0
+    assert lit.sum() > 0
+
+
+def test_a_faded_zone_lights_less(synthetic_pose):
+    from padel_analysis.render.court_zones import draw_zone
+
+    pose, _, _ = synthetic_pose
+    frame = np.zeros((1080, 1920, 3), dtype=np.uint8)
+    zone = zone_of(_v("floor", (2.0, 3.0, 0.0)), Court())
+    assert draw_zone(frame, zone, pose, 1.0).sum() > draw_zone(frame, zone, pose, 0.3).sum()
+
+
+def test_the_near_back_wall_lights_only_its_foot():
+    """La camera est derriere : le panneau entier couvrirait la moitie de l'image."""
+    zone = zone_of(_v("back_wall_negative_y", (0.0, -10.0, 1.5), "verre"), Court())
+    assert max(corner[2] for corner in zone.corners) <= 0.5
