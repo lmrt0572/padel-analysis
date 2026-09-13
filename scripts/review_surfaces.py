@@ -40,6 +40,7 @@ Usage:
 """
 
 import argparse
+import json
 from pathlib import Path
 
 import cv2
@@ -130,10 +131,19 @@ def main() -> None:
     parser.add_argument("--video", type=Path, required=True)
     parser.add_argument("--annotations", type=Path, required=True)
     parser.add_argument("--truth", type=Path, required=True)
+    parser.add_argument(
+        "--positions",
+        type=Path,
+        help="positions calculees a afficher a la place de la balle annotee, pour juger "
+        "ce que le systeme affirme et non ce que l'annotation montre",
+    )
     args = parser.parse_args()
 
     truth = SurfaceGroundTruth.load(args.truth)
     centres = BallAnnotations.load(args.annotations).centres()
+    if args.positions is not None:
+        claimed = json.loads(args.positions.read_text(encoding="utf-8"))
+        centres = {int(f): tuple(xy) for f, xy in claimed.items()}
     total = len(truth.tasks)
     answered = [t for t in truth.tasks if t.frame in truth.answers]
 

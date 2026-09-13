@@ -1,0 +1,276 @@
+{
+ "video": "FinalF",
+ "frame_range": [
+  16000,
+  17799
+ ],
+ "parameters": {
+  "weight": 960.0,
+  "absent_cost": 150.0,
+  "threshold": 0.7,
+  "min_run": 8
+ },
+ "tasks": [
+  {
+   "frame": 16020,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16045,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16072,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16083,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16144,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16169,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16194,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16223,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16298,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16309,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16321,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16336,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16375,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16385,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16405,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16459,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16565,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16588,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16596,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16648,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16668,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16705,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16717,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16791,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16841,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16873,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16901,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16917,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16971,
+   "stratum": "demo"
+  },
+  {
+   "frame": 16995,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17030,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17053,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17062,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17119,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17136,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17143,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17180,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17199,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17209,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17218,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17266,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17315,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17330,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17354,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17376,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17385,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17468,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17490,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17500,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17513,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17525,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17549,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17555,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17562,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17579,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17587,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17611,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17622,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17628,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17634,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17703,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17717,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17727,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17769,
+   "stratum": "demo"
+  },
+  {
+   "frame": 17795,
+   "stratum": "demo"
+  }
+ ],
+ "answers": {}
+}
