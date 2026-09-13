@@ -22,8 +22,8 @@ point ça marche, et où ça ne marche pas.
    cette surface se coupent en un point, qui donne la position en trois dimensions.
 
 Une commande de démonstration assemble les cinq étapes dans une vidéo : joueurs et
-minicarte, trace de la balle, et à chaque contact une étiquette — sol, vitre, grillage,
-filet ou raquette — reportée en point d'impact sur la minicarte.
+minicarte, trace de la balle, un anneau à chaque contact, et sur la minicarte la zone
+touchée — sol, vitre, grillage ou filet — qui s'éclaire puis s'estompe.
 
 ## Résultats
 
@@ -133,7 +133,10 @@ python -m padel_analysis.analyse --cache cache/<nom>.json \
 La vidéo de démonstration demande les poids du réseau de détection de balle. Elle
 analyse toute la plage avant de dessiner, puisque la balle est choisie sur la séquence
 entière. Ses contacts viennent du chemin reconstruit et non de positions annotées : elle
-en montre donc plus qu'il n'y en a eu.
+en montre donc plus qu'il n'y en a eu. Pour l'affichage seulement, la balle est masquée
+là où le réseau n'est pas sûr de lui : mesuré sur une minute annotée, les trajectoires
+fantômes — balle hors champ, balle en main avant le service — passent de 222 images à 36,
+pour 97,5 % des positions justes conservées. Les chiffres mesurés ne sont pas filtrés.
 
 ```bash
 python -m padel_analysis.demo --video <video.mp4>     --calibration ground_truth/calibrations/<nom>.json     --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4

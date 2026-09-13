@@ -8,11 +8,15 @@ the same thing the numbers do.
 import itertools
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
 
 from ..contact.surfaces import RACKET, Verdict
+
+if TYPE_CHECKING:
+    from .court_zones import Zone
 
 Point = tuple[float, float]
 
@@ -29,12 +33,12 @@ TRAIL = (0, 190, 255)
 
 @dataclass(frozen=True)
 class ContactEvent:
-    """One contact, labelled, with where to draw it on the frame and on the minimap."""
+    """One contact: its label gives the ring colour, its zone lights the minimap."""
 
     frame: int
     label: str
     pixel: Point
-    court_xy: Point | None
+    zone: "Zone | None" = None
 
 
 def contact_label(verdict: Verdict) -> str | None:
@@ -73,22 +77,18 @@ def visible_events(
 def draw_ball(
     frame: np.ndarray, points: Sequence[Point], events: Sequence[ContactEvent]
 ) -> np.ndarray:
-    """A copy of `frame` with the trail, the ball, and a label at each recent contact."""
+    """A copy of `frame` with the trail, the ball, and a ring at each recent contact."""
     canvas = frame.copy()
     for older, newer in itertools.pairwise(points):
         cv2.line(canvas, _pixel(older), _pixel(newer), TRAIL, 2)
     if points:
         cv2.circle(canvas, _pixel(points[-1]), 7, BALL, 2)
 
+    # Un anneau, sans texte : une etiquette fausse se lit tout de suite, un anneau
+    # marque l'instant sans affirmer plus que ce que la mesure soutient.
     for event in events:
         colour = LABEL_COLOURS.get(event.label, (255, 255, 255))
-        x, y = _pixel(event.pixel)
-        cv2.circle(canvas, (x, y), 20, colour, 3)
-        position = (x + 26, max(30, y - 26))
-        cv2.putText(canvas, event.label, position, cv2.FONT_HERSHEY_SIMPLEX, 1.1,
-                    (0, 0, 0), 5)
-        cv2.putText(canvas, event.label, position, cv2.FONT_HERSHEY_SIMPLEX, 1.1,
-                    colour, 2)
+        cv2.circle(canvas, _pixel(event.pixel), 20, colour, 3)
     return canvas
 
 

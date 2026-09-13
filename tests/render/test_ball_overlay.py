@@ -43,7 +43,7 @@ def test_the_trail_never_reaches_into_the_future():
 
 
 def test_a_contact_stays_on_screen_for_its_hold():
-    event = ContactEvent(frame=100, label="SOL", pixel=(1.0, 1.0), court_xy=None)
+    event = ContactEvent(frame=100, label="SOL", pixel=(1.0, 1.0))
     assert visible_events([event], 99, hold=20) == []
     assert visible_events([event], 100, hold=20) == [event]
     assert visible_events([event], 119, hold=20) == [event]
@@ -52,7 +52,7 @@ def test_a_contact_stays_on_screen_for_its_hold():
 
 def test_drawing_leaves_the_original_frame_untouched():
     frame = np.zeros((90, 160, 3), dtype=np.uint8)
-    event = ContactEvent(frame=5, label="VITRE", pixel=(40.0, 40.0), court_xy=None)
+    event = ContactEvent(frame=5, label="VITRE", pixel=(40.0, 40.0))
     drawn = draw_ball(frame, [(10.0, 10.0), (20.0, 20.0)], [event])
     assert frame.sum() == 0
     assert drawn.sum() > 0
