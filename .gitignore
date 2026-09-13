@@ -35,3 +35,6 @@ build/
 .env
 .vscode/
 .idea/
+
+# Poids entraines et leurs parametres
+weights/
