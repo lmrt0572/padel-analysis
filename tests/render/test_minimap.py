@@ -47,3 +47,15 @@ def test_a_player_outside_the_court_does_not_crash():
     minimap = Minimap(Court(), width=300)
     image = minimap.draw({"near_1": (-8.0, -13.0)})
     assert image.shape[1] == 300
+
+
+def test_impacts_are_drawn_on_the_minimap():
+    minimap = Minimap(Court())
+    bare = minimap.draw({})
+    marked = minimap.draw({}, impacts=[((0.0, 5.0), (0, 0, 255))])
+    assert not np.array_equal(bare, marked)
+
+
+def test_the_minimap_draws_the_same_without_impacts():
+    minimap = Minimap(Court())
+    assert np.array_equal(minimap.draw({}), minimap.draw({}, impacts=[]))

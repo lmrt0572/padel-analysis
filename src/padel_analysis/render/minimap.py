@@ -4,6 +4,8 @@ Positive `y` is drawn towards the top of the image, matching the broadcast camer
 where the far end of the court appears above the near one.
 """
 
+from collections.abc import Sequence
+
 import cv2
 import numpy as np
 
@@ -40,7 +42,12 @@ class Minimap:
         py = self._margin + (self._court.half_length - y) * self._scale
         return round(px), round(py)
 
-    def draw(self, positions: dict[str, tuple[float, float]]) -> np.ndarray:
+    def draw(
+        self,
+        positions: dict[str, tuple[float, float]],
+        impacts: Sequence[tuple[tuple[float, float], tuple[int, int, int]]] = (),
+    ) -> np.ndarray:
+        """Players as filled discs, and recent ball impacts as rings in their colour."""
         court = self._court
         image = np.full((self._height, self._width, 3), 35, dtype=np.uint8)
 
@@ -71,6 +78,10 @@ class Minimap:
             NET,
             2,
         )
+
+        for (x, y), colour in impacts:
+            centre = self.to_pixels(np.array([x, y]))
+            cv2.circle(image, centre, 6, colour, 2)
 
         for name, (x, y) in positions.items():
             centre = self.to_pixels(np.array([x, y]))
