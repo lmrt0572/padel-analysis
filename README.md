@@ -162,6 +162,21 @@ python scripts/review_surfaces.py --video <video.mp4>     --annotations <ball.js
 `n` et `x` ne disent pas la même chose et ne sont jamais additionnés. `x` est une
 non-mesure ; `n` est un faux positif constaté de l'étage des contacts.
 
+Le réseau de détection de balle s'entraîne sur un cache de frames réduites, construit
+hors de la tranche d'évaluation. Une session interrompue se reprend avec `--resume` :
+
+```bash
+python scripts/build_frame_cache.py --video <video.mp4> --annotations <ball.json>     --exclude 16000 20099 --step 1 --out cache/<nom>
+
+python scripts/train_ball_net.py --cache cache/<nom> --epochs 10 --out weights/ball_net
+
+python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 16000 --stop 20099 --spacing 3 --weights weights/ball_net_best.pt     --out outputs/<nom>_trajectory_net.json
+```
+
+`--spacing 3` est obligatoire avec `--weights` : le réseau a été entraîné sur des frames
+espacées de trois, et le script refuse tout autre écart plutôt que de rendre en silence
+une liste de candidats vide.
+
 La pose de caméra se contrôle sur les repères qu'elle n'a jamais ajustés :
 
 ```bash
@@ -664,6 +679,96 @@ le chemin ne renonce jamais, ce qui est en partie un artefact de la mesure et no
 qualité propre de la méthode. Le comparatif ci-dessus reste valide, les deux méthodes
 étant jugées à la même aune, mais le 0,733 ne doit pas se lire comme « la balle est
 localisée trois fois sur quatre en toute circonstance ».
+
+### Détection de balle par réseau
+
+La détection par mouvement place la balle dans sa liste de candidats 91 % du temps,
+mais au sixième rang parmi 78, et la trajectoire n'en récupère que 79 %. **Un réseau
+entraîné détecte-t-il mieux ?** La question est posée sous forme d'**ablation** : le
+réseau remplace l'étage des candidats et rien d'autre. Il répond au même protocole que
+la détection par mouvement, et la même optimisation de trajectoire tourne derrière,
+avec les mêmes coûts. L'écart mesuré revient donc au détecteur seul.
+
+#### Le réseau
+
+Un U-Net étroit lit **trois frames empilées**, espacées de trois images, et rend une
+**carte de chaleur** à 640×360. La cible d'entraînement est une gaussienne centrée sur
+la balle annotée plutôt qu'un masque binaire : une balle ne couvre ici que trois
+pixels, et un masque ne dirait pas où se trouve son centre. Les maxima locaux de la
+carte deviennent les candidats.
+
+Seules les frames portant une balle annotée servent à l'entraînement. Une frame sans
+annotation n'est pas une frame sans balle : 17,5 % des frames annotées n'en portent
+pas, et rien ne dit si la balle y était absente ou seulement non étiquetée.
+
+#### Ce que la carte graphique a imposé
+
+Une GTX 1650 offre 4,29 Go, dont 3,45 libres. Mesuré avant d'écrire la boucle
+d'entraînement :
+
+| Configuration | Mémoire | Débit |
+|---|---|---|
+| **Largeur 16, lot de 4, FP32** | **1,82 Go** | **15,1 frames/s** |
+| Largeur 32, lot de 4 | 3,61 Go | 5,7 frames/s |
+| Largeur 16, lot de 4, **précision mixte** | 0,91 Go | **5,3 frames/s** |
+
+**La précision mixte est trois fois plus lente.** C'est l'accélération habituelle, et
+sur cette carte elle ralentit : la TU117 n'a pas de cœurs tensoriels, donc le
+demi-format ne gagne rien et les conversions coûtent tout.
+
+**Le vrai goulot était le temps, pas la mémoire.** À 15 frames/s, une époque sur les
+34 265 frames d'entraînement prend 38 minutes. Deux budgets ont donc été entraînés :
+
+| Modèle | Frames | Époques | Durée | Validation |
+|---|---|---|---|---|
+| Une frame sur trois | 11 470 | 10 | 2 h 03 | 0,0103 → 0,0049 |
+| Toutes les frames | 34 265 | **6 sur 10** | 4 h 38 | 0,0056 → 0,0037 |
+
+Le second s'est arrêté à la sixième époque, avec la session qui le portait, alors que
+sa validation baissait encore. Les poids étant écrits après chaque époque, rien n'a été
+perdu. Les deux pertes de validation **ne se comparent pas entre elles** : elles ne
+portent pas sur les mêmes frames.
+
+#### Le résultat
+
+Rappel final après l'optimisation de trajectoire :
+
+| | Détecteur | 5 px | 10 px | 20 px |
+|---|---|---|---|---|
+| **Réglage** | Mouvement | 0,534 | 0,716 | 0,764 |
+| | Réseau, une frame sur trois | 0,690 | 0,815 | 0,858 |
+| | **Réseau, toutes les frames** | **0,756** | **0,837** | **0,893** |
+| **Tenu à l'écart** | Mouvement | 0,576 | 0,733 | 0,774 |
+| | Réseau, une frame sur trois | 0,689 | **0,798** | 0,836 |
+| | **Réseau, toutes les frames** | **0,728** | 0,791 | **0,845** |
+
+Match tenu à l'écart : frames 0 à 21 472, 19 259 balles annotées, comme pour la
+détection par mouvement. Les réseaux y ont été mesurés en deux passes, coupées à la
+frame 20 100, et combinées au prorata des balles annotées de chaque passe.
+
+**Le réseau gagne sur le match qu'il n'a jamais vu**, avec les deux modèles et aux
+trois tolérances : +6,5 points à 10 px, +15 à 5 px. La tranche d'évaluation du match
+de réglage n'avait jamais servi à l'entraînement, mais elle venait du même match —
+mêmes joueuses, même éclairage. Le match masculin répond à la question que celle-là
+ne pouvait pas trancher : le réseau a appris la balle, pas ce match-là.
+
+**Le gain le plus fort est à 5 px** sur les deux matchs. Le réseau ne trouve pas
+seulement la balle plus souvent, il la **localise** plus précisément que le centre
+d'une tache de mouvement, dont la dispersion médiane valait 3,3 px.
+
+**Tripler les données améliore la localisation, pas le rappel.** Le modèle entraîné
+sur toutes les frames gagne 4 points à 5 px sur le match tenu à l'écart, mais aucun à
+10 px — il y fait même 0,7 point de moins que le modèle à une frame sur trois. Son
+avance de 2 points à 10 px sur le match de réglage ne se transfère donc pas. Il n'a
+fait que six époques sur dix : c'est la seule réserve, et elle ne peut aller que dans
+son sens.
+
+Une observation annexe : avec les candidats du réseau, la croissance gloutonne, qui
+n'est pas la méthode retenue, se dégrade (0,162 → 0,093 à 10 px). La cause n'a pas été
+cherchée.
+
+Les poids et le cache de frames ne sont pas versionnés. Ils se reconstruisent avec les
+commandes de [Reproduire l'évaluation](#reproduire-lévaluation).
 
 ### Instants de contact
 
