@@ -175,8 +175,13 @@ def main() -> None:
     pose = pose_from_calibration(Calibration.load(args.calibration).points, analysis["size"])
     surfaces = court_surfaces(court)
     events: list[ContactEvent] = []
-    for contact in find_contacts(shown):
-        ball = shown[contact.frame]
+    # Les contacts se cherchent sur une trajectoire lissee : chaque zigzag du chemin brut
+    # passerait pour un virage. Mesure sur la minute annotee du match de reglage : 2 faux
+    # contacts et 3 non juges en moins, pour 1 vrai perdu. Un lissage plus fort en perd 7.
+    for contact in find_contacts(smooth_path(shown, cuts=[], process_noise=100.0)):
+        ball = shown.get(contact.frame)
+        if ball is None:
+            continue
         verdict = classify(ball, frames[contact.frame]["wrists"], pose, surfaces)
         label = contact_label(verdict)
         if label is None:
