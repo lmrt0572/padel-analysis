@@ -21,9 +21,9 @@ point ça marche, et où ça ne marche pas.
    la balle est **sur** une surface connue du court : le rayon de la caméra et le plan de
    cette surface se coupent en un point, qui donne la position en trois dimensions.
 
-Les étapes 1 et 2 produisent une vidéo annotée avec minicarte. Les étapes 3 à 5 sont
-implémentées et mesurées par des scripts dédiés, mais **pas encore intégrées à la vidéo
-annotée**.
+Une commande de démonstration assemble les cinq étapes dans une vidéo : joueurs et
+minicarte, trace de la balle, et à chaque contact une étiquette — sol, vitre, grillage,
+filet ou raquette — reportée en point d'impact sur la minicarte.
 
 ## Résultats
 
@@ -129,6 +129,15 @@ python -m padel_analysis.analyse --cache cache/<nom>.json \
     --out outputs/<nom>_report.json --figures outputs/
 ```
 
+
+La vidéo de démonstration demande les poids du réseau de détection de balle. Elle
+analyse toute la plage avant de dessiner, puisque la balle est choisie sur la séquence
+entière. Ses contacts viennent du chemin reconstruit et non de positions annotées : elle
+en montre donc plus qu'il n'y en a eu.
+
+```bash
+python -m padel_analysis.demo --video <video.mp4>     --calibration ground_truth/calibrations/<nom>.json     --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4
+```
 
 Les commandes qui reproduisent chaque mesure sont dans le
 [rapport d'évaluation](docs/evaluation.md#reproduire-lévaluation).
