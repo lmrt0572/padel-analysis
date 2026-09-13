@@ -48,7 +48,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from padel_analysis.ball.heatmap_data import gaussian_target, stacked_indices
-from padel_analysis.ball.heatmap_net import BallHeatmapNet, load_stack
+from padel_analysis.ball.heatmap_net import BallHeatmapNet, load_stack, meta_path
 
 
 class CachedBalls(Dataset):
@@ -164,6 +164,13 @@ def main() -> None:
     held, trained = frames[:cut], frames[cut:]
     print(f"{len(trained)} frames d'entrainement, {len(held)} de validation")
 
+    size = json.loads((args.cache / "balls.json").read_text(encoding="utf-8"))["size"]
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    meta_path(args.out.with_suffix(".pt")).write_text(
+        json.dumps({"size": size, "width": args.width, "spacing": args.spacing,
+                    "sigma": args.sigma}),
+        encoding="utf-8",
+    )
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     net = BallHeatmapNet(width=args.width).to(device)
     optimiser = torch.optim.Adam(net.parameters(), lr=args.rate)

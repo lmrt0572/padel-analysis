@@ -1,7 +1,15 @@
+import json
+
 import numpy as np
+import pytest
 import torch
 
-from padel_analysis.ball.heatmap_net import BallHeatmapNet, peaks_of
+from padel_analysis.ball.heatmap_net import (
+    BallHeatmapNet,
+    NetCandidates,
+    meta_path,
+    peaks_of,
+)
 
 
 def test_the_net_answers_at_the_input_resolution():
@@ -63,3 +71,39 @@ def test_the_number_of_candidates_is_capped():
     rng = np.random.default_rng(0)
     heatmap = rng.random((64, 128)).astype(np.float32)
     assert len(peaks_of(heatmap, threshold=0.1, suppression=1, limit=5)) == 5
+
+
+def _weights(tmp_path, width, meta=None):
+    path = tmp_path / "net.pt"
+    torch.save(BallHeatmapNet(width=width).state_dict(), path)
+    if meta is not None:
+        meta_path(path).write_text(json.dumps(meta), encoding="utf-8")
+    return path
+
+
+def test_the_best_weights_find_the_settings_of_their_run(tmp_path):
+    assert meta_path(tmp_path / "net_best.pt") == meta_path(tmp_path / "net.pt")
+
+
+def test_weights_are_read_at_the_resolution_they_were_trained(tmp_path):
+    """Un modele 720p relu en 360p rendrait des candidats faux sans rien dire."""
+    path = _weights(tmp_path, 8, {"size": [1280, 720], "width": 8, "spacing": 3})
+    finder = NetCandidates(path, spacing=3, device="cpu")
+    assert finder.size == (1280, 720)
+
+
+def test_weights_refuse_a_spacing_they_were_not_trained_with(tmp_path):
+    path = _weights(tmp_path, 8, {"size": [640, 360], "width": 8, "spacing": 3})
+    with pytest.raises(ValueError):
+        NetCandidates(path, spacing=2, device="cpu")
+
+
+def test_weights_without_settings_keep_the_first_resolution(tmp_path):
+    finder = NetCandidates(_weights(tmp_path, 16), spacing=3, device="cpu")
+    assert finder.size == (640, 360)
+
+
+def test_a_size_the_network_cannot_halve_three_times_is_refused(tmp_path):
+    path = _weights(tmp_path, 8, {"size": [960, 540], "width": 8, "spacing": 3})
+    with pytest.raises(ValueError):
+        NetCandidates(path, spacing=3, device="cpu")
