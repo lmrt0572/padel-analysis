@@ -23,8 +23,15 @@ Le debit mesure est de 10,7 frames/s, contre 15,1 en synthetique : le decodage J
 devenu le goulot, chaque frame etant lue trois fois - une par position dans la pile.
 Augmenter le nombre de processus de chargement n'a pas aide.
 
+Une session interrompue se reprend : --resume repart des poids ecrits, --first-epoch
+numerote la suite, et la meilleure validation initiale est recalculee sur les poids
+repris plutot que supposee. L'etat de l'optimiseur est ecrit a cote des poids depuis
+cette option ; un entrainement plus ancien repart donc avec des moments d'Adam nuls, et
+le script le dit.
+
 Usage:
     python scripts/train_ball_net.py --cache cache/FinalF --epochs 10 --out weights/ball_net
+    python scripts/train_ball_net.py --cache cache/FinalF_step1 --epochs 10         --resume weights/ball_net_full.pt --first-epoch 7 --out weights/ball_net_full
 """
 
 import argparse
@@ -96,6 +103,27 @@ def save_atomically(state: dict, target: Path) -> None:
         raise
 
 
+def optimiser_path(weights: Path) -> Path:
+    """Ou vit l'etat de l'optimiseur qui accompagne ces poids."""
+    return weights.with_name(weights.stem + "_optimiser.pt")
+
+
+def validate(net: nn.Module, loader: DataLoader, weight: torch.Tensor, device: str) -> float:
+    """Perte moyenne sur les frames de validation, ponderee comme a l'entrainement."""
+    net.eval()
+    checked, total = 0, 0.0
+    with torch.no_grad():
+        for stack, target in loader:
+            stack, target = stack.to(device), target.to(device)
+            total += float(
+                nn.functional.binary_cross_entropy_with_logits(
+                    net(stack), target, pos_weight=weight
+                )
+            ) * len(stack)
+            checked += len(stack)
+    return total / max(checked, 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, required=True)
@@ -110,6 +138,19 @@ def main() -> None:
     parser.add_argument("--limit", type=int, help="sonde : ne garder que N frames")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--resume",
+        type=Path,
+        help="repartir de ces poids ; memes --cache, --seed et --limit, sinon la "
+        "validation ne porterait plus sur les memes frames",
+    )
+    parser.add_argument(
+        "--first-epoch",
+        type=int,
+        default=1,
+        help="numero de la premiere epoque a jouer, pour reprendre ou l'on s'est arrete",
+    )
+    parser.add_argument("--device", choices=("cuda", "cpu"), help="par defaut : cuda si present")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -123,10 +164,24 @@ def main() -> None:
     held, trained = frames[:cut], frames[cut:]
     print(f"{len(trained)} frames d'entrainement, {len(held)} de validation")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     net = BallHeatmapNet(width=args.width).to(device)
     optimiser = torch.optim.Adam(net.parameters(), lr=args.rate)
     weight = torch.tensor([args.positive_weight], device=device)
+
+    if args.resume is not None:
+        net.load_state_dict(torch.load(args.resume, map_location=device, weights_only=True))
+        moments = optimiser_path(args.resume)
+        if moments.exists():
+            optimiser.load_state_dict(
+                torch.load(moments, map_location=device, weights_only=True)
+            )
+            print(f"reprise : poids et etat de l'optimiseur depuis {args.resume}")
+        else:
+            print(
+                f"reprise : poids depuis {args.resume}, mais aucun etat d'optimiseur - "
+                "Adam repart de moments nuls, ce qui secoue les premieres iterations"
+            )
 
     loaders = {
         name: DataLoader(
@@ -140,8 +195,14 @@ def main() -> None:
         for name, group in (("train", trained), ("held", held))
     }
 
+    if args.first_epoch > args.epochs:
+        raise SystemExit("--first-epoch depasse --epochs : rien a jouer")
     best = float("inf")
-    for epoch in range(1, args.epochs + 1):
+    if args.resume is not None:
+        best = validate(net, loaders["held"], weight, device)
+        print(f"validation des poids repris : {best:.4f}")
+
+    for epoch in range(args.first_epoch, args.epochs + 1):
         net.train()
         started, total, seen = time.time(), 0.0, 0
         for stack, target in loaders["train"]:
@@ -155,27 +216,16 @@ def main() -> None:
             total += float(loss) * len(stack)
             seen += len(stack)
 
-        net.eval()
-        checked, validation = 0, 0.0
-        with torch.no_grad():
-            for stack, target in loaders["held"]:
-                stack, target = stack.to(device), target.to(device)
-                validation += float(
-                    nn.functional.binary_cross_entropy_with_logits(
-                        net(stack), target, pos_weight=weight
-                    )
-                ) * len(stack)
-                checked += len(stack)
-
+        held_loss = validate(net, loaders["held"], weight, device)
         elapsed = time.time() - started
         print(
             f"epoque {epoch:2}  perte {total / seen:.4f}  "
-            f"validation {validation / max(checked, 1):.4f}  "
+            f"validation {held_loss:.4f}  "
             f"{elapsed / 60:.1f} min  {seen / elapsed:.1f} frames/s",
             flush=True,
         )
         save_atomically(net.state_dict(), args.out.with_suffix(".pt"))
-        held_loss = validation / max(checked, 1)
+        save_atomically(optimiser.state_dict(), optimiser_path(args.out.with_suffix(".pt")))
         if held_loss < best:
             best = held_loss
             save_atomically(
