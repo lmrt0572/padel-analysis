@@ -717,7 +717,8 @@ presque toute la largeur, écart-type 0,48 en demi-largeur.
 | Tenu à l'écart, balle annotée | 0,501 | 0,308 | 1,63× |
 
 Sur l'instrument le moins complaisant, le détecteur bat le hasard d'un facteur 1,5.
-C'est une mesure, mais faible — et elle le restera tant que la vérité terrain manquera.
+C'est une mesure, mais faible — et elle l'est restée jusqu'à ce qu'une vérité terrain
+produite à la main la remplace, plus bas.
 Le témoin aléatoire est calculé par le code et affiché à côté de chaque précision, pour
 qu'aucun de ces chiffres ne puisse être lu isolément.
 
@@ -746,13 +747,30 @@ fabrique un virage. Le virage absolu est donc encadré entre 25 et 300 px.
 La longue traîne — jusqu'à dix contacts entre deux frappes — disparaît avec le plafond.
 C'étaient des erreurs de chemin, pas des rebonds.
 
-#### Ce qui manque
+#### La précision, mesurée après coup
 
-Une vérité terrain d'instants de contact, toutes surfaces confondues. Elle n'existe
-dans aucun jeu de données public de padel. C'est celle que le sous-projet C doit
-produire pour classer les surfaces : sa campagne d'annotation enregistrera donc
-l'**instant** en plus de la surface, et servira rétroactivement de mesure de précision
-à cet étage-ci. C'est la seule que ce projet pourra produire.
+Il manquait une vérité terrain d'instants de contact, toutes surfaces confondues, et
+aucun jeu de données public de padel ne la fournit. Elle a été produite pour classer
+les surfaces, dans la section suivante : chaque contact détecté y a été rejoué et jugé
+à la main, avec une réponse possible **« aucun contact »** lorsque la trajectoire passait
+tout droit.
+
+Ces jugements donnent la précision que l'annotation de frappes ne pouvait pas donner :
+
+| | Contacts jugés | Aucun contact | **Précision** |
+|---|---|---|---|
+| Match de réglage | 194, tous | 49 | **0,747** |
+| Match tenu à l'écart | 150, tirés au sort sur 886 | 36 | **0,760** |
+
+**Un contact détecté sur quatre n'a pas eu lieu.** Le chiffre est stable d'un match à
+l'autre, et il remplace le « facteur 1,5 sur le hasard » du tableau précédent : celui-ci
+restait une mesure indirecte, celui-là est direct.
+
+Une précision importante sur sa portée : ces contacts ont été détectés sur la **balle
+annotée**, pas sur le chemin reconstruit. C'est donc la précision du critère de virage
+lui-même, hors de toute erreur de trajectoire. Sur le chemin reconstruit, qui produit
+44 % de contacts en plus, elle est très probablement plus basse, et elle n'est pas
+mesurée.
 
 ### Surfaces de contact
 
