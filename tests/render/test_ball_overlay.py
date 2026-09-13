@@ -1,10 +1,13 @@
 import numpy as np
 
 from padel_analysis.contact.surfaces import RACKET, Verdict
+from padel_analysis.perception.pose_detector import PersonDetection
 from padel_analysis.render.ball_overlay import (
     ContactEvent,
     contact_label,
     draw_ball,
+    draw_hitter,
+    hitter_box,
     trail,
     visible_events,
 )
@@ -56,3 +59,28 @@ def test_drawing_leaves_the_original_frame_untouched():
     drawn = draw_ball(frame, [(10.0, 10.0), (20.0, 20.0)], [event])
     assert frame.sum() == 0
     assert drawn.sum() > 0
+
+
+def _person(box, wrist):
+    keypoints = np.zeros((17, 3))
+    keypoints[9] = (wrist[0], wrist[1], 0.9)
+    return PersonDetection(bbox=np.array(box, dtype=float), confidence=0.9, keypoints=keypoints)
+
+
+def test_the_hitter_is_the_player_whose_wrist_is_nearest():
+    near = _person((0, 0, 10, 10), (100.0, 100.0))
+    far = _person((50, 50, 60, 60), (400.0, 400.0))
+    assert tuple(hitter_box((105.0, 100.0), [far, near])) == (0, 0, 10, 10)
+
+
+def test_no_visible_wrist_names_no_hitter():
+    hidden = _person((0, 0, 10, 10), (100.0, 100.0))
+    hidden.keypoints[9, 2] = 0.0
+    assert hitter_box((100.0, 100.0), [hidden]) is None
+
+
+def test_a_fresh_hit_lights_the_box_more_than_a_fading_one():
+    frame = np.zeros((90, 160, 3), dtype=np.uint8)
+    box = np.array([20.0, 20.0, 80.0, 70.0])
+    assert frame.sum() == 0
+    assert draw_hitter(frame, box, 1.0).sum() > draw_hitter(frame, box, 0.2).sum() > 0

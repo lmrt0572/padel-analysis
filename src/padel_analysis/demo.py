@@ -42,6 +42,8 @@ from .render.ball_overlay import (
     ContactEvent,
     contact_label,
     draw_ball,
+    draw_hitter,
+    hitter_box,
     trail,
     visible_events,
 )
@@ -168,8 +170,17 @@ def main() -> None:
         ball = shown[contact.frame]
         verdict = classify(ball, frames[contact.frame]["wrists"], pose, surfaces)
         label = contact_label(verdict)
-        if label is not None:
-            events.append(ContactEvent(contact.frame, label, ball, zone_of(verdict, court)))
+        if label is None:
+            continue
+        # Un rayon qui ne rencontre qu'une surface pointe hors du jeu. Mesure sur les
+        # deux matchs annotes : ces contacts portent 38 des 42 faux murs, pour 2 vrais
+        # murs sur 33. Filtre d'affichage, les chiffres mesures ne le connaissent pas.
+        if label != "RAQUETTE" and verdict.candidates == 1:
+            continue
+        box = hitter_box(ball, frames[contact.frame]["people"]) if label == "RAQUETTE" else None
+        events.append(
+            ContactEvent(contact.frame, label, ball, zone_of(verdict, court), box)
+        )
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
     hidden = sum(1 for f in path if path[f] is not None and shown[f] is None)
     print(
@@ -189,10 +200,12 @@ def main() -> None:
             data = frames.get(index, {})
             canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}))
             for event in visible_events(events, index, args.glow):
+                strength = 1.0 - (index - event.frame) / args.glow
                 if event.zone is not None:
-                    strength = 1.0 - (index - event.frame) / args.glow
                     canvas = draw_zone(canvas, event.zone, pose, strength)
-            canvas = draw_ball(canvas, trail(drawn, index), visible_events(events, index, 20))
+                elif event.box is not None:
+                    canvas = draw_hitter(canvas, event.box, strength)
+            canvas = draw_ball(canvas, trail(drawn, index), [])
             canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {})))
             writer.write(canvas)
     print(f"ecrit {args.out}")

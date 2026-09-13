@@ -39,6 +39,7 @@ class ContactEvent:
     label: str
     pixel: Point
     zone: "Zone | None" = None
+    box: np.ndarray | None = None  # la bbox du frappeur, pour une raquette
 
 
 def contact_label(verdict: Verdict) -> str | None:
@@ -77,19 +78,43 @@ def visible_events(
 def draw_ball(
     frame: np.ndarray, points: Sequence[Point], events: Sequence[ContactEvent]
 ) -> np.ndarray:
-    """A copy of `frame` with the trail, the ball, and a ring at each recent contact."""
+    """A copy of `frame` with the trail and the ball.
+
+    Contacts are not marked on the ball: a surface contact lights its zone of the
+    court, and a racket contact lights the player who struck.
+    """
     canvas = frame.copy()
     for older, newer in itertools.pairwise(points):
         cv2.line(canvas, _pixel(older), _pixel(newer), TRAIL, 2)
     if points:
         cv2.circle(canvas, _pixel(points[-1]), 7, BALL, 2)
-
-    # Un anneau, sans texte : une etiquette fausse se lit tout de suite, un anneau
-    # marque l'instant sans affirmer plus que ce que la mesure soutient.
-    for event in events:
-        colour = LABEL_COLOURS.get(event.label, (255, 255, 255))
-        cv2.circle(canvas, _pixel(event.pixel), 20, colour, 3)
     return canvas
+
+
+def hitter_box(ball: Point, people: Sequence) -> np.ndarray | None:
+    """The box of the player whose visible wrist is nearest the ball, if any has one."""
+    best, nearest = None, float("inf")
+    for person in people:
+        for wrist in (person.keypoints[9], person.keypoints[10]):
+            if wrist[2] <= 0.3:
+                continue
+            distance = float(np.hypot(wrist[0] - ball[0], wrist[1] - ball[1]))
+            if distance < nearest:
+                best, nearest = person.bbox, distance
+    return best
+
+
+def draw_hitter(
+    frame: np.ndarray, box: np.ndarray, strength: float, colour=(255, 255, 255)
+) -> np.ndarray:
+    """A copy of `frame` with the striking player's box lit, fading with `strength`."""
+    x1, y1, x2, y2 = (round(float(v)) for v in box)
+    overlay = frame.copy()
+    cv2.rectangle(overlay, (x1, y1), (x2, y2), colour, -1)
+    alpha = 0.35 * max(0.0, min(1.0, strength))
+    lit = cv2.addWeighted(overlay, alpha, frame, 1.0 - alpha, 0.0)
+    cv2.rectangle(lit, (x1, y1), (x2, y2), colour, 2 + round(4 * strength))
+    return lit
 
 
 def _pixel(point: Point) -> tuple[int, int]:
