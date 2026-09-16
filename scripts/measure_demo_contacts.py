@@ -22,6 +22,7 @@ from padel_analysis.ball.contacts import find_contacts
 from padel_analysis.ball.path import best_path
 from padel_analysis.ball.smoothing import despike, smooth_path
 from padel_analysis.contact.surfaces import classify
+from padel_analysis.demo import build_events
 from padel_analysis.eval.ball_dataset import BallAnnotations
 from padel_analysis.eval.contact_marks import ContactMarks, match_contacts
 from padel_analysis.geometry.calibration import Calibration
@@ -75,9 +76,13 @@ def main() -> None:
             find_contacts(relative), relative, frames, pose, surfaces, False),
         "chemin absolu, sans filtre": labelled(
             find_contacts(absolute), absolute, frames, pose, surfaces, False),
-        "demo actuelle": labelled(
+        "demo sans le geste": labelled(
             find_contacts(smooth_path(shown, cuts=[], process_noise=100.0)), shown, frames,
             pose, surfaces, True),
+        "demo actuelle": {
+            e.frame: ANSWER_OF_LABEL[e.label]
+            for e in build_events(analysis, Calibration.load(args.calibration).points)[2]
+        },
     }
 
     print(f"{len(marks)} contacts pointes : {dict(Counter(marks.values()))}\n")

@@ -30,6 +30,7 @@ from .ball.confidence import confident_path, path_scores
 from .ball.contacts import find_contacts
 from .ball.path import best_path
 from .ball.smoothing import despike, smooth_path
+from .contact.gesture import gesture_near, strikes
 from .contact.surfaces import classify
 from .geometry.calibration import Calibration
 from .geometry.camera import court_surfaces, pose_from_calibration
@@ -54,6 +55,7 @@ from .render.video_writer import VideoWriter
 from .tracking.court_constraint import CourtObservation, CourtSlotTracker
 
 SPACING = 3
+GESTURE_SPEED = 10.0
 LEFT_WRIST, RIGHT_WRIST = 9, 10
 
 
@@ -122,6 +124,73 @@ def analyse(args: argparse.Namespace) -> dict:
     return {"start": start, "stop": stop, "size": size, "frames": frames, "path": path}
 
 
+def build_events(
+    analysis: dict, calibration_points: list, threshold: float = 0.7, min_run: int = 8
+) -> tuple[dict, dict, list[ContactEvent], object]:
+    """The displayed ball path and the contacts shown on it, from a saved analysis.
+
+    Kept apart from the drawing so the measurement scripts score exactly what the
+    video shows, and not a copy of it that could drift.
+    """
+    court = Court()
+    frames = analysis["frames"]
+    raw = {f: v["raw"] for f, v in frames.items()}
+    # Le chemin d'affichage lit les scores du reseau tels quels, et peut donc renoncer
+    # la ou la balle n'est pas. Mesure sur une minute annotee, avec le filtre de
+    # confiance : 1 374 positions justes, 87 fausses, 2 fantomes, contre 1 174, 199 et
+    # 27 avec le chemin relatif regle pour le rappel.
+    path = best_path(
+        raw, analysis["start"], analysis["stop"], weight=960.0, absent_cost=150.0,
+        absolute=True,
+    )
+    scores = path_scores(path, raw)
+    # Pour l'affichage seulement : confiance, puis retrait des points isoles aberrants.
+    shown = despike(confident_path(path, scores, threshold, min_run))
+
+    pose = pose_from_calibration(calibration_points, analysis["size"])
+    surfaces = court_surfaces(court)
+    events: list[ContactEvent] = []
+    # Les contacts se cherchent sur une trajectoire lissee : chaque zigzag du chemin brut
+    # passerait pour un virage. Mesure sur la minute annotee du match de reglage : 2 faux
+    # contacts et 3 non juges en moins, pour 1 vrai perdu. Un lissage plus fort en perd 7.
+    players = {f: (v["people"], v["assignment"]) for f, v in frames.items()}
+    for contact in find_contacts(smooth_path(shown, cuts=[], process_noise=100.0)):
+        ball = shown.get(contact.frame)
+        if ball is None:
+            continue
+        # Un poignet proche mais immobile ne fait pas une frappe : sans geste, la
+        # raquette est ecartee et la surface se decide par la geometrie seule.
+        gesture = max(
+            gesture_near(players, f, shown.get(f)) for f in range(contact.frame - 3, contact.frame + 4)
+        )
+        wrists = frames[contact.frame]["wrists"] if gesture >= GESTURE_SPEED else []
+        verdict = classify(ball, wrists, pose, surfaces)
+        label = contact_label(verdict)
+        if label is None:
+            continue
+        # Un rayon qui ne rencontre qu'une surface pointe hors du jeu. Mesure sur les
+        # deux matchs annotes : ces contacts portent 38 des 42 faux murs, pour 2 vrais
+        # murs sur 33. Filtre d'affichage, les chiffres mesures ne le connaissent pas.
+        if label != "RAQUETTE" and verdict.candidates == 1:
+            continue
+        box = hitter_box(ball, frames[contact.frame]["people"]) if label == "RAQUETTE" else None
+        events.append(
+            ContactEvent(contact.frame, label, ball, zone_of(verdict, court), box)
+        )
+    # Les frappes que le virage ne voit pas - un coup dans l'axe de la camera plie a
+    # peine la trajectoire a l'image - se lisent au geste du frappeur. Mesure sur un
+    # pointage complet : +11 contacts justes sur le match de reglage, +9 sur le match
+    # tenu a l'ecart, reglage fige.
+    found = [e.frame for e in events]
+    for frame in strikes(players, shown, analysis["start"], analysis["stop"], GESTURE_SPEED,
+                         taken=found):
+        ball = shown[frame]
+        events.append(ContactEvent(frame, "RAQUETTE", ball, None,
+                                   hitter_box(ball, frames[frame]["people"])))
+    events.sort(key=lambda e: e.frame)
+    return path, shown, events, pose
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", type=Path, required=True)
@@ -157,44 +226,11 @@ def main() -> None:
         analysis = analyse(args)
         saved.write_bytes(pickle.dumps(analysis))
 
+    path, shown, events, pose = build_events(
+        analysis, Calibration.load(args.calibration).points, args.threshold, args.min_run
+    )
     court = Court()
     frames = analysis["frames"]
-    raw = {f: v["raw"] for f, v in frames.items()}
-    # Le chemin d'affichage lit les scores du reseau tels quels, et peut donc renoncer
-    # la ou la balle n'est pas. Mesure sur une minute annotee, avec le filtre de
-    # confiance : 1 374 positions justes, 87 fausses, 2 fantomes, contre 1 174, 199 et
-    # 27 avec le chemin relatif regle pour le rappel.
-    path = best_path(
-        raw, analysis["start"], analysis["stop"], weight=960.0, absent_cost=150.0,
-        absolute=True,
-    )
-    scores = path_scores(path, raw)
-    # Pour l'affichage seulement : confiance, puis retrait des points isoles aberrants.
-    shown = despike(confident_path(path, scores, args.threshold, args.min_run))
-
-    pose = pose_from_calibration(Calibration.load(args.calibration).points, analysis["size"])
-    surfaces = court_surfaces(court)
-    events: list[ContactEvent] = []
-    # Les contacts se cherchent sur une trajectoire lissee : chaque zigzag du chemin brut
-    # passerait pour un virage. Mesure sur la minute annotee du match de reglage : 2 faux
-    # contacts et 3 non juges en moins, pour 1 vrai perdu. Un lissage plus fort en perd 7.
-    for contact in find_contacts(smooth_path(shown, cuts=[], process_noise=100.0)):
-        ball = shown.get(contact.frame)
-        if ball is None:
-            continue
-        verdict = classify(ball, frames[contact.frame]["wrists"], pose, surfaces)
-        label = contact_label(verdict)
-        if label is None:
-            continue
-        # Un rayon qui ne rencontre qu'une surface pointe hors du jeu. Mesure sur les
-        # deux matchs annotes : ces contacts portent 38 des 42 faux murs, pour 2 vrais
-        # murs sur 33. Filtre d'affichage, les chiffres mesures ne le connaissent pas.
-        if label != "RAQUETTE" and verdict.candidates == 1:
-            continue
-        box = hitter_box(ball, frames[contact.frame]["people"]) if label == "RAQUETTE" else None
-        events.append(
-            ContactEvent(contact.frame, label, ball, zone_of(verdict, court), box)
-        )
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
     hidden = sum(1 for f in path if path[f] is not None and shown[f] is None)
     print(
