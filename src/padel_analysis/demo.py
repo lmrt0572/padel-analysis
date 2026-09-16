@@ -55,7 +55,8 @@ from .render.video_writer import VideoWriter
 from .tracking.court_constraint import CourtObservation, CourtSlotTracker
 
 SPACING = 3
-GESTURE_SPEED = 10.0
+GESTURE_SPEED = 8.0
+STRIKE_SPEED = 20.0
 CONTACT_SPAN = 3
 CONTACT_SHARPNESS = 0.40
 LEFT_WRIST, RIGHT_WRIST = 9, 10
@@ -189,9 +190,11 @@ def build_events(
     # Les frappes que le virage ne voit pas - un coup dans l'axe de la camera plie a
     # peine la trajectoire a l'image - se lisent au geste du frappeur. Mesure sur un
     # pointage complet : +11 contacts justes sur le match de reglage, +9 sur le match
-    # tenu a l'ecart, reglage fige.
+    # tenu a l'ecart, reglage fige. Une frappe sans virage demande un geste plus franc
+    # que celle qui confirme un virage : 20 px/image contre 8, balaye sur 316 contacts,
+    # 19 contacts inventes en moins pour le meme nombre de justes.
     found = [e.frame for e in events]
-    for frame in strikes(players, shown, analysis["start"], analysis["stop"], GESTURE_SPEED,
+    for frame in strikes(players, shown, analysis["start"], analysis["stop"], STRIKE_SPEED,
                          taken=found):
         ball = shown[frame]
         events.append(ContactEvent(frame, "RAQUETTE", ball, None,
