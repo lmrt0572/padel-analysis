@@ -56,6 +56,8 @@ from .tracking.court_constraint import CourtObservation, CourtSlotTracker
 
 SPACING = 3
 GESTURE_SPEED = 10.0
+CONTACT_SPAN = 3
+CONTACT_SHARPNESS = 0.40
 LEFT_WRIST, RIGHT_WRIST = 9, 10
 
 
@@ -153,8 +155,15 @@ def build_events(
     # Les contacts se cherchent sur une trajectoire lissee : chaque zigzag du chemin brut
     # passerait pour un virage. Mesure sur la minute annotee du match de reglage : 2 faux
     # contacts et 3 non juges en moins, pour 1 vrai perdu. Un lissage plus fort en perd 7.
+    # Sur la trajectoire affichee, la vitesse se mesure sur 3 images et non 2, avec un
+    # seuil de nettete plus bas : balaye sur quatre minutes pointees (316 contacts),
+    # 177 -> 194 contacts justes ; sur une minute de l'autre match, 42 -> 47.
     players = {f: (v["people"], v["assignment"]) for f, v in frames.items()}
-    for contact in find_contacts(smooth_path(shown, cuts=[], process_noise=100.0)):
+    turns = find_contacts(
+        smooth_path(shown, cuts=[], process_noise=100.0), span=CONTACT_SPAN,
+        sharpness=CONTACT_SHARPNESS,
+    )
+    for contact in turns:
         ball = shown.get(contact.frame)
         if ball is None:
             continue
