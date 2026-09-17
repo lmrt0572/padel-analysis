@@ -16,12 +16,16 @@ point ça marche, et où ça ne marche pas.
    minicarte du court, d'où sortent les statistiques tactiques.
 3. **La balle.** Un réseau propose des candidats sur chaque image, puis le chemin le
    plus plausible est choisi **sur toute la séquence d'un coup**, et non image par image.
-4. **Les contacts.** Un contact est un virage brusque de la trajectoire.
+4. **Les contacts.** Un contact est un virage brusque de la trajectoire, ou le geste
+   d'un joueur qui frappe.
 5. **Les surfaces.** Une caméra ne voit pas la profondeur, mais au moment d'un contact
    la balle est **sur** une surface connue du court : le rayon de la caméra et le plan de
    cette surface se coupent en un point, qui donne la position en trois dimensions.
+6. **La décision finale.** Un petit réseau temporel, entraîné sur des minutes de match
+   pointées à la main, combine ces indices pour décider quels contacts afficher et sur
+   quelle surface.
 
-Une commande de démonstration assemble les cinq étapes dans une vidéo : joueurs et
+Une commande de démonstration assemble ces étapes dans une vidéo : joueurs et
 minicarte, trace de la balle, et à chaque contact ce qui a été touché : la zone du
 terrain — sol, vitre, grillage ou filet — s'éclaire en perspective puis s'estompe, et
 lors d'une frappe c'est le joueur qui frappe qui s'illumine.
@@ -39,14 +43,26 @@ juger, une seule fois.
 | Contacts | Contacts détectés réels | 0,747 | **0,760** |
 | Surfaces | Surface correcte | 0,828 | **0,821** |
 
-Trois résultats valent d'être soulignés :
+Et **de bout en bout**, sur ce que la vidéo affiche : douze minutes dont chaque contact
+a été pointé à la main, dont trois jamais regardées avant le verdict.
+
+| Contacts affichés avec la bonne surface | Validation croisée (703 contacts) | Minutes de juge (239) |
+|---|---|---|
+| Règles réglées à la main | 58,5 % | 66,1 % |
+| **Modèle appris** | 80,8 % | **78,7 %** |
+
+Quatre résultats valent d'être soulignés :
 
 - **Choisir la balle sur toute la séquence** plutôt qu'image par image fait passer le
   rappel de 16 % à 72 % ; le réseau de détection le porte ensuite à 80 % sur le match
   jamais vu, contre 73 % avec la détection par mouvement.
 - **La vérité terrain a été produite à la main** quand le dataset ne la fournissait pas :
-  266 arbitrages d'identité et 344 jugements de surface, avec des outils qui n'affichent
+  266 arbitrages d'identité, 344 jugements de surface et 942 contacts pointés, avec des
+  outils qui n'affichent
   jamais ce que l'algorithme prédit.
+- **Apprendre a battu régler.** Chaque seuil de la chaîne de contacts avait été
+  balayé jusqu'au plateau ; un réseau qui voit tous les indices ensemble passe de 158 à
+  188 contacts justes sur les minutes de juge, et 93,6 % de ce qu'il affiche est réel.
 - **Le chiffre le moins flatteur était le bon.** Une vérité d'identité construite
   automatiquement annonçait un IDF1 de 0,956 et aucune erreur ; vérifiée à la main, elle
   en révèle quatre et descend à 0,819.
@@ -64,7 +80,8 @@ Le détail de chaque mesure, des ablations et des pièges évités est dans le
   autre court ou à une autre caméra.
 - **Le suivi d'identité se dégrade** sur le match tenu à l'écart, où les joueurs se
   croisent plus souvent de près, et ne traverse pas un changement de côté.
-- **Grillage et filet ne sont pas mesurables** : un et deux exemples seulement.
+- **Grillage et filet ne sont pas mesurables** : quelques exemples seulement.
+- **Un contact sur cinq reste faux ou manqué** sur ce que la démonstration affiche.
 - **Un seul annotateur** pour les vérités terrain produites à la main.
 
 ## Installation
@@ -134,7 +151,8 @@ python -m padel_analysis.analyse --cache cache/<nom>.json \
 La vidéo de démonstration demande les poids du réseau de détection de balle. Elle
 analyse toute la plage avant de dessiner, puisque la balle est choisie sur la séquence
 entière. Ses contacts viennent du chemin reconstruit et non de positions annotées : elle
-en montre donc plus qu'il n'y en a eu. Pour l'affichage seulement, la balle est masquée
+en montre donc plus qu'il n'y en a eu, sauf avec le modèle de contacts, qui les
+décide à partir de tous les indices à la fois. Pour l'affichage seulement, la balle est masquée
 là où le réseau n'est pas sûr de lui : mesuré sur une minute annotée, les trajectoires
 fantômes — balle hors champ, balle en main avant le service — passent de 222 images à 36,
 pour 97,5 % des positions justes conservées. Les contacts de mur dont le rayon ne
@@ -143,7 +161,17 @@ portent 38 des 42 faux murs, pour 2 vrais murs sur 33. Les chiffres mesurés ne 
 filtrés.
 
 ```bash
-python -m padel_analysis.demo --video <video.mp4>     --calibration ground_truth/calibrations/<nom>.json     --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4
+python -m padel_analysis.demo --video <video.mp4> \n    --calibration ground_truth/calibrations/<nom>.json \n    --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4 \
+    --contact-model weights/contact_net.pt
+```
+
+Le modèle de contacts s'entraîne sur les minutes pointées, et se note sur les minutes de
+juge, qui ne servent qu'une fois :
+
+```bash
+python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
+python scripts/train_contact_model.py --cv --out weights/contact_net.pt
+python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --juge
 ```
 
 Les commandes qui reproduisent chaque mesure sont dans le
