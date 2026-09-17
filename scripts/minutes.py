@@ -11,6 +11,9 @@ TUNING = [("FinalF", 16000), ("FinalF", 17800), ("FinalF", 30000), ("FinalF", 40
 USED = [("FinalM", 5000)]
 EXTRA = [("FinalM", 8000), ("FinalM", 18000), ("FinalM", 31000), ("FinalM", 47000)]
 JUDGE = [("FinalM", 12000), ("FinalM", 25000), ("FinalM", 40000)]
+# Le premier juge a rendu son verdict, et ses minutes ont servi a choisir la suite : un
+# second juge, pris dans les deux matchs, note le modele qui en sort.
+JUDGE_2 = [("FinalF", 8000), ("FinalF", 25000), ("FinalM", 35000)]
 FRAMES = 1800
 
 
