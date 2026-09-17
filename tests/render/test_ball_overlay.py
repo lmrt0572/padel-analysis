@@ -7,6 +7,7 @@ from padel_analysis.render.ball_overlay import (
     contact_label,
     draw_ball,
     draw_hitter,
+    following_box,
     hitter_box,
     trail,
     visible_events,
@@ -84,3 +85,20 @@ def test_a_fresh_hit_lights_the_box_more_than_a_fading_one():
     box = np.array([20.0, 20.0, 80.0, 70.0])
     assert frame.sum() == 0
     assert draw_hitter(frame, box, 1.0).sum() > draw_hitter(frame, box, 0.2).sum() > 0
+
+
+def test_the_lit_box_follows_the_player_who_moved():
+    box = np.array([100.0, 100.0, 150.0, 200.0])
+    moved = _person((130.0, 100.0, 180.0, 200.0), (140.0, 150.0))
+    assert following_box(box, [moved]) is moved.bbox
+
+
+def test_the_lit_box_stays_put_when_nobody_is_near():
+    box = np.array([100.0, 100.0, 150.0, 200.0])
+    far = _person((900.0, 100.0, 950.0, 200.0), (910.0, 150.0))
+    np.testing.assert_array_equal(following_box(box, [far]), box)
+
+
+def test_the_lit_box_stays_put_without_any_detection():
+    box = np.array([100.0, 100.0, 150.0, 200.0])
+    np.testing.assert_array_equal(following_box(box, []), box)
