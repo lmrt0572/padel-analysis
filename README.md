@@ -43,13 +43,15 @@ juger, une seule fois.
 | Contacts | Contacts détectés réels | 0,747 | **0,760** |
 | Surfaces | Surface correcte | 0,828 | **0,821** |
 
-Et **de bout en bout**, sur ce que la vidéo affiche : douze minutes dont chaque contact
-a été pointé à la main, dont trois jamais regardées avant le verdict.
+Et **de bout en bout**, sur ce que la vidéo affiche : quinze minutes dont chaque contact
+a été pointé à la main, dont six jamais regardées avant leur verdict.
 
-| Contacts affichés avec la bonne surface | Validation croisée (703 contacts) | Minutes de juge (239) |
-|---|---|---|
-| Règles réglées à la main | 58,5 % | 66,1 % |
-| **Modèle appris** | 80,8 % | **78,7 %** |
+| Contacts affichés avec la bonne surface | Validation croisée (703 contacts) | Premier juge (239) | Second juge (238) |
+|---|---|---|---|
+| Règles réglées à la main | 58,5 % | 66,1 % | 58,4 % |
+| **Modèle appris** | 80,7 % | **78,7 %** | **79,0 %** |
+
+Les deux juges sont des minutes pointées à la main et notées une seule fois, après coup.
 
 Quatre résultats valent d'être soulignés :
 
@@ -57,12 +59,12 @@ Quatre résultats valent d'être soulignés :
   rappel de 16 % à 72 % ; le réseau de détection le porte ensuite à 80 % sur le match
   jamais vu, contre 73 % avec la détection par mouvement.
 - **La vérité terrain a été produite à la main** quand le dataset ne la fournissait pas :
-  266 arbitrages d'identité, 344 jugements de surface et 942 contacts pointés, avec des
-  outils qui n'affichent
+  266 arbitrages d'identité, 344 jugements de surface et 1 180 contacts pointés sur
+  quinze minutes de match, avec des outils qui n'affichent
   jamais ce que l'algorithme prédit.
 - **Apprendre a battu régler.** Chaque seuil de la chaîne de contacts avait été
-  balayé jusqu'au plateau ; un réseau qui voit tous les indices ensemble passe de 158 à
-  188 contacts justes sur les minutes de juge, et 93,6 % de ce qu'il affiche est réel.
+  balayé jusqu'au plateau ; un réseau qui voit tous les indices ensemble donne la bonne
+  surface à 79 % des contacts réels contre 58 %, et 92 % de ce qu'il affiche est réel.
 - **Le chiffre le moins flatteur était le bon.** Une vérité d'identité construite
   automatiquement annonçait un IDF1 de 0,956 et aucune erreur ; vérifiée à la main, elle
   en révèle quatre et descend à 0,819.
