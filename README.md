@@ -161,7 +161,9 @@ portent 38 des 42 faux murs, pour 2 vrais murs sur 33. Les chiffres mesurés ne 
 filtrés.
 
 ```bash
-python -m padel_analysis.demo --video <video.mp4> \n    --calibration ground_truth/calibrations/<nom>.json \n    --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4 \
+python -m padel_analysis.demo --video <video.mp4> \
+    --calibration ground_truth/calibrations/<nom>.json \
+    --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4 \
     --contact-model weights/contact_net.pt
 ```
 
