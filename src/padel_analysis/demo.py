@@ -210,7 +210,7 @@ LABEL_OF_ANSWER = {"raquette": "RAQUETTE", "sol": "SOL", "verre": "VITRE",
 
 def learned_events(
     analysis: dict, calibration_points: list, model, threshold: float = 0.7,
-    whole_zone: bool = False,
+    whole_zone: bool = True,
 ) -> tuple[dict, dict, list[ContactEvent], object]:
     """The same as `build_events`, with the contacts decided by a trained model.
 
@@ -314,10 +314,10 @@ def main() -> None:
         "contacts sont decides par les regles",
     )
     parser.add_argument(
-        "--whole-zone",
+        "--impact-patch",
         action="store_true",
-        help="eclairer toute la zone touchee - panneau de vitre, carre de service - au "
-        "lieu du seul point d'impact",
+        help="eclairer seulement le point d'impact, sur environ 1,5 m, au lieu de toute "
+        "la zone touchee",
     )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -336,7 +336,7 @@ def main() -> None:
 
         path, shown, events, pose = learned_events(
             analysis, points, ContactModel.load(args.contact_model),
-            whole_zone=args.whole_zone,
+            whole_zone=not args.impact_patch,
         )
     else:
         path, shown, events, pose = build_events(analysis, points, args.threshold, args.min_run)
