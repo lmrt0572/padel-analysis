@@ -35,3 +35,9 @@ build/
 .env
 .vscode/
 .idea/
+
+# Poids entraines et leurs parametres
+weights/
+
+# Restes d une ecriture atomique interrompue
+*.tmp

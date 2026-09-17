@@ -4,10 +4,16 @@ Positive `y` is drawn towards the top of the image, matching the broadcast camer
 where the far end of the court appears above the near one.
 """
 
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
 import cv2
 import numpy as np
 
 from ..geometry.court import Court
+
+if TYPE_CHECKING:
+    from .court_zones import Zone
 
 TEAM_COLOURS: dict[str, tuple[int, int, int]] = {
     "near_1": (60, 60, 230),
@@ -40,7 +46,16 @@ class Minimap:
         py = self._margin + (self._court.half_length - y) * self._scale
         return round(px), round(py)
 
-    def draw(self, positions: dict[str, tuple[float, float]]) -> np.ndarray:
+    def draw(
+        self,
+        positions: dict[str, tuple[float, float]],
+        lit: Sequence[tuple["Zone", float]] = (),
+    ) -> np.ndarray:
+        """Players as filled discs, over the zones recent contacts have lit.
+
+        Each lit zone comes with a strength in [0, 1], so that a zone can fade out
+        after its contact instead of switching off at once.
+        """
         court = self._court
         image = np.full((self._height, self._width, 3), 35, dtype=np.uint8)
 
@@ -71,6 +86,16 @@ class Minimap:
             NET,
             2,
         )
+
+        for zone, strength in lit:
+            overlay = image.copy()
+            pixels = np.array([self.to_pixels(np.array(p)) for p in zone.points], np.int32)
+            if zone.kind == "area":
+                cv2.fillPoly(overlay, [pixels], zone.colour)
+            else:
+                cv2.line(overlay, tuple(pixels[0]), tuple(pixels[1]), zone.colour, 7)
+            alpha = 0.75 * max(0.0, min(1.0, strength))
+            image = cv2.addWeighted(overlay, alpha, image, 1.0 - alpha, 0.0)
 
         for name, (x, y) in positions.items():
             centre = self.to_pixels(np.array([x, y]))

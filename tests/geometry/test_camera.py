@@ -171,3 +171,26 @@ def test_a_point_on_a_wall_is_contained_without_any_margin(synthetic_pose):
     meeting = wall.intersect(*pose.ray(pixel))
     assert meeting[1] != 10.0
     assert wall.contains(meeting, margin=0.0)
+
+
+def test_a_pose_comes_straight_from_calibration_points(synthetic_pose):
+    """La demo et les scripts de mesure doivent retrouver la meme camera."""
+    from padel_analysis.geometry.calibration import CalibrationPoint
+    from padel_analysis.geometry.camera import pose_from_calibration
+
+    pose, object_points, image_points = synthetic_pose
+    points = [
+        CalibrationPoint(f"p{i}", (o[0], o[1]), tuple(px), height=o[2])
+        for i, (o, px) in enumerate(zip(object_points, image_points))
+    ]
+    found = pose_from_calibration(points, (1920, 1080))
+    np.testing.assert_allclose(found.camera_centre, pose.camera_centre, atol=0.3)
+
+
+def test_a_pose_refuses_calibration_points_that_all_sit_on_the_ground():
+    from padel_analysis.geometry.calibration import CalibrationPoint
+    from padel_analysis.geometry.camera import pose_from_calibration
+
+    flat = [CalibrationPoint(f"p{i}", (float(i), 0.0), (float(i), 0.0)) for i in range(6)]
+    with pytest.raises(ValueError):
+        pose_from_calibration(flat, (1920, 1080))

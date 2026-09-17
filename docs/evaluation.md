@@ -865,6 +865,105 @@ strate porte désormais ce nom. Il n'est pas appliqué comme filtre : 88 % sur s
 ne justifie pas encore de supprimer des détections, et ce serait une décision à mesurer
 pour elle-même.
 
+### De bout en bout : ce que la démonstration affiche
+
+Les sections précédentes jugent chaque étape sur ce que l'étape d'avant lui donne. Le
+spectateur, lui, voit la chaîne entière : un contact oublié ne s'affiche pas, un
+contact inventé éclaire une zone pour rien, et aucune des mesures ci-dessus ne les
+compte tous les deux.
+
+#### Une vérité terrain complète
+
+Juger les contacts qu'une chaîne propose ne mesure que sa précision : un mur qu'elle
+n'a jamais proposé n'est jamais jugé. Douze minutes ont donc été **pointées en
+entier**, chaque contact réel à l'image près, avec un outil qui n'affiche rien de ce
+que le système détecte (`scripts/mark_contacts.py`) : 942 contacts.
+
+| Minutes | Contacts | Rôle |
+|---|---|---|
+| Finale féminine, 4 minutes | 316 | réglage, puis entraînement |
+| Finale masculine, 5 minutes | 387 | entraînement |
+| Finale masculine, 3 autres minutes | 239 | **juge, notées une seule fois** |
+
+Un contact détecté compte comme juste s'il tombe à trois images ou moins d'un contact
+pointé et porte la bonne surface. Le score combine les deux erreurs visibles :
+2 × justes / (affichés + réels).
+
+#### Ce que les seuils ont donné
+
+La chaîne à règles de la démonstration a été réglée sur les quatre minutes féminines.
+Mesurer le virage sur trois images de part et d'autre au lieu de deux, avec un seuil
+de netteté abaissé de 0,50 à 0,40, fait passer les contacts justes de 177 à 194 sur
+316. Exiger un geste plus franc pour une frappe vue sans virage, 20 px par image au
+lieu de 10, retire 19 contacts inventés sans en perdre de juste.
+
+Tout le reste a été balayé sans gain :
+
+- **le réseau de balle en 720p**, entraîné dix époques : 194 justes contre 194. Sur 97
+  contacts manqués, 94 avaient la balle correctement affichée à l'instant du contact.
+  Le goulot n'était plus de voir la balle, mais de lire son virage ;
+- le seuil de confiance de l'affichage, la distance au poignet, la marge des surfaces
+  et la coupe de profondeur : les valeurs en place étaient déjà les meilleures ;
+- la hauteur de la balle le long du joueur le plus proche, pour séparer un rebond
+  d'une frappe : un intervalle corrigeait sept erreurs au réglage et en créait une
+  ailleurs, sur des effectifs trop petits pour conclure.
+
+Les erreurs restantes étaient des **combinaisons** d'indices : un virage mou à côté
+d'un poignet qui accélère est une frappe, le même virage avec la balle aux pieds du
+joueur est un rebond. Un seuil par indice ne peut pas l'exprimer.
+
+#### Un modèle appris
+
+`contact/learned.py` décrit chaque image par 45 indices — trajectoire, vitesses et
+virages sur une, deux et trois images, score du réseau, geste du poignet le plus
+proche, position de la balle le long du joueur, surfaces que le rayon peut rencontrer
+et où, décision de la chaîne à règles. Un réseau convolutif temporel dilaté, qui voit
+une soixantaine d'images de contexte, classe chaque image en aucun contact, raquette,
+sol, mur ou filet ; les contacts sont les pics de probabilité. Vitre ou grillage se lit
+ensuite par la géométrie, comme pour les règles : trois contacts de grillage ne
+suffisent pas à l'apprendre. Trois réseaux sont moyennés.
+
+Chaque minute pointée a d'abord été prédite par un modèle entraîné **sur les autres
+seulement** :
+
+| Minutes d'entraînement | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| Contacts justes | 71,9 % | 75,5 % | 78,0 % | 80,1 % |
+
+La courbe montait encore : quatre minutes masculines ont été pointées de plus. Sur les
+neuf minutes, en validation croisée :
+
+| | Justes | Affichés | Score |
+|---|---|---|---|
+| Règles | 411 / 703 (58,5 %) | 598 | 0,632 |
+| **Modèle** | **568 / 703 (80,8 %)** | 658 | **0,835** |
+
+Le modèle gagne sur chacune des neuf minutes. Il transfère entre les matchs : entraîné
+sur les seules minutes féminines, il passe de 45 à 55 contacts justes sur 75 sur une
+minute masculine. Le seuil de décision, 0,7, a été choisi sur cette validation croisée.
+
+#### Le verdict
+
+Les trois minutes de juge n'avaient été ni regardées ni notées avant que le modèle
+soit figé.
+
+| Minute | Règles | Modèle |
+|---|---|---|
+| 12000 | 55 / 82 | **60 / 82** |
+| 25000 | 55 / 78 | **62 / 78** |
+| 40000 | 48 / 79 | **66 / 79** |
+| **Total** | 158 / 239 (66,1 %) | **188 / 239 (78,7 %)** |
+| Contacts affichés réels | 84,4 % | **93,6 %** |
+| Score | 0,672 | **0,823** |
+
+Le modèle affiche moins de contacts que les règles, en trouve davantage et se trompe
+moins souvent de surface. Le chiffre du juge, 78,7 %, est à deux points de la
+validation croisée : la sélection n'a pas été flattée.
+
+Les minutes de juge viennent d'un match dont d'autres minutes ont servi à
+l'entraînement. Le verdict mesure donc le passage à des **échanges jamais vus**, pas à
+un match, un court ou une caméra jamais vus.
+
 ## Limites connues
 
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
@@ -1037,9 +1136,10 @@ section [Évaluation](#évaluation) ne seraient pas reproductibles :
 | `calibrations/*.json` | 23 points cliqués par vidéo — 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
 | `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
 | `surfaces/*.json` | les 194 contacts à juger et les 194 jugements rendus |
+| `contact_marks/*.json` | tous les contacts de douze minutes pointés à la main, avec leur surface |
 
-**`surfaces/` est le seul de ces fichiers qui ne dérive de rien.** Les surfaces de
-contact ne sont étiquetées dans aucun jeu de données public de padel : ce fichier est
+**`surfaces/` et `contact_marks/` sont les seuls de ces fichiers qui ne dérivent de rien.** Les surfaces de
+contact ne sont étiquetées dans aucun jeu de données public de padel : ces fichiers sont
 la mesure elle-même, et sans lui la section sur les surfaces ne serait qu'une règle
 sans juge. Les points en hauteur de `calibrations/` sont dans le même cas — ils sont
 relevés à la main sur les panneaux de mur, et sans eux la pose de caméra ne se

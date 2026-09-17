@@ -47,3 +47,27 @@ def test_a_player_outside_the_court_does_not_crash():
     minimap = Minimap(Court(), width=300)
     image = minimap.draw({"near_1": (-8.0, -13.0)})
     assert image.shape[1] == 300
+
+
+def test_a_lit_zone_is_drawn_on_the_minimap():
+    from padel_analysis.render.court_zones import FLOOR, Zone
+
+    minimap = Minimap(Court())
+    zone = Zone("sol", "area", ((0.0, 0.0), (5.0, 0.0), (5.0, 6.95), (0.0, 6.95)), FLOOR)
+    assert not np.array_equal(minimap.draw({}), minimap.draw({}, lit=[(zone, 1.0)]))
+
+
+def test_a_faded_zone_is_fainter_than_a_fresh_one():
+    from padel_analysis.render.court_zones import GLASS, Zone
+
+    minimap = Minimap(Court())
+    wall = Zone("fond", "line", ((-5.0, 10.0), (5.0, 10.0)), GLASS)
+    bare = minimap.draw({}).astype(int)
+    fresh = np.abs(minimap.draw({}, lit=[(wall, 1.0)]).astype(int) - bare).sum()
+    faded = np.abs(minimap.draw({}, lit=[(wall, 0.2)]).astype(int) - bare).sum()
+    assert fresh > faded > 0
+
+
+def test_the_minimap_draws_the_same_with_nothing_lit():
+    minimap = Minimap(Court())
+    assert np.array_equal(minimap.draw({}), minimap.draw({}, lit=[]))

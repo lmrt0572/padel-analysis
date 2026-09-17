@@ -49,7 +49,10 @@ def acceleration_cost(
 
 
 def emission_cost(
-    candidate: Candidate, frame: Sequence[Candidate], weight: float = 30.0
+    candidate: Candidate,
+    frame: Sequence[Candidate],
+    weight: float = 30.0,
+    absolute: bool = False,
 ) -> float:
     """What it costs to pick this candidate rather than the best of its frame.
 
@@ -63,7 +66,14 @@ def emission_cost(
         weight: what a completely worthless candidate costs, in pixel-equivalents,
             so that this cost is commensurable with the acceleration one.
     """
-    if not frame or weight == 0.0:
+    if weight == 0.0:
+        return 0.0
+    if absolute:
+        # Un score deja borne dans [0, 1] - celui du reseau - se lit tel quel : un
+        # candidat faible coute cher meme quand il est le meilleur de son image, et
+        # c'est ce qui permet au chemin de renoncer quand la balle n'est pas la.
+        return weight * (1.0 - min(1.0, max(0.0, candidate.score)))
+    if not frame:
         return 0.0
     best = max(c.score for c in frame)
     if best <= 0.0:
@@ -82,6 +92,7 @@ def best_path(
     gate: float = 320.0,
     weight: float = 240.0,
     absent_cost: float = 1200.0,
+    absolute: bool = False,
 ) -> dict[int, Point | None]:
     """The cheapest explanation of the whole sequence, frame by frame.
 
@@ -108,6 +119,11 @@ def best_path(
         absent_cost: what holding no ball costs for one frame. Above about a
             thousand the recall saturates, which is to say the path stops giving up
             at all - and giving up is what the greedy baseline did too much of.
+        absolute: read candidate scores as they are rather than relative to the best
+            of their frame. Relative scores make the best candidate of every frame
+            free however weak it is, so the path can never prefer absence. Only
+            meaningful for scores bounded in [0, 1], which the network gives and
+            motion detection does not.
     """
     frames = list(range(start, stop + 1))
     kept: dict[int, list[Candidate]] = {
@@ -127,7 +143,7 @@ def best_path(
         only = kept[first]
         if not only:
             return {first: None}
-        best = min(only, key=lambda c: emission_cost(c, only, weight))
+        best = min(only, key=lambda c: emission_cost(c, only, weight, absolute))
         return {first: (best.x, best.y)}
 
     second = frames[1]
@@ -137,11 +153,11 @@ def best_path(
             costs[(i, j)] = (
                 absent_cost
                 if i == ABSENT
-                else emission_cost(kept[first][i], kept[first], weight)
+                else emission_cost(kept[first][i], kept[first], weight, absolute)
             ) + (
                 absent_cost
                 if j == ABSENT
-                else emission_cost(kept[second][j], kept[second], weight)
+                else emission_cost(kept[second][j], kept[second], weight, absolute)
             )
 
     back: list[dict[tuple[int, int], tuple[int, int]]] = []
@@ -155,7 +171,7 @@ def best_path(
             emission = (
                 absent_cost
                 if k == ABSENT
-                else emission_cost(kept[frame][k], kept[frame], weight)
+                else emission_cost(kept[frame][k], kept[frame], weight, absolute)
             )
             for (i, j), so_far in costs.items():
                 here = position(current_frame, j)

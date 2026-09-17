@@ -155,3 +155,21 @@ def test_the_default_weight_does_not_let_a_strong_decoy_win():
     candidates[5] = [Candidate(800.0, 700.0, 900.0)] + candidates[5]
     found = best_path(candidates, start=0, stop=9)
     assert found[5] == pytest.approx((200.0, 100.0))
+
+
+def test_an_absolute_score_makes_a_weak_best_candidate_costly():
+    """En relatif le meilleur d'une image ne coute rien, meme tres faible."""
+    weak = [Candidate(0.0, 0.0, 0.05)]
+    assert emission_cost(weak[0], weak, weight=100.0) == pytest.approx(0.0)
+    assert emission_cost(weak[0], weak, weight=100.0, absolute=True) == pytest.approx(95.0)
+
+
+def test_an_absolute_path_gives_up_where_only_weak_candidates_remain():
+    strong = {f: [Candidate(10.0 * f, 0.0, 0.95)] for f in range(10)}
+    weak = {f: [Candidate(500.0 - 37.0 * f, 300.0, 0.02)] for f in range(10, 20)}
+    candidates = {**strong, **weak}
+    relative = best_path(candidates, 0, 19, weight=240.0, absent_cost=100.0)
+    absolute = best_path(candidates, 0, 19, weight=240.0, absent_cost=100.0, absolute=True)
+    assert all(relative[f] is not None for f in range(10, 20))
+    assert all(absolute[f] is None for f in range(12, 20))
+    assert all(absolute[f] is not None for f in range(8))

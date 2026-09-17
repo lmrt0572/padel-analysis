@@ -22,8 +22,6 @@ import cv2
 from padel_analysis.eval.ball_dataset import BallAnnotations
 from padel_analysis.io.video_source import VideoSource
 
-WIDTH, HEIGHT = 640, 360
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -32,14 +30,21 @@ def main() -> None:
     parser.add_argument("--exclude", type=int, nargs=2, required=True)
     parser.add_argument("--step", type=int, default=3)
     parser.add_argument("--quality", type=int, default=90)
+    parser.add_argument("--width", type=int, default=640)
+    parser.add_argument("--height", type=int, default=360)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
+    if args.width % 8 or args.height % 8:
+        raise SystemExit(
+            "largeur et hauteur doivent etre multiples de 8 : le reseau divise la "
+            "resolution par deux trois fois, et 540 ne s'y prete pas"
+        )
     low, high = args.exclude
     centres = BallAnnotations.load(args.annotations).centres()
     args.out.mkdir(parents=True, exist_ok=True)
 
-    scale_x, scale_y = WIDTH / 1920, HEIGHT / 1080
+    scale_x, scale_y = args.width / 1920, args.height / 1080
     balls: dict[str, list[float]] = {}
     written = 0
     with VideoSource(args.video) as source:
@@ -48,7 +53,7 @@ def main() -> None:
                 continue
             cv2.imwrite(
                 str(args.out / f"{index:06d}.jpg"),
-                cv2.resize(frame, (WIDTH, HEIGHT)),
+                cv2.resize(frame, (args.width, args.height)),
                 [cv2.IMWRITE_JPEG_QUALITY, args.quality],
             )
             written += 1
@@ -59,7 +64,9 @@ def main() -> None:
                 print(f"  {written} frames", flush=True)
 
     (args.out / "balls.json").write_text(
-        json.dumps({"size": [WIDTH, HEIGHT], "step": args.step, "balls": balls}),
+        json.dumps(
+            {"size": [args.width, args.height], "step": args.step, "balls": balls}
+        ),
         encoding="utf-8",
     )
     print(f"{written} frames ecrites, dont {len(balls)} avec une balle annotee")

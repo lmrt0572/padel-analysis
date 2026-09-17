@@ -5,6 +5,7 @@ lets any 3D court point be projected into the image, which is what contact-surfa
 classification needs in order to tell a glass contact from a mesh contact.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import cv2
@@ -249,3 +250,23 @@ def estimate_intrinsics(
     if best is None:
         raise ValueError("no focal length fitted these correspondences")
     return best[1]
+
+
+def pose_from_calibration(points: Sequence, image_size: tuple[int, int]) -> CameraPose:
+    """The camera pose fitted on a calibration's non-control points.
+
+    One entry point, so that the demo and the measurement scripts cannot drift into
+    recovering different cameras from the same file.
+
+    Raises:
+        ValueError: when every fitting point sits on the ground. A coplanar set leaves
+            the vertical direction free, and the pose it returned would mean nothing.
+    """
+    fit = [p for p in points if not p.is_control]
+    objects = np.array([p.court_xyz for p in fit], dtype=np.float64)
+    pixels = np.array([p.image_xy for p in fit], dtype=np.float64)
+    if not (objects[:, 2] > 0).any():
+        raise ValueError("a camera pose needs fitting points above the ground")
+    return CameraPose.from_correspondences(
+        objects, pixels, estimate_intrinsics(objects, pixels, image_size)
+    )

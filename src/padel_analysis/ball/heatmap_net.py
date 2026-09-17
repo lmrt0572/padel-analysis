@@ -14,6 +14,7 @@ slower - the TU117 has no tensor cores, so half precision buys nothing and the c
 cost everything.
 """
 
+import json
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -102,6 +103,16 @@ def peaks_of(
     return kept
 
 
+def meta_path(weights: Path) -> Path:
+    """Where the training settings of these weights are written.
+
+    The best-validation weights share the file of their training run, so `_best` is
+    dropped from the name before looking.
+    """
+    stem = Path(weights).stem.removesuffix("_best")
+    return Path(weights).with_name(stem + "_meta.json")
+
+
 class NetCandidates:
     """The candidate protocol of `candidates.py`, backed by a trained network.
 
@@ -113,13 +124,28 @@ class NetCandidates:
         self,
         weights: Path,
         spacing: int = 3,
-        width: int = 16,
-        size: tuple[int, int] = (640, 360),
+        width: int | None = None,
+        size: tuple[int, int] | None = None,
         threshold: float = 0.1,
-        suppression: int = 6,
+        suppression: int | None = None,
         limit: int = 20,
         device: str = "cuda",
     ) -> None:
+        meta_file = meta_path(weights)
+        meta = json.loads(meta_file.read_text(encoding="utf-8")) if meta_file.exists() else {}
+        if meta and meta["spacing"] != spacing:
+            raise ValueError(
+                f"these weights were trained with spacing {meta['spacing']}, not {spacing}"
+            )
+        # Sans fichier d'accompagnement : les poids anterieurs, entraines en 640x360.
+        size = size or tuple(meta.get("size", (640, 360)))
+        width = width or meta.get("width", 16)
+        if size[0] % 8 or size[1] % 8:
+            raise ValueError("the network needs a size whose sides are multiples of 8")
+        # La suppression est en pixels de carte : a 1280 de large, une balle y est deux
+        # fois plus grosse qu'a 640, et la meme distance reelle vaut deux fois plus.
+        if suppression is None:
+            suppression = round(6 * size[0] / 640)
         self.spacing = spacing
         self.size = size
         self.threshold = threshold
