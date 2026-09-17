@@ -875,15 +875,16 @@ compte tous les deux.
 #### Une vérité terrain complète
 
 Juger les contacts qu'une chaîne propose ne mesure que sa précision : un mur qu'elle
-n'a jamais proposé n'est jamais jugé. Douze minutes ont donc été **pointées en
+n'a jamais proposé n'est jamais jugé. Quinze minutes ont donc été **pointées en
 entier**, chaque contact réel à l'image près, avec un outil qui n'affiche rien de ce
-que le système détecte (`scripts/mark_contacts.py`) : 942 contacts.
+que le système détecte (`scripts/mark_contacts.py`) : 1 180 contacts.
 
 | Minutes | Contacts | Rôle |
 |---|---|---|
 | Finale féminine, 4 minutes | 316 | réglage, puis entraînement |
 | Finale masculine, 5 minutes | 387 | entraînement |
-| Finale masculine, 3 autres minutes | 239 | **juge, notées une seule fois** |
+| Finale masculine, 3 autres minutes | 239 | **premier juge, noté une seule fois** |
+| Deux minutes féminines, une masculine | 238 | **second juge, noté une seule fois** |
 
 Un contact détecté compte comme juste s'il tombe à trois images ou moins d'un contact
 pointé et porte la bonne surface. Le score combine les deux erreurs visibles :
@@ -914,10 +915,12 @@ joueur est un rebond. Un seuil par indice ne peut pas l'exprimer.
 
 #### Un modèle appris
 
-`contact/learned.py` décrit chaque image par 45 indices — trajectoire, vitesses et
-virages sur une, deux et trois images, score du réseau, geste du poignet le plus
-proche, position de la balle le long du joueur, surfaces que le rayon peut rencontrer
-et où, décision de la chaîne à règles. Un réseau convolutif temporel dilaté, qui voit
+`contact/learned.py` décrit chaque image par 58 indices — trajectoire, vitesses et
+virages sur une, deux et trois images, score du réseau et les autres positions qu'il
+proposait, geste du poignet le plus proche, distances de la balle aux coudes, poignets,
+hanches et chevilles du joueur le plus proche, sa taille apparente qui tient lieu de
+profondeur, surfaces que le rayon peut rencontrer et où, décision de la chaîne à
+règles. Un réseau convolutif temporel dilaté, qui voit
 une soixantaine d'images de contexte, classe chaque image en aucun contact, raquette,
 sol, mur ou filet ; les contacts sont les pics de probabilité. Vitre ou grillage se lit
 ensuite par la géométrie, comme pour les règles : trois contacts de grillage ne
@@ -963,6 +966,45 @@ validation croisée : la sélection n'a pas été flattée.
 Les minutes de juge viennent d'un match dont d'autres minutes ont servi à
 l'entraînement. Le verdict mesure donc le passage à des **échanges jamais vus**, pas à
 un match, un court ou une caméra jamais vus.
+
+#### Un second juge, et ce que la suite a coûté
+
+Le premier verdict a servi à décider que le modèle remplaçait les règles. Il ne pouvait
+donc plus mesurer ce qui a été construit ensuite. Trois minutes de plus ont été mises de
+côté — deux dans la finale féminine, une dans la masculine — pointées puis notées une
+seule fois, après que le modèle a été figé.
+
+Ce qui a été essayé entre les deux verdicts, tout en validation croisée :
+
+| | Contacts justes sur 703 | Score |
+|---|---|---|
+| Modèle du premier verdict | 568 | 0,835 |
+| Symétrie gauche-droite du court | 566 | 0,829 |
+| Contexte temporel doublé, puis quadruplé | 573 / 574 | 0,846 / 0,847 |
+| Réseau plus large | 562 | 0,836 |
+| **Candidats du détecteur et squelette du joueur** | **573** | **0,848** |
+
+Trois graines par essai ont été nécessaires pour les départager : d'une graine à
+l'autre, le score bouge de ±0,006, soit autant que la plupart de ces écarts. Seuls les
+indices supplémentaires gagnent avec les trois graines — cinq contacts justes de plus et
+dix contacts inventés de moins en moyenne. Le contexte élargi, lui, gagne deux fois sur
+trois et perd la troisième : moyenne 0,843 contre 0,841, donc rien. Il n'a pas été
+retenu.
+
+La courbe d'apprentissage, prolongée, s'aplatit : 71,1 % à deux minutes d'entraînement,
+76,8 % à quatre, 78,3 % à six, 80,2 % à huit. Pointer encore rapporterait environ un
+demi-point par minute.
+
+| Second juge, 238 contacts | Règles | Modèle |
+|---|---|---|
+| Surface juste | 139 (58,4 %) | **188 (79,0 %)** |
+| Contacts affichés réels | 83,6 % | **91,7 %** |
+| Score | 0,608 | **0,826** |
+
+Trois mesures indépendantes — validation croisée 80,7 %, premier juge 78,7 %, second
+juge 79,0 % — donnent le même chiffre. Ces minutes-ci viennent des deux finales, donc le
+résultat ne tient pas à un seul match ; il reste établi sur un tournoi et un angle de
+caméra.
 
 ## Limites connues
 
@@ -1136,7 +1178,7 @@ section [Évaluation](#évaluation) ne seraient pas reproductibles :
 | `calibrations/*.json` | 23 points cliqués par vidéo — 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
 | `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
 | `surfaces/*.json` | les 194 contacts à juger et les 194 jugements rendus |
-| `contact_marks/*.json` | tous les contacts de douze minutes pointés à la main, avec leur surface |
+| `contact_marks/*.json` | tous les contacts de quinze minutes pointés à la main, avec leur surface |
 
 **`surfaces/` et `contact_marks/` sont les seuls de ces fichiers qui ne dérivent de rien.** Les surfaces de
 contact ne sont étiquetées dans aucun jeu de données public de padel : ces fichiers sont
