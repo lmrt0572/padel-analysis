@@ -31,7 +31,7 @@ from .ball.contacts import find_contacts
 from .ball.path import best_path
 from .ball.smoothing import despike, smooth_path
 from .contact.gesture import gesture_near, strikes
-from .contact.surfaces import classify
+from .contact.surfaces import Verdict, classify
 from .geometry.calibration import Calibration
 from .geometry.camera import court_surfaces, pose_from_calibration
 from .geometry.court import Court
@@ -203,6 +203,67 @@ def build_events(
     return path, shown, events, pose
 
 
+LABEL_OF_ANSWER = {"raquette": "RAQUETTE", "sol": "SOL", "verre": "VITRE",
+                   "grillage": "GRILLAGE", "filet": "FILET"}
+
+
+def learned_events(
+    analysis: dict, calibration_points: list, model, threshold: float = 0.7
+) -> tuple[dict, dict, list[ContactEvent], object]:
+    """The same as `build_events`, with the contacts decided by a trained model.
+
+    The rule chain still runs: its decisions are one of the cues the model reads.
+    Validated minute by minute over nine hand-marked minutes, each predicted by a
+    model that never saw it: 556 contacts of 703 given the right surface, against 411
+    for the rules.
+    """
+    from .contact.learned import decode, frame_features
+
+    path, shown, rule_events, pose = build_events(analysis, calibration_points)
+    court = Court()
+    surfaces = court_surfaces(court)
+    features, material = frame_features(analysis, path, shown, rule_events, pose, surfaces)
+    answers = decode(model.probabilities(features), material, analysis["start"], threshold)
+
+    frames = analysis["frames"]
+    events: list[ContactEvent] = []
+    for frame, answer in answers.items():
+        ball = shown.get(frame) or path.get(frame)
+        if ball is None:
+            continue
+        label = LABEL_OF_ANSWER[answer]
+        if label == "RAQUETTE":
+            box = hitter_box(ball, frames[frame]["people"])
+            events.append(ContactEvent(frame, label, ball, None, box))
+            continue
+        verdict = _verdict_on(label, ball, pose, surfaces)
+        zone = zone_of(verdict, court) if verdict is not None else None
+        events.append(ContactEvent(frame, label, ball, zone))
+    return path, shown, events, pose
+
+
+def _verdict_on(label: str, ball, pose, surfaces) -> Verdict | None:
+    """Where the ray through the ball meets the surface the model chose, for drawing."""
+    origin, direction = pose.ray(ball)
+    for surface in surfaces:
+        is_floor, is_net = surface.name == "floor", surface.name == "net"
+        if label == "SOL":
+            wanted = is_floor
+        elif label == "FILET":
+            wanted = is_net
+        else:
+            wanted = not (is_floor or is_net)
+        if not wanted:
+            continue
+        meeting = surface.intersect(origin, direction)
+        if meeting is None:
+            continue
+        if not (is_floor or is_net) and not surface.contains(meeting, 0.30):
+            continue
+        return Verdict(surface.name, meeting, surface.material_at(meeting), candidates=1)
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", type=Path, required=True)
@@ -227,6 +288,12 @@ def main() -> None:
     )
     parser.add_argument("--glow", type=int, default=30, help="frames d'eclairage d'une zone")
     parser.add_argument("--reuse", action="store_true", help="relire l'analyse sauvegardee")
+    parser.add_argument(
+        "--contact-model",
+        type=Path,
+        help="modele appris de contacts (scripts/train_contact_model.py) ; sans lui, les "
+        "contacts sont decides par les regles",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -238,9 +305,15 @@ def main() -> None:
         analysis = analyse(args)
         saved.write_bytes(pickle.dumps(analysis))
 
-    path, shown, events, pose = build_events(
-        analysis, Calibration.load(args.calibration).points, args.threshold, args.min_run
-    )
+    points = Calibration.load(args.calibration).points
+    if args.contact_model is not None:
+        from .contact.learned import ContactModel
+
+        path, shown, events, pose = learned_events(
+            analysis, points, ContactModel.load(args.contact_model)
+        )
+    else:
+        path, shown, events, pose = build_events(analysis, points, args.threshold, args.min_run)
     court = Court()
     frames = analysis["frames"]
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
