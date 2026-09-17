@@ -128,8 +128,9 @@ def test_features_give_one_row_per_frame_and_mark_a_missing_ball(synthetic_pose)
     )
     assert features.shape[0] == 20 and material.shape == (20,)
     assert features[3, 0] == 1.0 and features[15, 0] == 0.0
-    geometry = slice(-5 - 13, -5)
-    assert features[3, geometry].any()
-    assert not features[15, geometry].any()
+    # Une image sans balle est decrite de la meme facon a chaque fois, et autrement
+    # qu'une image ou la balle est la.
+    np.testing.assert_array_equal(features[15], features[16])
+    assert (features[3] != features[15]).any()
     assert features[5, -5:].tolist() == [0.0, 1.0, 0.0, 0.0, 0.0]
     assert not features[6, -5:].any()

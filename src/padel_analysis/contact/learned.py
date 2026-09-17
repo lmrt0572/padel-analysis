@@ -7,7 +7,9 @@ is a shot, the same turn with the ball at a player's feet is a bounce. A network
 sees every cue over a few dozen frames learns those combinations from the hand-marked
 minutes.
 
-Every frame gets a vector of cues. A dilated 1D convolution labels each frame as no
+Every frame gets a vector of cues: the path and its turns, what else the detector
+proposed there, the nearest player's limbs and apparent size, and the surfaces the ray
+can meet. A dilated 1D convolution labels each frame as no
 contact, racket, floor, wall or net. Contacts are the local peaks of the contact
 probability. Glass or mesh is then read from the geometry, as the rule chain does:
 the three mesh contacts in the marked minutes are too few to learn from.
@@ -85,10 +87,61 @@ def frame_features(
         row += _height_by_player(ball, frames[frame]["people"])
         wall, cues = _geometry(ball, pose, surfaces)
         row += cues
+        row += _candidates(ball, frames[frame]["raw"], smooth.get(frame - 1))
+        row += _skeleton(ball, frames[frame]["people"], height)
         row += [rule.get(frame) == label for label in RULE_LABELS]
         rows.append(row)
         material.append(wall)
     return np.asarray(rows, dtype=np.float32), np.asarray(material, dtype=np.int64)
+
+
+ELBOWS, WRISTS, HIPS, ANKLES = (7, 8), (9, 10), (11, 12), (15, 16)
+
+
+def _candidates(ball: Point | None, raw: Sequence, previous: Point | None) -> list[float]:
+    """What the detector proposed at this frame, beyond the point the path kept.
+
+    A frame where the path sits far from the detector's own best peak is a frame where
+    the ball was hidden or confused, which is where contacts get lost.
+    """
+    best = sorted(raw, key=lambda c: -c.score)
+    row = [len(best) / 10]
+    row += [best[index].score if index < len(best) else 0.0 for index in range(3)]
+    away = math.dist(ball, (best[0].x, best[0].y)) / 100 if ball and best else 3.0
+    row += [min(away, 3.0)]
+    row += [min(math.dist(ball, previous) / 20, 3.0) if ball and previous else 0.0]
+    return row
+
+
+def _skeleton(ball: Point | None, people: Sequence, height: int) -> list[float]:
+    """The nearest player's limbs around the ball, and how far the next player stands.
+
+    A shot is taken with the arm, a bounce happens near the feet. The apparent size of
+    the player stands in for depth, which one camera cannot measure.
+    """
+    if ball is None or not people:
+        return [0.0, *[3.0] * 4, 0.0, 3.0]
+    ordered = sorted(people, key=lambda p: math.dist(ball, _centre(p)))
+    near = ordered[0]
+    top, bottom = float(near.bbox[1]), float(near.bbox[3])
+    row = [(bottom - top) / height]
+    for joints in (ELBOWS, WRISTS, HIPS, ANKLES):
+        gaps = [math.dist(ball, near.keypoints[j][:2]) / 100 for j in joints
+                if near.keypoints[j][2] > 0.3]
+        row += [min(min(gaps, default=3.0), 3.0)]
+    ankles = [near.keypoints[j][1] for j in ANKLES if near.keypoints[j][2] > 0.3]
+    foot = max(ankles, default=bottom)
+    # Hauteur de la balle au-dessus des pieds, en tailles de joueur : contrairement aux
+    # pixels, elle ne depend pas de la profondeur.
+    row += [max(min((foot - ball[1]) / max(bottom - top, 1.0), 3.0), -3.0)]
+    other = min((math.dist(ball, _centre(p)) for p in ordered[1:]), default=1500.0)
+    row += [min(other / 500, 3.0)]
+    return row
+
+
+def _centre(person) -> Point:
+    x1, y1, x2, y2 = person.bbox[:4]
+    return (float(x1 + x2) / 2, float(y1 + y2) / 2)
 
 
 def _height_by_player(ball: Point | None, people: Sequence) -> list[float]:
