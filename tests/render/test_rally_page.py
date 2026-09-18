@@ -5,7 +5,7 @@ import pytest
 
 from padel_analysis.analytics.rally import Rally, RallyContact
 from padel_analysis.eval.contact_marks import pair_contacts
-from padel_analysis.render.rally_page import RELIABILITY, page, rally_payload
+from padel_analysis.render.rally_page import RELIABILITY, page, player_path, rally_payload
 
 
 def _rally():
@@ -82,3 +82,16 @@ def test_the_page_offers_a_toggle_for_every_panel():
 def test_a_name_cannot_close_the_data_script():
     payload = rally_payload(_rally(), "r1", "t", {"near_1": "</script><b>"}, "r1.mp4")
     assert "</script><b>" not in page([payload])
+
+
+def test_a_tracking_jump_cuts_the_trace_instead_of_crossing_the_court():
+    track = {0: (0.0, -6.0), 3: (0.2, -6.0), 6: (4.0, 6.0), 9: (4.1, 6.1)}
+    path = player_path(Rally(0, 9, 30.0, (), {"near_1": track}), track)
+    assert path[2] is None
+    assert [p[1:] for p in path if p] == [[0.0, -6.0], [0.2, -6.0], [4.0, 6.0], [4.1, 6.1]]
+
+
+def test_a_position_outside_the_court_is_left_out_of_the_trace():
+    track = {0: (0.0, -6.0), 3: (9.0, 14.0), 6: (0.1, -6.0)}
+    path = player_path(Rally(0, 6, 30.0, (), {"near_1": track}), track)
+    assert [p[1:] if p else None for p in path] == [[0.0, -6.0], None, [0.1, -6.0]]

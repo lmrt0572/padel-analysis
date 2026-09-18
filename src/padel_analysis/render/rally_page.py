@@ -22,6 +22,8 @@ from ..analytics.rally import (
 from ..eval.contact_marks import Pairing
 
 PATH_STEP = 3  # une position de joueur toutes les 3 images suffit au plan anime
+MAX_STEP = 2.0  # metres entre deux points d'une trace : au-dela, c'est un saut du suivi
+COURT_MARGIN = (5.5, 10.5)
 
 RELIABILITY = {
     "frise": "Contacts et surfaces : 77,7 % des contacts réels donnés avec la bonne "
@@ -53,11 +55,7 @@ def rally_payload(
     players = {}
     for slot in sorted(set(rally.positions) | set(shots)):
         track = rally.positions.get(slot, {})
-        path = [
-            [round((frame - rally.start) / rally.fps, 3), round(x, 2), round(y, 2)]
-            for frame, (x, y) in sorted(track.items())
-            if (frame - rally.start) % PATH_STEP == 0
-        ]
+        path = player_path(rally, track)
         move = moves.get(slot)
         players[slot] = {
             "name": names.get(slot, slot),
@@ -112,6 +110,30 @@ def rally_payload(
             for line in truth
         ],
     }
+
+
+def player_path(rally: Rally, track: dict) -> list[list[float] | None]:
+    """A player's trace for the page: [seconds, x, y] points, None where it breaks.
+
+    A position far outside the court, or one that jumps further than a player can run
+    between two points, is a tracking slip. Joined to the rest, it would draw a line
+    across the court that nobody ran; the trace is cut there instead.
+    """
+    points: list[list[float] | None] = []
+    last = None
+    for frame, (x, y) in sorted(track.items()):
+        if (frame - rally.start) % PATH_STEP:
+            continue
+        if abs(x) > COURT_MARGIN[0] or abs(y) > COURT_MARGIN[1]:
+            if points and points[-1] is not None:
+                points.append(None)
+            last = None
+            continue
+        if last is not None and ((x - last[0]) ** 2 + (y - last[1]) ** 2) ** 0.5 > MAX_STEP:
+            points.append(None)
+        points.append([round((frame - rally.start) / rally.fps, 3), round(x, 2), round(y, 2)])
+        last = (x, y)
+    return points
 
 
 def page(payloads: Sequence[dict], title: str = "Padel Analysis — échanges") -> str:

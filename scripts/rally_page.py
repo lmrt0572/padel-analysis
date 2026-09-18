@@ -13,6 +13,7 @@ Usage:
 """
 
 import argparse
+import json
 import pickle
 import shutil
 import subprocess
@@ -96,6 +97,9 @@ def main() -> None:
 
     target = args.out / "index.html"
     target.write_text(page(payloads), encoding="utf-8")
+    # Les memes donnees, pour les figures du README (scripts/make_figures.py).
+    (args.out / "data.json").write_text(json.dumps(payloads, ensure_ascii=False),
+                                        encoding="utf-8")
     print(f"ecrit {target}")
 
 

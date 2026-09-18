@@ -253,9 +253,16 @@ const DATA = {{DATA}};
     // Le plan est dessine camera en bas : y du court vers le haut de l'image.
     for (const [slot, player] of Object.entries(rally.players)) {
       if (!player.path.length) continue;
-      el("polyline", { points: player.path.map(p => `${p[1]},${-p[2]}`).join(" "),
-                       fill: "none", stroke: playerColour(slot), "stroke-width": 0.08,
-                       "stroke-opacity": 0.45 }, svg);
+      // Une trace coupee (null) aux sauts du suivi : un trait par morceau.
+      let piece = [];
+      for (const p of [...player.path, null]) {
+        if (p) { piece.push(`${p[1]},${-p[2]}`); continue; }
+        if (piece.length > 1) {
+          el("polyline", { points: piece.join(" "), fill: "none", stroke: playerColour(slot),
+                           "stroke-width": 0.08, "stroke-opacity": 0.45 }, svg);
+        }
+        piece = [];
+      }
       el("circle", { id: "dot-" + slot, r: 0.35, fill: playerColour(slot),
                      stroke: css("--bg"), "stroke-width": 0.08 }, svg);
     }
@@ -281,9 +288,11 @@ const DATA = {{DATA}};
   }
 
   function positionAt(path, t) {
-    if (!path.length) return null;
-    let best = path[0];
-    for (const p of path) { if (p[0] <= t) best = p; else break; }
+    let best = null;
+    for (const p of path) {
+      if (!p) continue;
+      if (best === null || p[0] <= t) best = p; else break;
+    }
     return best;
   }
 
