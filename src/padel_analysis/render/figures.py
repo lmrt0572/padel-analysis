@@ -77,7 +77,8 @@ def learning_curve_chart(curve: Sequence[dict], path: Path) -> None:
     figure, axis = plt.subplots(figsize=(7, 4))
     axis.plot(sizes, shares, color=style.MODEL, marker="o", linewidth=2.2, zorder=2)
     for size, share in zip(sizes, shares, strict=True):
-        axis.annotate(f"{share:.1f} %", (size, share), textcoords="offset points",
+        axis.annotate(f"{share:.1f} %".replace(".", ","), (size, share),
+                      textcoords="offset points",
                       xytext=(0, 9), ha="center", fontsize=9)
     axis.set_xlabel("minutes de match pointées pour l'entraînement")
     axis.set_ylabel("surface juste (%), validation croisée")

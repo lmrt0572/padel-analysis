@@ -113,7 +113,9 @@ La courbe d'apprentissage et la confusion entre surfaces sont dans le
 - **Le suivi d'identité se dégrade** sur le match tenu à l'écart, où les joueurs se
   croisent plus souvent de près, et ne traverse pas un changement de côté.
 - **Grillage et filet ne sont pas mesurables** : quelques exemples seulement.
-- **Un contact sur cinq reste faux ou manqué** sur ce que la démonstration affiche.
+- **Un contact sur cinq reste faux ou manqué** sur ce que la démonstration affiche,
+  et la vitre est le point faible : la moitié seulement des contacts sur la vitre
+  sont retrouvés.
 - **Un seul annotateur** pour les vérités terrain produites à la main.
 
 ## Installation
