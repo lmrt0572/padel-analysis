@@ -241,7 +241,8 @@ def learned_events(
         verdict = _verdict_on(label, ball, pose, surfaces)
         light = zone_of if whole_zone else impact_patch
         zone = light(verdict, court) if verdict is not None else None
-        events.append(ContactEvent(frame, label, ball, zone))
+        point = verdict.point if verdict is not None else None
+        events.append(ContactEvent(frame, label, ball, zone, point=point))
     return path, shown, events, pose
 
 
@@ -340,8 +341,6 @@ def main() -> None:
         )
     else:
         path, shown, events, pose = build_events(analysis, points, args.threshold, args.min_run)
-    court = Court()
-    frames = analysis["frames"]
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
     hidden = sum(1 for f in path if path[f] is not None and shown[f] is None)
     print(
@@ -350,29 +349,37 @@ def main() -> None:
         flush=True,
     )
 
-    minimap = Minimap(court)
     print("passe 2 : rendu", flush=True)
-    with VideoSource(args.video) as source, VideoWriter(
-        args.out, source.metadata.fps, analysis["size"]
+    render(args.video, analysis, events, pose, drawn, args.out,
+           analysis["start"], analysis["stop"], args.glow, args.hitter_glow)
+    print(f"ecrit {args.out}")
+
+
+def render(
+    video: Path, analysis: dict, events: list[ContactEvent], pose, drawn: dict, out: Path,
+    start: int, stop: int, glow: int = 30, hitter_glow: int = 12,
+) -> None:
+    """Second pass: draw players, minimap, ball trail and lit contacts on each frame."""
+    frames = analysis["frames"]
+    minimap = Minimap(Court())
+    with VideoSource(video) as source, VideoWriter(
+        out, source.metadata.fps, analysis["size"]
     ) as writer:
-        for index, frame in source.iter_frames(
-            start=analysis["start"], stop=analysis["stop"] + 1
-        ):
+        for index, frame in source.iter_frames(start=start, stop=stop + 1):
             data = frames.get(index, {})
             canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}))
-            for event in visible_events(events, index, args.glow):
+            for event in visible_events(events, index, glow):
                 if event.zone is not None:
-                    strength = 1.0 - (index - event.frame) / args.glow
+                    strength = 1.0 - (index - event.frame) / glow
                     canvas = draw_zone(canvas, event.zone, pose, strength)
-            for event in visible_events(events, index, args.hitter_glow):
+            for event in visible_events(events, index, hitter_glow):
                 if event.box is not None:
-                    strength = 1.0 - (index - event.frame) / args.hitter_glow
+                    strength = 1.0 - (index - event.frame) / hitter_glow
                     box = following_box(event.box, data.get("people", []))
                     canvas = draw_hitter(canvas, box, strength)
             canvas = draw_ball(canvas, trail(drawn, index), [])
             canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {})))
             writer.write(canvas)
-    print(f"ecrit {args.out}")
 
 
 if __name__ == "__main__":

@@ -27,6 +27,9 @@ padel-analyse = "padel_analysis.analyse:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+padel_analysis = ["render/*.html"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
