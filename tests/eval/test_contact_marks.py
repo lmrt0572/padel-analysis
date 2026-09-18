@@ -1,6 +1,14 @@
 import pytest
 
-from padel_analysis.eval.contact_marks import ContactMarks, match_contacts
+from padel_analysis.eval.contact_marks import (
+    INVENTED,
+    MISSED,
+    RIGHT,
+    WRONG_SURFACE,
+    ContactMarks,
+    match_contacts,
+    pair_contacts,
+)
 
 
 def _marks():
@@ -51,3 +59,22 @@ def test_one_mark_cannot_be_claimed_by_two_detections():
     result = match_contacts({149: "sol", 151: "sol"}, {150: "sol"}, tolerance=3)
     assert result.found == 1
     assert result.invented == 1
+
+
+def test_each_detection_and_each_mark_gets_one_line():
+    detected = {10: "sol", 30: "raquette", 80: "verre"}
+    marks = {11: "sol", 31: "sol", 50: "raquette"}
+    lines = pair_contacts(detected, marks, tolerance=3)
+    assert [(line.detected_frame, line.marked_frame, line.status) for line in lines] == [
+        (10, 11, RIGHT), (30, 31, WRONG_SURFACE), (80, None, INVENTED), (None, 50, MISSED),
+    ]
+
+
+def test_the_pairing_and_the_counts_always_agree():
+    detected = {10: "sol", 12: "sol", 40: "verre", 70: "raquette"}
+    marks = {11: "sol", 41: "sol", 90: "raquette"}
+    lines = pair_contacts(detected, marks)
+    counts = match_contacts(detected, marks)
+    assert counts.invented == sum(line.status == INVENTED for line in lines) == 2
+    assert counts.missed == sum(line.status == MISSED for line in lines) == 1
+    assert counts.right_surface == sum(line.status == RIGHT for line in lines) == 1
