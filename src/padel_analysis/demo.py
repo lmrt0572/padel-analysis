@@ -44,11 +44,12 @@ from .render.ball_overlay import (
     contact_label,
     draw_ball,
     draw_hitter,
+    following_box,
     hitter_box,
     trail,
     visible_events,
 )
-from .render.court_zones import draw_zone, zone_of
+from .render.court_zones import draw_zone, impact_patch, zone_of
 from .render.minimap import Minimap
 from .render.overlay import draw_people, paste_minimap
 from .render.video_writer import VideoWriter
@@ -208,7 +209,8 @@ LABEL_OF_ANSWER = {"raquette": "RAQUETTE", "sol": "SOL", "verre": "VITRE",
 
 
 def learned_events(
-    analysis: dict, calibration_points: list, model, threshold: float = 0.7
+    analysis: dict, calibration_points: list, model, threshold: float = 0.7,
+    whole_zone: bool = True,
 ) -> tuple[dict, dict, list[ContactEvent], object]:
     """The same as `build_events`, with the contacts decided by a trained model.
 
@@ -237,14 +239,21 @@ def learned_events(
             events.append(ContactEvent(frame, label, ball, None, box))
             continue
         verdict = _verdict_on(label, ball, pose, surfaces)
-        zone = zone_of(verdict, court) if verdict is not None else None
+        light = zone_of if whole_zone else impact_patch
+        zone = light(verdict, court) if verdict is not None else None
         events.append(ContactEvent(frame, label, ball, zone))
     return path, shown, events, pose
 
 
 def _verdict_on(label: str, ball, pose, surfaces) -> Verdict | None:
-    """Where the ray through the ball meets the surface the model chose, for drawing."""
+    """Where the ray through the ball meets the surface the model chose, for drawing.
+
+    Several walls can be admissible at once, and the list order used to decide, which
+    lit a back wall for a contact on a side one. The ball is on the first surface the
+    ray reaches: anything behind it would be hidden by it.
+    """
     origin, direction = pose.ray(ball)
+    reached = []
     for surface in surfaces:
         is_floor, is_net = surface.name == "floor", surface.name == "net"
         if label == "SOL":
@@ -260,8 +269,11 @@ def _verdict_on(label: str, ball, pose, surfaces) -> Verdict | None:
             continue
         if not (is_floor or is_net) and not surface.contains(meeting, 0.30):
             continue
-        return Verdict(surface.name, meeting, surface.material_at(meeting), candidates=1)
-    return None
+        reached.append((float(np.linalg.norm(meeting - origin)), surface, meeting))
+    if not reached:
+        return None
+    _, surface, meeting = min(reached, key=lambda item: item[0])
+    return Verdict(surface.name, meeting, surface.material_at(meeting), candidates=len(reached))
 
 
 def main() -> None:
@@ -287,12 +299,25 @@ def main() -> None:
         help="images consecutives sures pour afficher une trajectoire",
     )
     parser.add_argument("--glow", type=int, default=30, help="frames d'eclairage d'une zone")
+    parser.add_argument(
+        "--hitter-glow",
+        type=int,
+        default=12,
+        help="frames d'eclairage du frappeur. Plus court qu'une zone : le geste dure moins "
+        "longtemps qu'un rebond ne se lit",
+    )
     parser.add_argument("--reuse", action="store_true", help="relire l'analyse sauvegardee")
     parser.add_argument(
         "--contact-model",
         type=Path,
         help="modele appris de contacts (scripts/train_contact_model.py) ; sans lui, les "
         "contacts sont decides par les regles",
+    )
+    parser.add_argument(
+        "--impact-patch",
+        action="store_true",
+        help="eclairer seulement le point d'impact, sur environ 1,5 m, au lieu de toute "
+        "la zone touchee",
     )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -310,7 +335,8 @@ def main() -> None:
         from .contact.learned import ContactModel
 
         path, shown, events, pose = learned_events(
-            analysis, points, ContactModel.load(args.contact_model)
+            analysis, points, ContactModel.load(args.contact_model),
+            whole_zone=not args.impact_patch,
         )
     else:
         path, shown, events, pose = build_events(analysis, points, args.threshold, args.min_run)
@@ -335,11 +361,14 @@ def main() -> None:
             data = frames.get(index, {})
             canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}))
             for event in visible_events(events, index, args.glow):
-                strength = 1.0 - (index - event.frame) / args.glow
                 if event.zone is not None:
+                    strength = 1.0 - (index - event.frame) / args.glow
                     canvas = draw_zone(canvas, event.zone, pose, strength)
-                elif event.box is not None:
-                    canvas = draw_hitter(canvas, event.box, strength)
+            for event in visible_events(events, index, args.hitter_glow):
+                if event.box is not None:
+                    strength = 1.0 - (index - event.frame) / args.hitter_glow
+                    box = following_box(event.box, data.get("people", []))
+                    canvas = draw_hitter(canvas, box, strength)
             canvas = draw_ball(canvas, trail(drawn, index), [])
             canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {})))
             writer.write(canvas)

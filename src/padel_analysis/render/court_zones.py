@@ -21,12 +21,14 @@ from ..geometry.court import Court
 
 Point = tuple[float, float]
 Corner = tuple[float, float, float]
+Corner2 = tuple[float, float]
 
 FLOOR = (80, 200, 80)
 GLASS = (255, 200, 60)
 MESH = (170, 170, 170)
 NET = (80, 220, 255)
 NEAR_WALL_BAND = 0.4
+PATCH_SIZE = 1.5
 
 
 @dataclass(frozen=True)
@@ -95,6 +97,67 @@ def zone_of(verdict: Verdict, court: Court) -> Zone | None:
     return Zone(f"cote_{side}_grillage", "line", ((wall_x, -glass_from), (wall_x, glass_from)),
                 MESH, ((wall_x, -glass_from, 0.0), (wall_x, glass_from, 0.0),
                        (wall_x, glass_from, top), (wall_x, -glass_from, top)))
+
+
+def impact_patch(verdict: Verdict, court: Court, size: float = PATCH_SIZE) -> Zone | None:
+    """A square of the surface itself, centred on where the ball hit it.
+
+    Lighting a whole zone turns the position error into a change of zone: a bounce ten
+    centimetres from the service line lights the entire back of the court, and the pose
+    error reaches 56 cm at the far baseline. A patch moves with the error instead, and
+    says where the ball landed rather than which box it belongs to.
+    """
+    if verdict.surface in (None, RACKET) or verdict.point is None:
+        return None
+    x, y, z = (float(v) for v in verdict.point)
+    half = size / 2
+    if verdict.surface == "floor":
+        corners = _clamp_square((x, y), half, (-court.half_width, court.half_width),
+                                (-court.half_length, court.half_length))
+        footprint = tuple((a, b) for a, b in corners)
+        return Zone("impact_sol", "area", footprint, FLOOR,
+                    tuple((a, b, 0.0) for a, b in corners))
+
+    if verdict.surface == "net":
+        top = court.net_height_posts
+        low, high = max(0.0, min(z, top) - half), min(top, max(z, 0.0) + half)
+        left, right = _clamp_line(x, half, court.half_width)
+        return Zone("impact_filet", "line", ((left, 0.0), (right, 0.0)), NET,
+                    ((left, 0.0, low), (right, 0.0, low),
+                     (right, 0.0, high), (left, 0.0, high)))
+
+    colour = MESH if verdict.material == "grillage" else GLASS
+    if verdict.surface.startswith("back_wall"):
+        top = court.back_wall_total_height
+        low, high = max(0.0, min(z, top) - half), min(top, max(z, 0.0) + half)
+        left, right = _clamp_line(x, half, court.half_width)
+        depth = court.half_length if y > 0 else -court.half_length
+        half_name = "eloigne" if y > 0 else "proche"
+        return Zone(f"impact_fond_{half_name}", "line", ((left, depth), (right, depth)), colour,
+                    ((left, depth, low), (right, depth, low),
+                     (right, depth, high), (left, depth, high)))
+
+    top = court.side_wall_total_height
+    low, high = max(0.0, min(z, top) - half), min(top, max(z, 0.0) + half)
+    near, far = _clamp_line(y, half, court.half_length)
+    wall_x = court.half_width if x > 0 else -court.half_width
+    side = "droite" if x > 0 else "gauche"
+    return Zone(f"impact_cote_{side}", "line", ((wall_x, near), (wall_x, far)), colour,
+                ((wall_x, near, low), (wall_x, far, low),
+                 (wall_x, far, high), (wall_x, near, high)))
+
+
+def _clamp_line(centre: float, half: float, limit: float) -> tuple[float, float]:
+    """The segment of `2 * half` around `centre`, kept inside the surface."""
+    low = max(-limit, min(centre, limit) - half)
+    high = min(limit, max(centre, -limit) + half)
+    return low, high
+
+
+def _clamp_square(centre: Point, half: float, x_limits, y_limits) -> tuple[Corner2, ...]:
+    left, right = _clamp_line(centre[0], half, x_limits[1])
+    near, far = _clamp_line(centre[1], half, y_limits[1])
+    return ((left, near), (right, near), (right, far), (left, far))
 
 
 def draw_zone(

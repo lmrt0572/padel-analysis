@@ -2,7 +2,7 @@ import numpy as np
 
 from padel_analysis.contact.surfaces import RACKET, Verdict
 from padel_analysis.geometry.court import Court
-from padel_analysis.render.court_zones import zone_of
+from padel_analysis.render.court_zones import impact_patch, zone_of
 
 
 def _v(surface, point, material=None):
@@ -85,3 +85,37 @@ def test_the_near_back_wall_lights_only_its_foot():
     """La camera est derriere : le panneau entier couvrirait la moitie de l'image."""
     zone = zone_of(_v("back_wall_negative_y", (0.0, -10.0, 1.5), "verre"), Court())
     assert max(corner[2] for corner in zone.corners) <= 0.5
+
+
+def test_an_impact_patch_is_a_square_centred_on_the_bounce():
+    patch = impact_patch(_v("floor", (2.0, 3.0, 0.0)), Court(), size=1.5)
+    xs = [corner[0] for corner in patch.corners]
+    ys = [corner[1] for corner in patch.corners]
+    assert (min(xs), max(xs)) == (1.25, 2.75)
+    assert (min(ys), max(ys)) == (2.25, 3.75)
+    assert {corner[2] for corner in patch.corners} == {0.0}
+
+
+def test_an_impact_patch_never_leaves_the_court():
+    patch = impact_patch(_v("floor", (4.9, -9.8, 0.0)), Court(), size=1.5)
+    court = Court()
+    assert max(corner[0] for corner in patch.corners) == court.half_width
+    assert min(corner[1] for corner in patch.corners) == -court.half_length
+
+
+def test_a_wall_patch_stands_on_the_wall_at_the_impact_height():
+    court = Court()
+    patch = impact_patch(_v("side_wall_positive_x", (5.0, 2.0, 2.0)), court, size=1.5)
+    assert {corner[0] for corner in patch.corners} == {court.half_width}
+    assert min(corner[2] for corner in patch.corners) == 1.25
+    assert max(corner[2] for corner in patch.corners) == 2.75
+
+
+def test_a_wall_patch_is_kept_under_the_top_of_the_wall():
+    court = Court()
+    patch = impact_patch(_v("back_wall_positive_y", (0.0, 10.0, 3.9), "grillage"), court)
+    assert max(corner[2] for corner in patch.corners) == court.back_wall_total_height
+
+
+def test_a_racket_contact_lights_no_patch():
+    assert impact_patch(Verdict(RACKET, None, None, 0), Court()) is None

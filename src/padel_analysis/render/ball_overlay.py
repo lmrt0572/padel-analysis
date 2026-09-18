@@ -104,6 +104,24 @@ def hitter_box(ball: Point, people: Sequence) -> np.ndarray | None:
     return best
 
 
+def following_box(box: np.ndarray, people: Sequence, jump: float = 120.0) -> np.ndarray:
+    """The same player's box on a later frame, found by the nearest centre.
+
+    A strike lasts a few frames and the striker keeps moving. Lighting the box of the
+    contact frame would leave a bright rectangle behind them; this follows them. `jump`
+    caps how far the box may move, so a missed detection falls back on the last known
+    box rather than jumping to somebody else.
+    """
+    centre = ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
+    best, nearest = box, jump
+    for person in people:
+        other = ((person.bbox[0] + person.bbox[2]) / 2, (person.bbox[1] + person.bbox[3]) / 2)
+        distance = float(np.hypot(other[0] - centre[0], other[1] - centre[1]))
+        if distance < nearest:
+            best, nearest = person.bbox, distance
+    return best
+
+
 def draw_hitter(
     frame: np.ndarray, box: np.ndarray, strength: float, colour=(255, 255, 255)
 ) -> np.ndarray:
