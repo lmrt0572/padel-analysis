@@ -86,3 +86,18 @@ def test_a_rally_carries_the_players_positions_over_its_frames_only():
     assert set(rally.positions) == {"near_1", "far_1"}
     assert min(rally.positions["near_1"]) == 110 and max(rally.positions["near_1"]) == 180
     assert rally.positions["far_1"][150] == (-2.0, 7.0)
+
+
+def test_a_lit_box_the_tracker_left_out_falls_back_on_the_nearest_tracked_player():
+    analysis, _ = _analysis()
+    frame = analysis["frames"][120]
+    stranger = np.array([150.0, 520.0, 200.0, 690.0])
+    assert striker_slot(stranger, frame["people"], frame["assignment"],
+                        ball=(165.0, 560.0)) == "near_1"
+
+
+def test_without_a_ball_an_unknown_box_still_has_no_slot():
+    analysis, _ = _analysis()
+    frame = analysis["frames"][120]
+    assert striker_slot(np.array([0.0, 0.0, 1.0, 1.0]), frame["people"],
+                        frame["assignment"]) is None

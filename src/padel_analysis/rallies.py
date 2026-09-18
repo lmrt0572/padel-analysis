@@ -53,15 +53,30 @@ def load_specs(path: str | Path) -> list[RallySpec]:
     ]
 
 
-def striker_slot(box: np.ndarray | None, people: Sequence, assignment: dict) -> str | None:
-    """The slot of the player whose box was lit for a strike, if the tracker had one."""
-    if box is None:
-        return None
+def striker_slot(
+    box: np.ndarray | None, people: Sequence, assignment: dict, ball=None
+) -> str | None:
+    """The slot of the player who struck.
+
+    The player whose box was lit, when the tracker holds them. The lit box can belong to
+    a detection the tracker left out - a player half hidden, or a figure beside the
+    court - and a strike still has a striker: then it is the tracked player whose box
+    is nearest the ball.
+    """
     slot_of_index = {index: slot for slot, index in assignment.items()}
-    for index, person in enumerate(people):
-        if np.array_equal(person.bbox, box):
-            return slot_of_index.get(index)
-    return None
+    if box is not None:
+        for index, person in enumerate(people):
+            if np.array_equal(person.bbox, box) and index in slot_of_index:
+                return slot_of_index[index]
+    if ball is None:
+        return None
+    nearest, best = None, float("inf")
+    for index, slot in slot_of_index.items():
+        x1, y1, x2, y2 = people[index].bbox[:4]
+        gap = np.hypot(max(x1 - ball[0], 0.0, ball[0] - x2), max(y1 - ball[1], 0.0, ball[1] - y2))
+        if gap < best:
+            nearest, best = slot, gap
+    return nearest
 
 
 def build_rally(analysis: dict, events: Sequence, spec: RallySpec, fps: float) -> Rally:
@@ -77,7 +92,7 @@ def build_rally(analysis: dict, events: Sequence, spec: RallySpec, fps: float) -
         if kind == "raquette":
             frame = frames.get(event.frame, {})
             player = striker_slot(event.box, frame.get("people", []),
-                                  frame.get("assignment", {}))
+                                  frame.get("assignment", {}), event.pixel)
         contacts.append(RallyContact(event.frame, kind, point, player))
 
     positions: dict[str, dict[int, tuple[float, float]]] = {}

@@ -357,17 +357,29 @@ def main() -> None:
 
 def render(
     video: Path, analysis: dict, events: list[ContactEvent], pose, drawn: dict, out: Path,
-    start: int, stop: int, glow: int = 30, hitter_glow: int = 12,
+    start: int, stop: int, glow: int = 30, hitter_glow: int = 12, side=None,
+    minimap: bool = True, labels: dict | None = None, colours: dict | None = None,
 ) -> None:
-    """Second pass: draw players, minimap, ball trail and lit contacts on each frame."""
+    """Second pass: draw players, minimap, ball trail and lit contacts on each frame.
+
+    Args:
+        side: optional panel drawn to the right of the picture, as `side(frame)` returning
+            an image of the video's height. The picture itself is left whole.
+        minimap: paste the minimap in the picture's top-right corner.
+        labels, colours: names and BGR colours of the players' boxes, by slot.
+    """
     frames = analysis["frames"]
-    minimap = Minimap(Court())
+    court_map = Minimap(Court()) if minimap else None
+    width, height = analysis["size"]
+    if side is not None:
+        width += side(start).shape[1]
     with VideoSource(video) as source, VideoWriter(
-        out, source.metadata.fps, analysis["size"]
+        out, source.metadata.fps, (width, height)
     ) as writer:
         for index, frame in source.iter_frames(start=start, stop=stop + 1):
             data = frames.get(index, {})
-            canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}))
+            canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}),
+                                 labels=labels, colours=colours)
             for event in visible_events(events, index, glow):
                 if event.zone is not None:
                     strength = 1.0 - (index - event.frame) / glow
@@ -378,7 +390,10 @@ def render(
                     box = following_box(event.box, data.get("people", []))
                     canvas = draw_hitter(canvas, box, strength)
             canvas = draw_ball(canvas, trail(drawn, index), [])
-            canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {})))
+            if court_map is not None:
+                canvas = paste_minimap(canvas, court_map.draw(data.get("positions", {})))
+            if side is not None:
+                canvas = np.hstack([canvas, side(index)])
             writer.write(canvas)
 
 
