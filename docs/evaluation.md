@@ -875,9 +875,9 @@ compte tous les deux.
 #### Une vérité terrain complète
 
 Juger les contacts qu'une chaîne propose ne mesure que sa précision : un mur qu'elle
-n'a jamais proposé n'est jamais jugé. Quinze minutes ont donc été **pointées en
+n'a jamais proposé n'est jamais jugé. Vingt minutes ont donc été **pointées en
 entier**, chaque contact réel à l'image près, avec un outil qui n'affiche rien de ce
-que le système détecte (`scripts/mark_contacts.py`) : 1 180 contacts.
+que le système détecte (`scripts/mark_contacts.py`) : 1 579 contacts.
 
 | Minutes | Contacts | Rôle |
 |---|---|---|
@@ -885,6 +885,8 @@ que le système détecte (`scripts/mark_contacts.py`) : 1 180 contacts.
 | Finale masculine, 5 minutes | 387 | entraînement |
 | Finale masculine, 3 autres minutes | 239 | **premier juge, noté une seule fois** |
 | Deux minutes féminines, une masculine | 238 | **second juge, noté une seule fois** |
+| Une minute de chaque finale | 160 | entraînement |
+| Deux minutes féminines, une masculine | 239 | **troisième juge, noté une seule fois** |
 
 Un contact détecté compte comme juste s'il tombe à trois images ou moins d'un contact
 pointé et porte la bonne surface. Le score combine les deux erreurs visibles :
@@ -1005,6 +1007,60 @@ Trois mesures indépendantes — validation croisée 80,7 %, premier juge 78,7 %
 juge 79,0 % — donnent le même chiffre. Ces minutes-ci viennent des deux finales, donc le
 résultat ne tient pas à un seul match ; il reste établi sur un tournoi et un angle de
 caméra.
+
+#### Un troisième juge, pour l'enchaînement de l'échange
+
+Le dernier levier envisagé était la structure de l'échange : après une frappe vient un
+sol ou un mur, deux frappes à quelques images d'écart sont rares. Écrite en règles
+strictes, elle avait échoué (voir plus haut). Elle a été reprise en probabilités : le
+réseau propose des contacts candidats avec un seuil bas, une table apprise sur les
+pointages donne la probabilité de chaque étiquette selon la précédente et l'écart en
+images, et l'algorithme de Viterbi choisit sur toute la minute quels candidats garder
+et comment les étiqueter.
+
+Deux minutes d'entraînement de plus portent l'ensemble à onze minutes et 863
+contacts. Le modèle y est à 80,8 %, comme sur neuf minutes : la courbe d'apprentissage
+est bien à plat.
+
+| Validation croisée, 863 contacts | Graines 0-2 | 3-5 | 6-8 |
+|---|---|---|---|
+| Décodage par pics | 0,838 | 0,838 | 0,838 |
+| Enchaînement, poids 0,5 | 0,842 | 0,836 | 0,833 |
+| Enchaînement, poids 1,5 | 0,844 | 0,842 | 0,835 |
+
+L'écart moyen est de l'ordre de +0,002, gagné sur un jeu de graines et perdu sur un
+autre : l'enchaînement n'a pas été retenu. Le réseau voit déjà deux secondes autour de
+chaque instant, et ce que l'échange pouvait lui apprendre, il l'avait appris.
+
+Le modèle a donc été figé tel quel, puis noté sur trois nouvelles minutes :
+
+| Troisième juge, 239 contacts | Règles | Modèle |
+|---|---|---|
+| Surface juste | 149 (62,3 %) | **180 (75,3 %)** |
+| Contacts affichés réels | 88,7 % | **94,5 %** |
+| Score | 0,687 | **0,818** |
+
+Sur les trois juges réunis, 716 contacts jamais regardés avant leur verdict, le modèle
+donne la bonne surface à **77,7 %** des contacts réels, contre 62,3 % pour les règles.
+C'est le chiffre à retenir : les trois juges pris un à un varient de 75,3 % à 79,0 %,
+et c'est cet écart, plus que la validation croisée, qui dit la précision réelle
+d'une mesure faite sur trois minutes.
+
+#### Ce que l'affichage éclaire
+
+Le modèle choisit sol, mur ou filet ; la paroi exacte et la zone se lisent ensuite par
+le rayon. Quand plusieurs parois étaient admissibles, la première de la liste l'emportait,
+et les fonds y passent avant les côtés : 6 % des contacts de vitre éclairaient le fond
+pour un contact sur le côté. La paroi retenue est désormais celle que le rayon atteint en
+premier depuis la caméra, puisque la balle, visible, ne peut pas être derrière une autre
+surface.
+
+La zone entière est éclairée — carré de service, rectangle du fond, panneau de vitre. Une
+tache centrée sur l'impact a aussi été essayée : elle absorbe l'erreur de position au
+lieu de faire basculer une zone près d'une ligne, mais la zone entière se lit mieux à
+l'écran. Elle reste disponible (`--impact-patch`). Mesuré au passage, la zone tirée de
+l'instant détecté est celle de l'instant réel dans 98 rebonds sur 101 : ce qui bascule,
+c'est la position près d'une ligne, pas l'instant.
 
 ## Limites connues
 
@@ -1178,7 +1234,7 @@ section [Évaluation](#évaluation) ne seraient pas reproductibles :
 | `calibrations/*.json` | 23 points cliqués par vidéo — 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
 | `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
 | `surfaces/*.json` | les 194 contacts à juger et les 194 jugements rendus |
-| `contact_marks/*.json` | tous les contacts de quinze minutes pointés à la main, avec leur surface |
+| `contact_marks/*.json` | tous les contacts de vingt minutes pointés à la main, avec leur surface |
 
 **`surfaces/` et `contact_marks/` sont les seuls de ces fichiers qui ne dérivent de rien.** Les surfaces de
 contact ne sont étiquetées dans aucun jeu de données public de padel : ces fichiers sont

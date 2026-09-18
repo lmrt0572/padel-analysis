@@ -27,8 +27,9 @@ point ça marche, et où ça ne marche pas.
 
 Une commande de démonstration assemble ces étapes dans une vidéo : joueurs et
 minicarte, trace de la balle, et à chaque contact ce qui a été touché : la zone du
-terrain — sol, vitre, grillage ou filet — s'éclaire en perspective puis s'estompe, et
-lors d'une frappe c'est le joueur qui frappe qui s'illumine.
+terrain — carré de service, fond, panneau de vitre ou de grillage, filet — s'éclaire en
+perspective puis s'estompe, et lors d'une frappe c'est le joueur qui frappe qui
+s'illumine, brièvement, en le suivant.
 
 ## Résultats
 
@@ -43,15 +44,17 @@ juger, une seule fois.
 | Contacts | Contacts détectés réels | 0,747 | **0,760** |
 | Surfaces | Surface correcte | 0,828 | **0,821** |
 
-Et **de bout en bout**, sur ce que la vidéo affiche : quinze minutes dont chaque contact
-a été pointé à la main, dont six jamais regardées avant leur verdict.
+Et **de bout en bout**, sur ce que la vidéo affiche : vingt minutes dont chaque contact
+a été pointé à la main, dont neuf jamais regardées avant leur verdict.
 
-| Contacts affichés avec la bonne surface | Validation croisée (703 contacts) | Premier juge (239) | Second juge (238) |
-|---|---|---|---|
-| Règles réglées à la main | 58,5 % | 66,1 % | 58,4 % |
-| **Modèle appris** | 80,7 % | **78,7 %** | **79,0 %** |
+| Contacts affichés avec la bonne surface | Validation croisée (863) | Juge 1 (239) | Juge 2 (238) | Juge 3 (239) | **Trois juges (716)** |
+|---|---|---|---|---|---|
+| Règles réglées à la main | 59,2 % | 66,1 % | 58,4 % | 62,3 % | 62,3 % |
+| **Modèle appris** | 80,8 % | 78,7 % | 79,0 % | 75,3 % | **77,7 %** |
 
-Les deux juges sont des minutes pointées à la main et notées une seule fois, après coup.
+Chaque juge est un lot de trois minutes pointées à la main et noté une seule fois, après
+que le modèle a été figé ; 94,5 % de ce que le modèle affiche au dernier juge est un
+contact réel.
 
 Quatre résultats valent d'être soulignés :
 
@@ -59,12 +62,13 @@ Quatre résultats valent d'être soulignés :
   rappel de 16 % à 72 % ; le réseau de détection le porte ensuite à 80 % sur le match
   jamais vu, contre 73 % avec la détection par mouvement.
 - **La vérité terrain a été produite à la main** quand le dataset ne la fournissait pas :
-  266 arbitrages d'identité, 344 jugements de surface et 1 180 contacts pointés sur
-  quinze minutes de match, avec des outils qui n'affichent
+  266 arbitrages d'identité, 344 jugements de surface et 1 579 contacts pointés sur
+  vingt minutes de match, avec des outils qui n'affichent
   jamais ce que l'algorithme prédit.
 - **Apprendre a battu régler.** Chaque seuil de la chaîne de contacts avait été
   balayé jusqu'au plateau ; un réseau qui voit tous les indices ensemble donne la bonne
-  surface à 79 % des contacts réels contre 58 %, et 92 % de ce qu'il affiche est réel.
+  surface à 78 % des contacts réels contre 62 % sur trois juges, et plus de 90 % de ce
+  qu'il affiche est réel. Apprendre l'enchaînement de l'échange, en plus, n'apporte rien.
 - **Le chiffre le moins flatteur était le bon.** Une vérité d'identité construite
   automatiquement annonçait un IDF1 de 0,956 et aucune erreur ; vérifiée à la main, elle
   en révèle quatre et descend à 0,819.
