@@ -5,8 +5,10 @@ des heures de carte graphique par essai. Les minutes analysees pour la demonstra
 portent deja les detections ; il suffit d'y ajouter les couleurs des torses, lues une
 fois dans la video, pour rejouer n'importe quel suivi en quelques secondes.
 
-La finale feminine sert a regler. La finale masculine ne se note qu'avec --juge, une
-seule fois, quand le suivi est fige.
+Les vingt minutes analysees pour les contacts servent a regler. Huit minutes a part,
+quatre par finale, ne se notent qu'avec --juge, une seule fois, quand le suivi est
+fige : la verite d'identite couvre les deux matchs en entier, elles n'ont demande aucun
+pointage.
 
 Usage:
     python scripts/identity_bench.py            # construit le cache, note le reglage
@@ -87,9 +89,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--juge", action="store_true")
     args = parser.parse_args()
-    chosen = [m for m in ALL if m[0] == ("FinalM" if args.juge else "FinalF")]
+    chosen = minutes.IDENTITY_JUDGE if args.juge else ALL
     result = score(chosen)
-    title = "JUGE, finale masculine" if args.juge else "reglage, finale feminine"
+    title = "JUGE, huit minutes neuves" if args.juge else "reglage, vingt minutes"
     print(f"{title} : {len(chosen)} minutes, {result['frames']} images notees")
     print(f"  IDF1 {result['idf1']:.3f}   changements d'identite {result['switches']}")
 
