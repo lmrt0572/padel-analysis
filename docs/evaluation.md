@@ -1081,6 +1081,38 @@ que se trouverait le prochain gain, pas dans davantage de minutes pointées :
 La courbe, refaite sur onze minutes, monte de 73,2 % à deux minutes d'entraînement à
 81,6 % à huit, puis 81,9 % à dix.
 
+**Pourquoi la vitre, et ce qui a été tenté.** Rangées par paroi, les vitres pointées ne
+posent pas le même problème partout :
+
+| Vitre | Justes | Manquées | Prises pour le sol ou une frappe |
+|---|---|---|---|
+| Fond proche de la caméra | 43 | 17 | 21 |
+| Fond éloigné | 14 | **24** | 1 |
+| Côtés | 8 | 4 | 0 |
+
+Au fond proche, la vitre est confondue avec le sol : c'est l'ambiguïté géométrique déjà
+décrite, au-dessus d'environ un mètre. Au fond éloigné, elle est simplement **manquée**,
+et souvent le modèle n'y voyait aucun contact. La trajectoire l'explique : autour d'un
+contact sur la vitre du fond, la balle poursuit à l'image une course lisse, sans virage.
+À trente mètres de la caméra, l'aller-retour en profondeur contre la vitre ne déplace
+la balle que de quelques pixels, pendant que sa montée ou sa descente en déplace
+beaucoup plus ; sa taille apparente, elle, varierait d'un tiers de pixel. Le rebond est
+presque invisible pour une caméra de diffusion.
+
+Donner plus de poids aux murs à l'entraînement, et les accepter plus tôt, a été mesuré
+sur trois jeux de graines :
+
+| Validation croisée, moyenne de 3 graines | Justes / 863 | Score | Vitres justes / 135 |
+|---|---|---|---|
+| Modèle retenu | 697 | 0,838 | 66 (49 %) |
+| Murs pondérés ×2, seuil 0,7 | 701 | 0,840 | 70 (52 %) |
+| Murs pondérés ×2, seuil 0,3 | 706 | 0,835 | 76 (56 %) |
+
+La version agressive retrouve une dizaine de vitres de plus à chaque graine, mais en
+invente autant : c'est un échange, pas un gain, et le score baisse. **Le modèle n'a pas
+été changé.** Retrouver ces vitres demanderait une autre vue — une seconde caméra, ou
+un micro — plutôt qu'un autre réglage.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans
