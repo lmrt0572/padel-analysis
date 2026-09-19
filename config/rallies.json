@@ -1,0 +1,20 @@
+{
+  "rallies": [
+    {
+      "id": "finale-f-vitres",
+      "match": "FinalF",
+      "minute": 12000,
+      "start": 12888,
+      "stop": 13799,
+      "title": "Finale féminine — échange à 13 vitres"
+    },
+    {
+      "id": "finale-m-long",
+      "match": "FinalM",
+      "minute": 40000,
+      "start": 40895,
+      "stop": 41799,
+      "title": "Finale masculine — long échange"
+    }
+  ]
+}

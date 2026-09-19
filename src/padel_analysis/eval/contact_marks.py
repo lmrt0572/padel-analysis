@@ -96,22 +96,57 @@ class ContactMatch:
         return self.found / max(self.found + self.invented, 1)
 
 
-def match_contacts(
+RIGHT, WRONG_SURFACE, INVENTED, MISSED = "juste", "surface fausse", "invente", "manque"
+
+
+@dataclass(frozen=True)
+class Pairing:
+    """One line of the comparison: a detection, a mark, or both paired."""
+
+    detected_frame: int | None
+    marked_frame: int | None
+    detected: str | None
+    marked: str | None
+
+    @property
+    def status(self) -> str:
+        if self.marked_frame is None:
+            return INVENTED
+        if self.detected_frame is None:
+            return MISSED
+        return RIGHT if self.detected == self.marked else WRONG_SURFACE
+
+
+def pair_contacts(
     detected: dict[int, str], marks: dict[int, str], tolerance: int = 3
-) -> ContactMatch:
+) -> list[Pairing]:
     """Pair each detection with the nearest free mark within `tolerance` frames.
 
     A mark is claimed at most once, so two detections of one bounce count as one
     found contact and one invented - the second is a false contact on the screen.
+    Unclaimed marks come last, as missed contacts.
     """
     free = dict(marks)
-    found = right = invented = 0
+    lines = []
     for frame, answer in sorted(detected.items()):
         near = [f for f in free if abs(f - frame) <= tolerance]
         if not near:
-            invented += 1
+            lines.append(Pairing(frame, None, answer, None))
             continue
         nearest = min(near, key=lambda f: abs(f - frame))
-        found += 1
-        right += free.pop(nearest) == answer
-    return ContactMatch(found, len(free), invented, right)
+        lines.append(Pairing(frame, nearest, answer, free.pop(nearest)))
+    lines += [Pairing(None, frame, None, answer) for frame, answer in sorted(free.items())]
+    return lines
+
+
+def match_contacts(
+    detected: dict[int, str], marks: dict[int, str], tolerance: int = 3
+) -> ContactMatch:
+    """The counts of `pair_contacts`: found, missed, invented, and right surface."""
+    statuses = [line.status for line in pair_contacts(detected, marks, tolerance)]
+    return ContactMatch(
+        found=statuses.count(RIGHT) + statuses.count(WRONG_SURFACE),
+        missed=statuses.count(MISSED),
+        invented=statuses.count(INVENTED),
+        right_surface=statuses.count(RIGHT),
+    )

@@ -1,0 +1,265 @@
+"""The figures of the README and of the evaluation report, in the page's dark style.
+
+Each function takes plain data - measured counts, a rally as the page receives it,
+player trajectories - and writes one PNG. None of them draws a video frame: the
+footage belongs to the broadcaster, the numbers drawn from it do not.
+"""
+
+from collections.abc import Sequence
+from pathlib import Path
+
+import numpy as np
+
+from . import figure_style as style
+
+SURFACE_ORDER = ("raquette", "sol", "verre", "grillage", "filet", "aucun")
+
+
+def _save(figure, path: Path) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    figure.tight_layout()
+    figure.savefig(path, dpi=130)
+    import matplotlib.pyplot as plt
+
+    plt.close(figure)
+
+
+def _share(counts: dict) -> float:
+    return 100.0 * counts["right"] / counts["real"]
+
+
+def judges_chart(verdicts: dict, cv: dict | None, path: Path) -> None:
+    """Rules against the learned model: cross-validation, each judge, all judges."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    groups, rules, model = [], [], []
+    if cv is not None:
+        groups.append("Validation\ncroisée")
+        rules.append(_share(cv["regles"]))
+        model.append(_share(cv["modele"]))
+    for judge in verdicts["judges"]:
+        groups.append(judge["name"])
+        rules.append(_share(judge["rules"]))
+        model.append(_share(judge["model"]))
+    pooled = {kind: {"right": sum(j[kind]["right"] for j in verdicts["judges"]),
+                     "real": sum(j[kind]["real"] for j in verdicts["judges"])}
+              for kind in ("rules", "model")}
+    groups.append(f"Trois juges\n({pooled['model']['real']} contacts)")
+    rules.append(_share(pooled["rules"]))
+    model.append(_share(pooled["model"]))
+
+    figure, axis = plt.subplots(figsize=(9, 4.6))
+    x = np.arange(len(groups))
+    for offset, values, colour, label in ((-0.2, rules, style.RULES, "Règles réglées à la main"),
+                                          (0.2, model, style.MODEL, "Modèle appris")):
+        bars = axis.bar(x + offset, values, 0.38, color=colour, label=label, zorder=2)
+        for bar, value in zip(bars, values, strict=True):
+            axis.text(bar.get_x() + bar.get_width() / 2, value + 1, f"{value:.0f} %",
+                      ha="center", color=style.TEXT, fontsize=9)
+    axis.set_xticks(x, groups)
+    axis.set_ylim(0, 100)
+    axis.set_ylabel("contacts réels donnés avec la bonne surface (%)")
+    axis.set_title("Contacts et surfaces, sur ce que la vidéo affiche")
+    axis.legend(loc="upper left", ncol=2)
+    axis.grid(axis="x", visible=False)
+    _save(figure, path)
+
+
+def learning_curve_chart(curve: Sequence[dict], path: Path) -> None:
+    """How the model improves with the number of hand-marked minutes it learns from."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    sizes = [point["minutes"] for point in curve]
+    shares = [_share(point) for point in curve]
+    figure, axis = plt.subplots(figsize=(7, 4))
+    axis.plot(sizes, shares, color=style.MODEL, marker="o", linewidth=2.2, zorder=2)
+    for size, share in zip(sizes, shares, strict=True):
+        axis.annotate(f"{share:.1f} %".replace(".", ","), (size, share),
+                      textcoords="offset points",
+                      xytext=(0, 9), ha="center", fontsize=9)
+    axis.set_xlabel("minutes de match pointées pour l'entraînement")
+    axis.set_ylabel("surface juste (%), validation croisée")
+    axis.set_xticks(sizes)
+    axis.set_ylim(min(shares) - 6, max(shares) + 5)
+    axis.set_title("Au-delà de huit minutes, pointer plus n'apporte presque rien")
+    _save(figure, path)
+
+
+def confusion_chart(confusion: Sequence[dict], path: Path) -> None:
+    """For each true surface, what the model answered - including nothing at all."""
+    style.use()
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap
+
+    present = {row["marked"] for row in confusion} | {row["detected"] for row in confusion}
+    labels = [kind for kind in SURFACE_ORDER if kind in present]
+    index = {kind: i for i, kind in enumerate(labels)}
+    grid = np.zeros((len(labels), len(labels)))
+    for row in confusion:
+        grid[index[row["marked"]], index[row["detected"]]] += row["count"]
+    totals = grid.sum(axis=1, keepdims=True)
+    shares = np.divide(grid, totals, out=np.zeros_like(grid), where=totals > 0)
+
+    figure, axis = plt.subplots(figsize=(6.6, 5.6))
+    colours = LinearSegmentedColormap.from_list("vert", [style.PANEL, style.MODEL])
+    axis.imshow(shares, cmap=colours, vmin=0, vmax=1)
+    for i in range(len(labels)):
+        for j in range(len(labels)):
+            if grid[i, j] == 0:
+                continue
+            axis.text(j, i, f"{int(grid[i, j])}", ha="center", va="center", fontsize=9,
+                      color=style.BACKGROUND if shares[i, j] > 0.55 else style.TEXT)
+    names = [style.KIND_NAMES[kind] for kind in labels]
+    axis.set_xticks(range(len(labels)), names)
+    axis.set_yticks(range(len(labels)), names)
+    axis.set_xlabel("réponse du modèle")
+    axis.set_ylabel("vérité, pointée à la main")
+    axis.set_title("Qui est pris pour qui")
+    axis.grid(False)
+    _save(figure, path)
+
+
+def _name(payload: dict, slot: str | None) -> str:
+    if slot is None:
+        return "?"
+    return payload["players"].get(slot, {}).get("name", slot)
+
+
+def rally_court_chart(payload: dict, path: Path) -> None:
+    """The rally seen from above: where each player went, and where the ball landed."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    figure, axis = plt.subplots(figsize=(4.4, 7.4))
+    style.draw_court(axis)
+    for slot, player in payload["players"].items():
+        # Les None coupent la trace aux sauts du suivi ; NaN fait de meme pour matplotlib.
+        path_xy = np.array([[p[1], p[2]] if p else [np.nan, np.nan] for p in player["path"]])
+        if not len(path_xy):
+            continue
+        colour = style.PLAYER.get(slot, style.TEXT)
+        axis.plot(path_xy[:, 0], path_xy[:, 1], color=colour, alpha=0.7, linewidth=1.4,
+                  label=player["name"], zorder=2)
+    shown = set()
+    for impact in payload["impacts"]:
+        x, y, _ = impact["point"]
+        kind = impact["kind"]
+        label = style.KIND_NAMES[kind] if kind not in shown else None
+        shown.add(kind)
+        if kind == "sol":
+            axis.scatter(x, y, s=50, color=style.KIND[kind], edgecolor=style.BACKGROUND,
+                         zorder=3, label=label)
+        else:
+            on_back = abs(y) > 9.7
+            px, py = (x, np.sign(y) * 10) if on_back else (np.sign(x) * 5, y)
+            axis.scatter(px, py, s=70, marker="D", color=style.KIND[kind], zorder=3,
+                         label=label)
+    axis.legend(loc="upper center", bbox_to_anchor=(0.5, -0.01), ncol=2, fontsize=9)
+    axis.set_title(payload["title"], fontsize=11)
+    _save(figure, path)
+
+
+def rally_timeline_chart(payload: dict, path: Path) -> None:
+    """Every contact of the rally in order, coloured by what the ball touched."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    figure, axis = plt.subplots(figsize=(11, 2.3))
+    axis.axhline(0, color=style.LINE, linewidth=2, zorder=1)
+    for contact in payload["contacts"]:
+        kind = contact["kind"]
+        colour = (style.PLAYER.get(contact["player"], style.TEXT) if kind == "raquette"
+                  else style.KIND[kind])
+        axis.scatter(contact["t"], 0, s=160, color=colour, edgecolor=style.BACKGROUND,
+                     zorder=2)
+        if kind == "raquette":
+            axis.text(contact["t"], 0, _name(payload, contact["player"])[:1], ha="center",
+                      va="center", fontsize=7, color=style.BACKGROUND, fontweight="bold",
+                      zorder=3)
+    axis.set_xlim(-0.5, payload["duration"] + 0.5)
+    axis.set_ylim(-1, 1)
+    axis.set_yticks([])
+    axis.set_xlabel("secondes")
+    axis.grid(axis="y", visible=False)
+    axis.set_title("Chronologie : frappes (initiale du joueur), sol, vitre, grillage, filet",
+                   fontsize=11)
+    _save(figure, path)
+
+
+def rally_shots_chart(payload: dict, path: Path) -> None:
+    """Strikes per player, split by what the ball touched next."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    order = ("sol", "verre", "grillage", "filet", "raquette", "fin")
+    players = sorted((p for p in payload["players"].items() if p[1]["shots"]),
+                     key=lambda item: -item[1]["shots"])
+    figure, axis = plt.subplots(figsize=(7, 0.7 + 0.6 * max(len(players), 1)))
+    for row, (_, player) in enumerate(players):
+        left = 0
+        for kind in order:
+            count = player["after"].get(kind, 0)
+            if count:
+                axis.barh(row, count, left=left, color=style.KIND[kind], zorder=2,
+                          label=style.KIND_NAMES[kind] if row == 0 else None)
+                left += count
+    axis.set_yticks(range(len(players)), [p["name"] for _, p in players])
+    axis.invert_yaxis()
+    axis.set_xlabel("frappes, découpées par ce que la balle touche ensuite")
+    axis.grid(axis="y", visible=False)
+    handles = [plt.Rectangle((0, 0), 1, 1, color=style.KIND[k]) for k in order]
+    axis.legend(handles, [style.KIND_NAMES[k] for k in order], ncol=3, fontsize=8,
+                loc="lower right")
+    axis.set_title("Qui frappe quoi", fontsize=11)
+    _save(figure, path)
+
+
+def heatmaps_chart(positions: dict, court, path: Path) -> None:
+    """Where each of the four players stood, over the whole match."""
+    from ..analytics.heatmap import occupancy_grid
+
+    style.use()
+    import matplotlib.pyplot as plt
+
+    figure, axes = plt.subplots(1, len(positions), figsize=(3.2 * len(positions), 6.4))
+    for axis, (slot, track) in zip(np.atleast_1d(axes), positions.items(), strict=True):
+        grid, extent = occupancy_grid(track, court)
+        style.draw_court(axis, court.half_width, court.half_length,
+                         court.service_line_distance)
+        axis.imshow(np.ma.masked_equal(grid, 0), origin="lower", extent=extent,
+                    cmap="magma", alpha=0.85, zorder=2)
+        axis.set_title(slot, color=style.PLAYER.get(slot, style.TEXT))
+    figure.suptitle("Occupation du terrain, match entier", color=style.TEXT)
+    _save(figure, path)
+
+
+def net_control_chart(depths: np.ndarray, threshold: float, control: dict, path: Path) -> None:
+    """The two depths players hold, the threshold between them, and who held the net."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    figure, (left, right) = plt.subplots(1, 2, figsize=(11, 4.2),
+                                         gridspec_kw={"width_ratios": [2.2, 1]})
+    left.hist(depths[~np.isnan(depths)], bins=50, range=(0, 10), color=style.KIND["verre"],
+              zorder=2)
+    left.axvline(threshold, color=style.KIND["filet"], linewidth=2,
+                 label=f"seuil {threshold} m, au creux des deux modes")
+    left.set_xlabel("distance au filet (m)")
+    left.set_ylabel("positions")
+    left.set_title("Deux profondeurs : au filet, ou au fond")
+    left.legend()
+
+    labels = ["Paire proche", "Paire du fond", "Disputé"]
+    values = [control["near_percent"], control["far_percent"], control["contested_percent"]]
+    colours = [style.PLAYER["near_1"], style.PLAYER["far_1"], style.MUTED]
+    bars = right.bar(labels, values, color=colours, zorder=2)
+    for bar, value in zip(bars, values, strict=True):
+        right.text(bar.get_x() + bar.get_width() / 2, value + 1, f"{value:.0f} %",
+                   ha="center", color=style.TEXT, fontsize=9)
+    right.set_ylabel("temps de jeu (%)")
+    right.set_title("Qui tient le filet")
+    right.grid(axis="x", visible=False)
+    _save(figure, path)

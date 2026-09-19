@@ -10,60 +10,23 @@ from pathlib import Path
 
 import numpy as np
 
-from .analytics.heatmap import occupancy_grid
 from .analytics.net_control import NET_THRESHOLD
 from .analytics.report import build_report, save_report
 from .analytics.trajectories import SLOTS, MatchTrajectories
 from .geometry.court import Court
 from .pipeline.cache import PositionCache
+from .render.figures import heatmaps_chart, net_control_chart
 
 
 def draw_heatmaps(trajectories: MatchTrajectories, court: Court, path: Path) -> None:
     """One occupancy map per player, on a single figure."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    figure, axes = plt.subplots(1, 4, figsize=(16, 7))
-    for axis, slot in zip(axes, SLOTS):
-        grid, extent = occupancy_grid(trajectories.positions[slot], court)
-        axis.imshow(grid, origin="lower", extent=extent, aspect="equal", cmap="hot")
-        axis.axhline(0.0, color="cyan", linewidth=1)
-        for depth in (-court.service_line_distance, court.service_line_distance):
-            axis.axhline(depth, color="white", linewidth=0.5)
-        axis.set_title(slot)
-        axis.set_xlabel("x (m)")
-        axis.set_ylabel("y (m)")
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    figure.tight_layout()
-    figure.savefig(path, dpi=110)
-    plt.close(figure)
+    heatmaps_chart({slot: trajectories.positions[slot] for slot in SLOTS}, court, path)
 
 
-def draw_depth_histogram(trajectories: MatchTrajectories, path: Path) -> None:
-    """The distribution the net threshold was chosen from."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
+def draw_net_control(trajectories: MatchTrajectories, control: dict, path: Path) -> None:
+    """The depth distribution the net threshold was chosen from, and who held the net."""
     depths = np.concatenate([trajectories.depth(slot) for slot in SLOTS])
-    depths = depths[~np.isnan(depths)]
-
-    figure, axis = plt.subplots(figsize=(9, 5))
-    axis.hist(depths, bins=40, range=(0, 10), color="#3b6ea5")
-    axis.axvline(NET_THRESHOLD, color="crimson", linewidth=2,
-                 label=f"seuil {NET_THRESHOLD} m")
-    axis.set_xlabel("distance au filet (m)")
-    axis.set_ylabel("frames")
-    axis.legend()
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    figure.tight_layout()
-    figure.savefig(path, dpi=110)
-    plt.close(figure)
+    net_control_chart(depths, NET_THRESHOLD, control, path)
 
 
 def main() -> None:
@@ -100,7 +63,7 @@ def main() -> None:
     if args.figures is not None:
         court = Court()
         draw_heatmaps(trajectories, court, args.figures / "heatmaps.png")
-        draw_depth_histogram(trajectories, args.figures / "depth_histogram.png")
+        draw_net_control(trajectories, report["net_control"], args.figures / "net_control.png")
         print(f"\nfigures ecrites dans {args.figures}")
 
     print(f"\nrapport : {args.out}")

@@ -1062,7 +1062,61 @@ l'écran. Elle reste disponible (`--impact-patch`). Mesuré au passage, la zone 
 l'instant détecté est celle de l'instant réel dans 98 rebonds sur 101 : ce qui bascule,
 c'est la position près d'une ligne, pas l'instant.
 
+#### Où le modèle se trompe encore
+
+Sur les onze minutes d'entraînement, chaque minute prédite par un modèle qui ne l'a pas
+vue, voici pour chaque contact pointé à la main ce que le modèle a répondu — « rien »
+pour un contact manqué, et une ligne « rien » pour les contacts inventés :
+
+![Matrice de confusion des surfaces](figures/confusion.png)
+
+Les frappes sont retrouvées à 92 % (411 sur 445) et le sol à 81 % (219 sur 272). **La
+vitre est le point faible : 64 sur 128 seulement**, 44 manquées et 12 prises pour le
+sol. C'est la confusion que la géométrie annonçait — au-dessus d'environ un mètre, un
+contact sur la vitre proche et un rebond au sol tombent sur le même pixel — et c'est là
+que se trouverait le prochain gain, pas dans davantage de minutes pointées :
+
+![Courbe d'apprentissage](figures/courbe.png)
+
+La courbe, refaite sur onze minutes, monte de 73,2 % à deux minutes d'entraînement à
+81,6 % à huit, puis 81,9 % à dix.
+
+#### Les statistiques d'un échange
+
+`scripts/rally_page.py` construit, pour des échanges choisis à la main dans
+`config/rallies.json`, une page où la vidéo et les statistiques avancent ensemble :
+chronologie des contacts, plan du court avec les impacts et les traces des joueurs,
+frappes par joueur selon ce que la balle touche ensuite, vitesse de la balle,
+déplacements et temps au filet. Chaque panneau porte sa fiabilité, et un mode vérité
+superpose le pointage fait à la main quand l'échange en a un.
+
+Les échanges de la page sont pris dans des minutes de juge, jamais vues par le modèle :
+le mode vérité y montre ses vraies erreurs — 34 contacts justes sur 44 pour l'échange
+féminin, 32 sur 41 pour le masculin — plutôt que le score flatteur d'une minute
+d'entraînement, où il en montrait 33 sur 36.
+
+Trois limites sont écrites dans la page elle-même. Les statistiques héritent des
+erreurs du modèle, une surface sur cinq. La vitesse de la balle est une borne basse,
+en ligne droite entre deux contacts, et une estimation quand un bout est une frappe,
+placée par convention au joueur à un mètre de haut. Les traces des joueurs sont coupées
+là où le suivi saute de plus de deux mètres en un dixième de seconde, plutôt que de
+tracer une course que personne n'a faite.
+
 ## Limites connues
+
+**Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi
+tolérait quatre mètres de débordement dans les deux sens, pour laisser passer une
+joueuse qui sort par une ouverture latérale. Mais ces ouvertures sont sur les côtés :
+derrière une vitre du fond, dans la largeur du court, il n'y a que le public et le
+personnel. Sur les vingt minutes analysées, **3 783 images sur 36 000** avaient un
+« joueur » placé là — sur l'une, un emplacement a suivi vingt secondes une personne
+assise derrière le fond pendant que la vraie joueuse n'était pas suivie. Ces positions
+sont désormais refusées, et toute position hors du court est pénalisée, pour qu'une
+personne sur le court soit toujours préférée à une personne à côté. La vidéo de
+statistiques rejoue le suivi corrigé. Les statistiques tactiques et les mesures
+d'identité de ce rapport ont été faites avant ce correctif, et sont à refaire sur le
+match entier.
+
 
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
 emplacements désignent des moitiés de court, et le suivi refuse par construction une

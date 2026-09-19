@@ -40,6 +40,7 @@ class ContactEvent:
     pixel: Point
     zone: "Zone | None" = None
     box: np.ndarray | None = None  # la bbox du frappeur, pour une raquette
+    point: np.ndarray | None = None  # sur la surface touchee, en metres du court
 
 
 def contact_label(verdict: Verdict) -> str | None:

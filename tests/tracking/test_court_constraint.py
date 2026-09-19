@@ -148,3 +148,24 @@ def test_a_player_leaving_through_the_side_opening_is_still_accepted():
     )
     assert len(assignment) == 4
     assert 0 in assignment.values()
+
+
+def test_nobody_can_be_playing_behind_the_back_glass():
+    """Vu sur la finale feminine : une personne assise derriere la vitre du fond."""
+    tracker = CourtSlotTracker()
+    tracker.update([_observation(-2, -5), _observation(2, -5), _observation(-2, 5)])
+    assignment = tracker.update([_observation(-2, -5), _observation(2, -5),
+                                 _observation(-2, 5), _observation(5.1, 11.7)])
+    assert 3 not in assignment.values()
+
+
+def test_someone_on_the_court_is_preferred_to_someone_beside_it():
+    tracker = CourtSlotTracker()
+    # La vraie joueuse n'est pas detectee au debut : un arbitre assis prend l'emplacement.
+    for _ in range(5):
+        tracker.update([_observation(-2, -5), _observation(2, -5),
+                        _observation(2, 5), _observation(6.5, 2.0)])
+    assignment = tracker.update([_observation(-2, -5), _observation(2, -5),
+                                 _observation(2, 5), _observation(6.5, 2.0),
+                                 _observation(-2, 6)])
+    assert 4 in assignment.values() and 3 not in assignment.values()

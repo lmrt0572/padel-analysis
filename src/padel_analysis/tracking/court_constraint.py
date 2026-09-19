@@ -73,6 +73,10 @@ class CourtSlotTracker:
         max_missing_frames: int = 30,
         max_x: float = 9.0,
         max_y: float = 14.0,
+        court_half_width: float = 5.0,
+        court_half_length: float = 10.0,
+        margin: float = 0.8,
+        off_court_penalty: float = 20.0,
     ) -> None:
         """Args:
             max_x, max_y: half-extents beyond which an observation is refused, in
@@ -81,6 +85,18 @@ class CourtSlotTracker:
                 return a lob - while refusing spectators in the stands. Without this
                 bound, roughly one position in a hundred landed several metres past
                 the glass.
+            court_half_width, court_half_length, margin: the court, and the slack given
+                to the ground point's projection error - 56 cm at the far baseline.
+                Behind a back wall and within the court's width, nobody can be playing:
+                the glass is in the way, and the only way out is the side openings.
+                Seen on the women's final: a slot held for twenty seconds a person
+                sitting 1.7 m behind the far glass, while the real player went untracked.
+            off_court_penalty: metres-equivalent added to any observation off the
+                court. A player may still leave through a side opening, but someone on
+                the court is always preferred to someone beside it - an umpire or a
+                ball boy sits there and never moves, so a slot that took them would
+                keep them. Larger than the court is long, so that no distance to a
+                player on the court can outweigh it.
         """
         self.slots = [
             Slot(name="near_1", side=-1),
@@ -93,12 +109,21 @@ class CourtSlotTracker:
         self._max_missing_frames = max_missing_frames
         self._max_x = max_x
         self._max_y = max_y
+        self._half_width = court_half_width
+        self._half_length = court_half_length
+        self._margin = margin
+        self._off_court_penalty = off_court_penalty
 
     def cost(self, slot: Slot, observation: CourtObservation) -> float:
         """Cost of assigning `observation` to `slot`, in metres-equivalent."""
         x, y = float(observation.court_xy[0]), float(observation.court_xy[1])
         if abs(x) > self._max_x or abs(y) > self._max_y:
             return IMPOSSIBLE
+        within_width = abs(x) <= self._half_width + self._margin
+        behind_back_wall = abs(y) > self._half_length + self._margin
+        if within_width and behind_back_wall:
+            return IMPOSSIBLE
+        off_court = not within_width or behind_back_wall
 
         observed_side = 1 if y >= 0 else -1
         if observed_side != slot.side:
@@ -116,7 +141,8 @@ class CourtSlotTracker:
             appearance = float(np.linalg.norm(slot.appearance - observation.appearance))
 
         doubt = self._confidence_weight * (1.0 - observation.confidence)
-        return distance + self._appearance_weight * appearance + doubt
+        penalty = self._off_court_penalty if off_court else 0.0
+        return distance + self._appearance_weight * appearance + doubt + penalty
 
     def update(self, observations: list[CourtObservation]) -> dict[str, int]:
         """Assign observations to slots. Returns {slot name: observation index}."""

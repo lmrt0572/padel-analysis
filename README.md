@@ -76,6 +76,32 @@ Quatre résultats valent d'être soulignés :
 Le détail de chaque mesure, des ablations et des pièges évités est dans le
 **[rapport d'évaluation](docs/evaluation.md)**.
 
+## En images
+
+Un échange de la finale féminine, pris dans des minutes que le modèle n'a jamais
+vues : les déplacements des quatre joueuses, où la balle a touché le sol et les vitres,
+et chaque contact dans l'ordre.
+
+<p align="center">
+  <img src="docs/figures/echange_plan.png" alt="Plan du court : traces des joueuses, rebonds et vitres" width="30%">
+  <img src="docs/figures/echange_frappes.png" alt="Frappes par joueuse, selon ce que la balle touche ensuite" width="62%">
+</p>
+
+![Chronologie des contacts de l'échange](docs/figures/echange_frise.png)
+
+Ce que valent ces contacts, mesuré contre un pointage fait à la main, et comment les
+joueurs occupent le court sur un match entier :
+
+![Règles contre modèle appris, sur la validation croisée et trois juges](docs/figures/juges.png)
+
+<p align="center">
+  <img src="docs/figures/occupation.png" alt="Occupation du terrain par joueur" width="58%">
+  <img src="docs/figures/filet.png" alt="Profondeurs des joueurs et contrôle du filet" width="40%">
+</p>
+
+La courbe d'apprentissage et la confusion entre surfaces sont dans le
+[rapport d'évaluation](docs/evaluation.md#de-bout-en-bout--ce-que-la-démonstration-affiche).
+
 ## Limites
 
 - **Pas de temps réel** : c'est une analyse après match, à quelques images par seconde
@@ -87,7 +113,9 @@ Le détail de chaque mesure, des ablations et des pièges évités est dans le
 - **Le suivi d'identité se dégrade** sur le match tenu à l'écart, où les joueurs se
   croisent plus souvent de près, et ne traverse pas un changement de côté.
 - **Grillage et filet ne sont pas mesurables** : quelques exemples seulement.
-- **Un contact sur cinq reste faux ou manqué** sur ce que la démonstration affiche.
+- **Un contact sur cinq reste faux ou manqué** sur ce que la démonstration affiche,
+  et la vitre est le point faible : la moitié seulement des contacts sur la vitre
+  sont retrouvés.
 - **Un seul annotateur** pour les vérités terrain produites à la main.
 
 ## Installation
@@ -180,6 +208,25 @@ juge, qui ne servent qu'une fois :
 python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
 python scripts/train_contact_model.py --cv --out weights/contact_net.pt
 python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --juge
+```
+
+Une page de statistiques par échange met la vidéo et les chiffres côte à côte : frise
+des contacts, plan du court animé, frappes par joueur, vitesse de la balle,
+déplacements. Chaque panneau s'affiche ou se masque, un clic sur un contact fait sauter
+la vidéo à cet instant, et un mode vérité compare la détection au pointage fait à la
+main. Les échanges se choisissent dans `config/rallies.json`. La page et ses extraits
+vidéo sont écrits dans `outputs/rallies/`, hors du dépôt, et demandent ffmpeg :
+
+```bash
+python scripts/rally_page.py --contact-model weights/contact_net.pt
+```
+
+Les figures ci-dessus se refont depuis les chiffres écrits par les scripts de mesure :
+
+```bash
+python scripts/train_contact_model.py --cv --curve --results outputs/measures/cv.json \
+    --out weights/contact_net_rerun.pt
+python scripts/make_figures.py --cache cache/<match entier>.json
 ```
 
 Les commandes qui reproduisent chaque mesure sont dans le

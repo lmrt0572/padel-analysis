@@ -89,17 +89,7 @@ def analyse(args: argparse.Namespace) -> dict:
                 continue
 
             detections = detector.detect(window[middle])
-            observations = []
-            for detection in detections:
-                point, confidence = strategy(detection)
-                court_xy = calibration.projector.image_to_court(point.reshape(1, 2))[0]
-                observations.append(
-                    CourtObservation(
-                        court_xy=court_xy,
-                        confidence=confidence,
-                        appearance=torso_histogram(window[middle], detection.bbox),
-                    )
-                )
+            observations = observe(detections, window[middle], calibration, strategy)
             assignment = tracker.update(observations)
             raw = finder(window, middle)
             frames[middle] = {
@@ -126,6 +116,48 @@ def analyse(args: argparse.Namespace) -> dict:
 
     path = best_path({f: v["candidates"] for f, v in frames.items()}, start, stop)
     return {"start": start, "stop": stop, "size": size, "frames": frames, "path": path}
+
+
+def observe(detections, image, calibration, strategy) -> list[CourtObservation]:
+    """Each detected person placed on the court, with the colours of their torso."""
+    observations = []
+    for detection in detections:
+        point, confidence = strategy(detection)
+        court_xy = calibration.projector.image_to_court(point.reshape(1, 2))[0]
+        observations.append(CourtObservation(
+            court_xy=court_xy,
+            confidence=confidence,
+            appearance=torso_histogram(image, detection.bbox),
+        ))
+    return observations
+
+
+def retrack(analysis: dict, video: Path, calibration: Calibration) -> dict:
+    """The same analysis with the players' identities tracked again.
+
+    Detections are kept; only the assignment to the four slots is redone, with the
+    tracker as it stands now. Reading the video again is needed for the torso colours,
+    running the pose detector again is not. The saved analysis is left untouched: the
+    measured figures were made on it.
+    """
+    tracker = CourtSlotTracker()
+    strategy = AnkleMidpoint()
+    frames = {}
+    with VideoSource(video) as source:
+        for index, image in source.iter_frames(start=analysis["start"],
+                                                stop=analysis["stop"] + 1):
+            data = analysis["frames"][index]
+            observations = observe(data["people"], image, calibration, strategy)
+            assignment = tracker.update(observations)
+            frames[index] = {
+                **data,
+                "assignment": assignment,
+                "positions": {
+                    name: (float(observations[i].court_xy[0]), float(observations[i].court_xy[1]))
+                    for name, i in assignment.items()
+                },
+            }
+    return {**analysis, "frames": frames}
 
 
 def build_events(
@@ -241,7 +273,8 @@ def learned_events(
         verdict = _verdict_on(label, ball, pose, surfaces)
         light = zone_of if whole_zone else impact_patch
         zone = light(verdict, court) if verdict is not None else None
-        events.append(ContactEvent(frame, label, ball, zone))
+        point = verdict.point if verdict is not None else None
+        events.append(ContactEvent(frame, label, ball, zone, point=point))
     return path, shown, events, pose
 
 
@@ -340,8 +373,6 @@ def main() -> None:
         )
     else:
         path, shown, events, pose = build_events(analysis, points, args.threshold, args.min_run)
-    court = Court()
-    frames = analysis["frames"]
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
     hidden = sum(1 for f in path if path[f] is not None and shown[f] is None)
     print(
@@ -350,29 +381,52 @@ def main() -> None:
         flush=True,
     )
 
-    minimap = Minimap(court)
     print("passe 2 : rendu", flush=True)
-    with VideoSource(args.video) as source, VideoWriter(
-        args.out, source.metadata.fps, analysis["size"]
+    render(args.video, analysis, events, pose, drawn, args.out,
+           analysis["start"], analysis["stop"], args.glow, args.hitter_glow)
+    print(f"ecrit {args.out}")
+
+
+def render(
+    video: Path, analysis: dict, events: list[ContactEvent], pose, drawn: dict, out: Path,
+    start: int, stop: int, glow: int = 30, hitter_glow: int = 12, side=None,
+    minimap: bool = True, labels: dict | None = None, colours: dict | None = None,
+) -> None:
+    """Second pass: draw players, minimap, ball trail and lit contacts on each frame.
+
+    Args:
+        side: optional panel drawn to the right of the picture, as `side(frame)` returning
+            an image of the video's height. The picture itself is left whole.
+        minimap: paste the minimap in the picture's top-right corner.
+        labels, colours: names and BGR colours of the players' boxes, by slot.
+    """
+    frames = analysis["frames"]
+    court_map = Minimap(Court()) if minimap else None
+    width, height = analysis["size"]
+    if side is not None:
+        width += side(start).shape[1]
+    with VideoSource(video) as source, VideoWriter(
+        out, source.metadata.fps, (width, height)
     ) as writer:
-        for index, frame in source.iter_frames(
-            start=analysis["start"], stop=analysis["stop"] + 1
-        ):
+        for index, frame in source.iter_frames(start=start, stop=stop + 1):
             data = frames.get(index, {})
-            canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}))
-            for event in visible_events(events, index, args.glow):
+            canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}),
+                                 labels=labels, colours=colours)
+            for event in visible_events(events, index, glow):
                 if event.zone is not None:
-                    strength = 1.0 - (index - event.frame) / args.glow
+                    strength = 1.0 - (index - event.frame) / glow
                     canvas = draw_zone(canvas, event.zone, pose, strength)
-            for event in visible_events(events, index, args.hitter_glow):
+            for event in visible_events(events, index, hitter_glow):
                 if event.box is not None:
-                    strength = 1.0 - (index - event.frame) / args.hitter_glow
+                    strength = 1.0 - (index - event.frame) / hitter_glow
                     box = following_box(event.box, data.get("people", []))
                     canvas = draw_hitter(canvas, box, strength)
             canvas = draw_ball(canvas, trail(drawn, index), [])
-            canvas = paste_minimap(canvas, minimap.draw(data.get("positions", {})))
+            if court_map is not None:
+                canvas = paste_minimap(canvas, court_map.draw(data.get("positions", {})))
+            if side is not None:
+                canvas = np.hstack([canvas, side(index)])
             writer.write(canvas)
-    print(f"ecrit {args.out}")
 
 
 if __name__ == "__main__":

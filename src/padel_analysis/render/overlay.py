@@ -22,14 +22,23 @@ def draw_people(
     detections: list[PersonDetection],
     assignment: dict[str, int],
     keypoint_threshold: float = 0.3,
+    labels: dict[str, str] | None = None,
+    colours: dict[str, tuple[int, int, int]] | None = None,
 ) -> np.ndarray:
-    """Return a copy of `frame` with boxes, skeletons and identifiers drawn."""
+    """Return a copy of `frame` with boxes, skeletons and identifiers drawn.
+
+    Args:
+        labels: text written above each slot's box; the slot name by default.
+        colours: BGR colour per slot; the team colours by default.
+    """
     canvas = frame.copy()
     name_of_index = {index: name for name, index in assignment.items()}
+    palette = colours or TEAM_COLOURS
 
     for index, detection in enumerate(detections):
-        name = name_of_index.get(index)
-        colour = TEAM_COLOURS.get(name, UNASSIGNED) if name else UNASSIGNED
+        slot = name_of_index.get(index)
+        colour = palette.get(slot, UNASSIGNED) if slot else UNASSIGNED
+        name = (labels or {}).get(slot, slot) if slot else None
 
         x1, y1, x2, y2 = (round(float(v)) for v in detection.bbox)
         cv2.rectangle(canvas, (x1, y1), (x2, y2), colour, 2)
