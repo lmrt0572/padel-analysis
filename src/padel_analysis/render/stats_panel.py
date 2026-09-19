@@ -110,7 +110,8 @@ class StatsPanel:
             shots = f"{line.shots} frappe" + ("s" if line.shots > 1 else "")
             pen.text((x1 - round(12 * s), y + round(17 * s)), shots, font=self.fonts["value"],
                      fill=_rgb(style.BACKGROUND), anchor="rm")
-            detail = f"{line.volleys} volées · {line.after_bounce} après rebond"
+            volleys = f"{line.volleys} volée" + ("s" if line.volleys > 1 else "")
+            detail = f"{volleys} · {line.after_bounce} après rebond"
             pen.text((x1 - round(12 * s), y + round(38 * s)), detail, font=self.fonts["small"],
                      fill=_rgb(style.MUTED), anchor="ra")
             net = "—" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
