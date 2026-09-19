@@ -1117,6 +1117,39 @@ statistiques rejoue le suivi corrigé. Les statistiques tactiques et les mesures
 d'identité de ce rapport ont été faites avant ce correctif, et sont à refaire sur le
 match entier.
 
+**Ce que le correctif a changé, et ce qu'il n'a pas réglé.** La campagne d'identité
+refait la détection des joueurs sur tout le match, des heures par essai. Un banc plus
+léger rejoue le suivi sur les minutes déjà analysées (`scripts/identity_bench.py`) :
+vingt minutes pour régler, et huit minutes neuves, quatre par finale, pour juger une
+seule fois — la vérité d'identité couvrant les deux matchs, elles n'ont demandé aucun
+pointage.
+
+| Juge, 8 minutes neuves | IDF1 | Changements d'identité |
+|---|---|---|
+| Suivi d'origine | 0,811 | 26 |
+| Refus derrière la vitre du fond | **0,841** | **22** |
+| — dont finale féminine | 0,812 → **0,872** | 10 → 6 |
+| — dont finale masculine | 0,809 → 0,809 | 16 → 16 |
+
+Presque tous les changements restants se produisent **aux raccords** de la vidéo, où
+les joueurs réapparaissent ailleurs, avec des partenaires éloignés de trois à six
+mètres ; les croisements serrés n'en expliquent qu'une poignée. Trois idées ont été
+essayées sur les minutes de réglage :
+
+- **effacer la vitesse qu'un raccord laisse derrière lui** — mesurée à travers un
+  raccord, c'est celle d'une téléportation : +5,6 points d'IDF1 sur les minutes
+  masculines de réglage, **rien sur le juge**. Gardée, parce qu'elle est juste et ne
+  coûte rien, mais sans gain démontré ;
+- **le côté habituel de chaque partenaire** — le joueur de drive à droite, celui de
+  revers à gauche : tenu dans 94,8 % des raccords chez les femmes mais 83,7 % chez les
+  hommes. Ajouté au mouvement, il ne gagnait que 0,005 d'IDF1 sur les vingt minutes :
+  du bruit, **non retenu** ;
+- **la couleur de la tête et du bas du corps**, puisque les partenaires portent le même
+  maillot : elle retrouve la bonne paire dans 76 % des cas seulement, et n'a rien
+  changé au suivi. **Non retenue.**
+
+Le suivi d'identité masculin reste donc le point faible des statistiques par joueur.
+
 
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
 emplacements désignent des moitiés de court, et le suivi refuse par construction une
