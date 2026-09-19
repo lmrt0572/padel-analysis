@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from padel_analysis.analytics.live_stats import LiveTimeline
+from padel_analysis.analytics.live_stats import LiveTimeline, volley_flags
 from padel_analysis.analytics.rally import Rally, RallyContact
 
 
@@ -67,3 +67,43 @@ def test_elapsed_time_counts_from_the_start_and_stops_at_the_end():
     timeline = LiveTimeline(_rally())
     assert timeline.at(45).elapsed == pytest.approx(1.5)
     assert timeline.at(500).elapsed == pytest.approx(3.0)
+
+
+def test_a_strike_with_no_bounce_since_the_last_one_is_a_volley():
+    rally = Rally(0, 90, 30.0, (
+        RallyContact(0, "raquette", None, "near_1"),
+        RallyContact(10, "sol", (0.0, 6.0, 0.0), None),
+        RallyContact(20, "raquette", None, "far_1"),  # apres rebond
+        RallyContact(30, "verre", (5.0, -9.0, 1.0), None),
+        RallyContact(40, "raquette", None, "near_1"),  # vitre sans sol : volee
+    ))
+    assert volley_flags(rally) == {0: None, 20: False, 40: True}
+    lines = {line.slot: line for line in LiveTimeline(rally).at(90).players}
+    assert (lines["near_1"].volleys, lines["near_1"].after_bounce) == (1, 0)
+    assert (lines["far_1"].volleys, lines["far_1"].after_bounce) == (0, 1)
+
+
+def test_top_running_speed_follows_the_player_and_ignores_a_tracking_jump():
+    positions = {"near_1": {f: (f * 5.0 / 30.0, -6.0) for f in range(61)}}  # 5 m/s
+    positions["near_1"][30] = (9.0, 9.0)  # un saut du suivi
+    rally = Rally(0, 60, 30.0, (), positions)
+    top = {line.slot: line for line in LiveTimeline(rally).at(60).players}["near_1"].top_speed
+    assert top == pytest.approx(18.0, abs=1.5)
+
+
+def test_a_shot_speed_is_known_once_the_ball_has_landed():
+    positions = {"near_1": {f: (0.0, -6.0) for f in range(61)}}
+    rally = Rally(0, 60, 30.0, (
+        RallyContact(0, "raquette", None, "near_1"),
+        RallyContact(30, "sol", (0.0, 6.0, 0.0), None),
+    ), positions)
+    timeline = LiveTimeline(rally)
+    assert timeline.at(29).last_shot_speed is None
+    expected = math.dist((0.0, -6.0, 1.0), (0.0, 6.0, 0.0)) * 3.6
+    assert timeline.at(30).last_shot_speed == pytest.approx(expected)
+
+
+def test_the_minimap_trail_ends_on_the_current_position():
+    stats = LiveTimeline(_rally()).at(60)
+    assert stats.positions["near_1"][-1] == pytest.approx((2.0, -3.0), abs=0.01)
+    assert len(stats.positions["near_1"]) <= 46
