@@ -116,7 +116,7 @@ class StatsPanel:
                      fill=_rgb(style.MUTED), anchor="ra")
             net = "—" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
             values = [(f"{line.distance:.0f} m", "parcourus"),
-                      (f"{line.top_speed:.0f} km/h", "vitesse max"),
+                      (f"≈ {line.top_speed:.0f} km/h", "vitesse max"),
                       (net, "au filet")]
             for i, (value, label) in enumerate(values):
                 vx = left + i * column
