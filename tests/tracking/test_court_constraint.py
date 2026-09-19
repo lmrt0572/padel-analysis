@@ -169,3 +169,37 @@ def test_someone_on_the_court_is_preferred_to_someone_beside_it():
                                  _observation(2, 5), _observation(6.5, 2.0),
                                  _observation(-2, 6)])
     assert 4 in assignment.values() and 3 not in assignment.values()
+
+
+def _four(far_1, far_2, near=((-2, -5), (2, -5))):
+    return [_observation(*near[0]), _observation(*near[1]),
+            _observation(*far_1), _observation(*far_2)]
+
+
+def test_each_partner_learns_the_side_it_keeps():
+    tracker = CourtSlotTracker()
+    for _ in range(60):
+        assignment = tracker.update(_four((-3, 5), (3, 5)))
+    slot_of = {v: k for k, v in assignment.items()}
+    left = next(s for s in tracker.slots if s.name == slot_of[2])
+    right = next(s for s in tracker.slots if s.name == slot_of[3])
+    assert left.lateral < -0.9 and right.lateral > 0.9
+
+
+def test_at_a_broadcast_cut_partners_go_back_to_their_usual_side():
+    """Au raccord, la distance designerait le mauvais partenaire ; le cote habituel, le bon."""
+    tracker = CourtSlotTracker()
+    for _ in range(60):
+        before = tracker.update(_four((-3, 9), (3, 2)))
+    left_slot = next(k for k, v in before.items() if v == 2)
+    after = tracker.update(_four((-2, 2), (2, 9), near=((3, -8), (-3, -2))))
+    assert after[left_slot] == 2
+
+
+def test_ordinary_movement_is_not_taken_for_a_cut():
+    tracker = CourtSlotTracker()
+    first = tracker.update(_four((-3, 5), (3, 5)))
+    for step in range(1, 30):
+        moved = tracker.update(_four((-3 + 0.1 * step, 5), (3 - 0.1 * step, 5)))
+    assert moved == first
+    assert not tracker._undecided
