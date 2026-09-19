@@ -10,6 +10,7 @@ LINE = "#2a313c"
 TEXT = "#e8eaed"
 MUTED = "#8b95a5"
 COURT = "#123a2a"
+COURT_BLUE = "#1d4f8f"  # le bleu d'un court de padel, pour la minimap
 
 KIND = {
     "sol": "#3ddc97",

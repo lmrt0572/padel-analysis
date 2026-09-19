@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from ..analytics.live_stats import LiveStats
+from ..geometry.court import Court
 from . import figure_style as style
 
 FONTS = Path("C:/Windows/Fonts")
@@ -43,6 +44,7 @@ class StatsPanel:
     def __init__(self, width: int, height: int, names: dict[str, str]) -> None:
         self.width, self.height = width, height
         self.names = names
+        self.court = Court()
         self.scale = height / 1080
         s = self.scale
         self.fonts = {
@@ -118,14 +120,13 @@ class StatsPanel:
                      fill=_rgb(style.MUTED), anchor="ra")
             net = "—" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
             values = [(f"{line.distance:.0f} m", "parcourus"),
-                      (f"{line.top_speed:.0f} km/h", "pointe"),
+                      (f"{line.top_speed:.0f} km/h", "vitesse max"),
                       (net, "au filet")]
             for i, (value, label) in enumerate(values):
                 vx = left + i * column
-                pen.text((vx, y + round(62 * s)), value, font=self.fonts["value"],
+                pen.text((vx, y + round(56 * s)), value, font=self.fonts["value"],
                          fill=_rgb(style.TEXT))
-                pen.text((vx + round(6 * s) + pen.textlength(value, font=self.fonts["value"]),
-                          y + round(67 * s)), label, font=self.fonts["small"],
+                pen.text((vx, y + round(82 * s)), label, font=self.fonts["small"],
                          fill=_rgb(style.MUTED))
             y += card
 
@@ -137,29 +138,48 @@ class StatsPanel:
         return np.asarray(image)[:, :, ::-1].copy()
 
     def _minimap(self, pen, stats: LiveStats, x: int, y: int, width: int, height: int) -> None:
-        """The court from above, camera at the bottom: each player and their last steps."""
-        half_w, half_l, service = 5.0, 10.0, 6.95
+        """The court from above, camera at the bottom, as it is built.
+
+        Walls on the outline - glass across each back wall and along the first metres of
+        each side, mesh in between - and the white lines where they are painted: the
+        service lines, the centre line from one to the other, and the net.
+        """
+        court = self.court
+        half_w, half_l = court.half_width, court.half_length
+        service, glass = court.service_line_distance, court.side_wall_glass_length
 
         def point(cx: float, cy: float) -> tuple[float, float]:
             return (x + (cx + half_w) / (2 * half_w) * width,
                     y + (half_l - cy) / (2 * half_l) * height)
 
-        green, line = _rgb(style.KIND["sol"]), _rgb(style.LINE)
-        pen.rectangle((x, y, x + width, y + height), fill=_rgb(style.COURT), outline=green,
-                      width=max(1, round(2 * self.scale)))
+        def segment(a, b, colour, thickness):
+            pen.line((*point(*a), *point(*b)), fill=colour, width=max(1, round(thickness)))
+
+        s = self.scale
+        white, glass_colour = (235, 238, 240), _rgb(style.KIND["verre"])
+        mesh_colour = _rgb(style.KIND["grillage"])
+        pen.rectangle((*point(-half_w, half_l), *point(half_w, -half_l)),
+                      fill=_rgb(style.COURT_BLUE))
         for depth in (-service, service):
-            pen.line((*point(-half_w, depth), *point(half_w, depth)), fill=line, width=1)
-        pen.line((*point(0, -service), *point(0, service)), fill=line, width=1)
-        pen.line((*point(-half_w - 0.4, 0), *point(half_w + 0.4, 0)), fill=_rgb(style.TEXT),
-                 width=max(2, round(3 * self.scale)))
-        radius = round(7 * self.scale)
+            segment((-half_w, depth), (half_w, depth), white, 2 * s)
+        segment((0, -service - 0.2), (0, service + 0.2), white, 2 * s)
+        for sign in (-1, 1):
+            segment((-half_w, sign * half_l), (half_w, sign * half_l), glass_colour, 4 * s)
+            for side in (-half_w, half_w):
+                segment((side, sign * half_l), (side, sign * (half_l - glass)), glass_colour,
+                        4 * s)
+        for side in (-half_w, half_w):
+            segment((side, -(half_l - glass)), (side, half_l - glass), mesh_colour, 3 * s)
+        segment((-half_w - 0.3, 0), (half_w + 0.3, 0), white, 4 * s)
+
+        radius = round(7 * s)
         for slot, trail in stats.positions.items():
             if not trail:
                 continue
             colour = _rgb(style.PLAYER.get(slot, style.TEXT))
             inside = [p for p in trail if abs(p[0]) <= half_w + 0.5 and abs(p[1]) <= half_l + 0.5]
             if len(inside) > 1:
-                pen.line([point(*p) for p in inside], fill=colour, width=max(1, round(2 * self.scale)))
+                pen.line([point(*p) for p in inside], fill=colour, width=max(1, round(2 * s)))
             if inside:
                 px, py = point(*inside[-1])
                 pen.ellipse((px - radius, py - radius, px + radius, py + radius), fill=colour,

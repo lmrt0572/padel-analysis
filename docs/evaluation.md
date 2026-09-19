@@ -1104,6 +1104,20 @@ tracer une course que personne n'a faite.
 
 ## Limites connues
 
+**Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi
+tolérait quatre mètres de débordement dans les deux sens, pour laisser passer une
+joueuse qui sort par une ouverture latérale. Mais ces ouvertures sont sur les côtés :
+derrière une vitre du fond, dans la largeur du court, il n'y a que le public et le
+personnel. Sur les vingt minutes analysées, **3 783 images sur 36 000** avaient un
+« joueur » placé là — sur l'une, un emplacement a suivi vingt secondes une personne
+assise derrière le fond pendant que la vraie joueuse n'était pas suivie. Ces positions
+sont désormais refusées, et toute position hors du court est pénalisée, pour qu'une
+personne sur le court soit toujours préférée à une personne à côté. La vidéo de
+statistiques rejoue le suivi corrigé. Les statistiques tactiques et les mesures
+d'identité de ce rapport ont été faites avant ce correctif, et sont à refaire sur le
+match entier.
+
+
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
 emplacements désignent des moitiés de court, et le suivi refuse par construction une
 observation du mauvais côté du filet — c'est ce qui lui donne son « 0 frame au-dessus

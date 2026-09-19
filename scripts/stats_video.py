@@ -22,7 +22,7 @@ from rally_page import to_h264
 from padel_analysis.analytics.live_stats import LiveTimeline
 from padel_analysis.ball.smoothing import smooth_path
 from padel_analysis.contact.learned import ContactModel
-from padel_analysis.demo import learned_events, render
+from padel_analysis.demo import learned_events, render, retrack
 from padel_analysis.geometry.calibration import Calibration
 from padel_analysis.rallies import DEFAULT_NAMES, RallySpec, build_rally
 from padel_analysis.render.figure_style import PLAYER
@@ -54,9 +54,13 @@ def main() -> None:
     if not analysis["start"] <= start <= stop <= analysis["stop"]:
         raise SystemExit("l'extrait deborde de la minute analysee")
 
-    points = Calibration.load(minutes.calibration(args.match)).points
-    _, shown, events, pose = learned_events(analysis, points,
+    calibration = Calibration.load(minutes.calibration(args.match))
+    _, shown, events, pose = learned_events(analysis, calibration.points,
                                             ContactModel.load(args.contact_model))
+    # Les contacts viennent de l'analyse telle qu'elle a ete mesuree ; les identites des
+    # joueurs, du suivi tel qu'il est aujourd'hui.
+    print("suivi des joueurs rejoue", flush=True)
+    analysis = retrack(analysis, Path(minutes.video(args.match)), calibration)
     spec = RallySpec("extrait", args.match, args.minute, start, stop, "")
     timeline = LiveTimeline(build_rally(analysis, events, spec, FPS))
     panel = StatsPanel(PANEL_WIDTH, analysis["size"][1], dict(DEFAULT_NAMES))

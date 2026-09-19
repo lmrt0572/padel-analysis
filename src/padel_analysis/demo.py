@@ -89,17 +89,7 @@ def analyse(args: argparse.Namespace) -> dict:
                 continue
 
             detections = detector.detect(window[middle])
-            observations = []
-            for detection in detections:
-                point, confidence = strategy(detection)
-                court_xy = calibration.projector.image_to_court(point.reshape(1, 2))[0]
-                observations.append(
-                    CourtObservation(
-                        court_xy=court_xy,
-                        confidence=confidence,
-                        appearance=torso_histogram(window[middle], detection.bbox),
-                    )
-                )
+            observations = observe(detections, window[middle], calibration, strategy)
             assignment = tracker.update(observations)
             raw = finder(window, middle)
             frames[middle] = {
@@ -126,6 +116,48 @@ def analyse(args: argparse.Namespace) -> dict:
 
     path = best_path({f: v["candidates"] for f, v in frames.items()}, start, stop)
     return {"start": start, "stop": stop, "size": size, "frames": frames, "path": path}
+
+
+def observe(detections, image, calibration, strategy) -> list[CourtObservation]:
+    """Each detected person placed on the court, with the colours of their torso."""
+    observations = []
+    for detection in detections:
+        point, confidence = strategy(detection)
+        court_xy = calibration.projector.image_to_court(point.reshape(1, 2))[0]
+        observations.append(CourtObservation(
+            court_xy=court_xy,
+            confidence=confidence,
+            appearance=torso_histogram(image, detection.bbox),
+        ))
+    return observations
+
+
+def retrack(analysis: dict, video: Path, calibration: Calibration) -> dict:
+    """The same analysis with the players' identities tracked again.
+
+    Detections are kept; only the assignment to the four slots is redone, with the
+    tracker as it stands now. Reading the video again is needed for the torso colours,
+    running the pose detector again is not. The saved analysis is left untouched: the
+    measured figures were made on it.
+    """
+    tracker = CourtSlotTracker()
+    strategy = AnkleMidpoint()
+    frames = {}
+    with VideoSource(video) as source:
+        for index, image in source.iter_frames(start=analysis["start"],
+                                                stop=analysis["stop"] + 1):
+            data = analysis["frames"][index]
+            observations = observe(data["people"], image, calibration, strategy)
+            assignment = tracker.update(observations)
+            frames[index] = {
+                **data,
+                "assignment": assignment,
+                "positions": {
+                    name: (float(observations[i].court_xy[0]), float(observations[i].court_xy[1]))
+                    for name, i in assignment.items()
+                },
+            }
+    return {**analysis, "frames": frames}
 
 
 def build_events(
