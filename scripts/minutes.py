@@ -17,6 +17,10 @@ JUDGE = [("FinalM", 12000), ("FinalM", 25000), ("FinalM", 40000)]
 JUDGE_2 = [("FinalF", 8000), ("FinalF", 25000), ("FinalM", 35000)]
 # Chaque juge ne sert qu'une fois : en decider quoi que ce soit le consomme.
 JUDGE_3 = [("FinalF", 12000), ("FinalF", 43000), ("FinalM", 50000)]
+# Juge du suivi d'identite : la verite d'identite couvre les deux matchs en entier, ces
+# minutes n'ont donc besoin d'aucun pointage, seulement d'etre analysees.
+IDENTITY_JUDGE = [("FinalF", 3000), ("FinalF", 27000), ("FinalF", 34000), ("FinalF", 37000),
+                  ("FinalM", 1000), ("FinalM", 14000), ("FinalM", 28000), ("FinalM", 43000)]
 FRAMES = 1800
 
 
