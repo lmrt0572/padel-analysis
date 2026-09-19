@@ -1,0 +1,340 @@
+{
+ "examples": [
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 3510,
+   "row": 2,
+   "value": "1"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 3540,
+   "row": 2,
+   "value": "1"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 3570,
+   "row": 2,
+   "value": "1"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 17550,
+   "row": 1,
+   "value": "4"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 17580,
+   "row": 1,
+   "value": "4"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 17610,
+   "row": 1,
+   "value": "4"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 12180,
+   "row": 1,
+   "value": "3"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 12210,
+   "row": 1,
+   "value": "3"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 12240,
+   "row": 1,
+   "value": "3"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 27510,
+   "row": 2,
+   "value": "3"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 27540,
+   "row": 2,
+   "value": "3"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 27570,
+   "row": 2,
+   "value": "3"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 20550,
+   "row": 2,
+   "value": "2"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 20580,
+   "row": 2,
+   "value": "2"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 20610,
+   "row": 2,
+   "value": "2"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalM",
+   "frame": 2580,
+   "row": 2,
+   "value": "0"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalM",
+   "frame": 2610,
+   "row": 2,
+   "value": "0"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalM",
+   "frame": 2640,
+   "row": 2,
+   "value": "0"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 9150,
+   "row": 1,
+   "value": "2"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 9180,
+   "row": 1,
+   "value": "2"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 9210,
+   "row": 1,
+   "value": "2"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 24600,
+   "row": 1,
+   "value": "5"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 24630,
+   "row": 1,
+   "value": "5"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 24660,
+   "row": 1,
+   "value": "5"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 3510,
+   "row": 1,
+   "value": "0"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 3540,
+   "row": 1,
+   "value": "0"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 3570,
+   "row": 1,
+   "value": "0"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 28890,
+   "row": 1,
+   "value": "6"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 28920,
+   "row": 1,
+   "value": "6"
+  },
+  {
+   "cell": "jeux",
+   "match": "FinalF",
+   "frame": 28950,
+   "row": 1,
+   "value": "6"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 60,
+   "row": 1,
+   "value": "0"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 90,
+   "row": 1,
+   "value": "0"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 120,
+   "row": 1,
+   "value": "0"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 510,
+   "row": 1,
+   "value": "15"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 540,
+   "row": 1,
+   "value": "15"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 570,
+   "row": 1,
+   "value": "15"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 840,
+   "row": 1,
+   "value": "30"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 870,
+   "row": 1,
+   "value": "30"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 900,
+   "row": 1,
+   "value": "30"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 1830,
+   "row": 2,
+   "value": "30"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 1860,
+   "row": 2,
+   "value": "30"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 1890,
+   "row": 2,
+   "value": "30"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 2310,
+   "row": 2,
+   "value": "40"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 2340,
+   "row": 2,
+   "value": "40"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 2370,
+   "row": 2,
+   "value": "40"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 5220,
+   "row": 1,
+   "value": "40"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 5250,
+   "row": 1,
+   "value": "40"
+  },
+  {
+   "cell": "points",
+   "match": "FinalF",
+   "frame": 5280,
+   "row": 1,
+   "value": "40"
+  }
+ ]
+}

@@ -1158,6 +1158,37 @@ contact ajoutait plus de faux débuts qu'il ne rattrapait de services filmés sa
 coupure — ce sont eux, les services manqués. Le seuil de raccord est stable entre 3
 et 4, et perd la moitié des points à 5.
 
+#### Lire le score au tableau d'affichage
+
+Le tableau de la retransmission est à une place fixe, une ligne par paire : les noms,
+une colonne par set, puis une case claire pour les points. Cette case est le repère :
+c'est la seule claire — blanche, ou dorée au point en or — et elle se décale d'une
+colonne à chaque set, ce qui donne le set en cours ; les jeux sont dans la case sombre
+à sa gauche, et la paire au service porte un point jaune (`io/scoreboard.py`). Onze
+valeurs suffisent — 0, 15, 30, 40 et les jeux de 0 à 6 — et la police ne change
+jamais : chaque case est comparée à des modèles, sans moteur de reconnaissance de
+texte. Les modèles sont tirés d'images listées avec leur valeur
+(`ground_truth/scoreboard/templates.json`) et recalculés depuis la vidéo, que le dépôt
+ne contient pas.
+
+Le tableau est lu au début de chaque séquence entre deux raccords, et la grammaire du
+score dit qui a gagné le point : un seul pas de 0 à 15, 30, 40, ou un jeu gagné avec
+les points remis à zéro (`analytics/points.py`).
+
+| | Séquences | Tableau lu | Points attribués | Changements rejetés |
+|---|---|---|---|---|
+| Finale féminine | 63 | 54 | 48 | 5 |
+| Finale masculine | 141 | 83 | 69 | 7 |
+
+Deux contrôles. **À l'œil, 48 tableaux tirés au hasard, 24 par finale : les 48
+lectures sont justes**, jeux, points et service. **Par la grammaire** : les douze
+changements rejetés ont tous plusieurs points d'écart entre deux lectures — un point
+absent de la vidéo, ou joué pendant une séquence où le tableau était caché. Aucun n'est
+une lecture fausse : la règle refuse de deviner. Deux faits en ressortent au passage :
+aucune séquence féminine ne répète le même score, ce qui confirme qu'un raccord ouvre
+bien un point ; et le tableau manque sur deux séquences masculines sur cinq, ralentis
+et gros plans compris.
+
 ## Limites connues
 
 **Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi
