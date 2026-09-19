@@ -1189,6 +1189,15 @@ aucune séquence féminine ne répète le même score, ce qui confirme qu'un rac
 bien un point ; et le tableau manque sur deux séquences masculines sur cinq, ralentis
 et gros plans compris.
 
+**Du point de la paire au point du joueur.** La vidéo de statistiques crédite chaque
+point à un joueur : la paire gagnante vient du tableau, son côté du court de la paire
+au service — le point jaune — et de la première frappe de l'échange, qui est le
+service ; le dernier frappeur de l'échange reçoit un **point gagnant** s'il est de la
+paire gagnante, une **faute** sinon. Ce partage n'a pas de vérité terrain : les
+pointages de contacts ne disent pas qui frappe. Il hérite des frappes manquées par le
+modèle, environ une sur dix, qui donnent le point au mauvais joueur ; la vidéo le
+dit sous le panneau.
+
 ## Limites connues
 
 **Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi

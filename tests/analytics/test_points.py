@@ -1,4 +1,4 @@
-from padel_analysis.analytics.points import point_winner
+from padel_analysis.analytics.points import credit, point_winner, serving_side
 from padel_analysis.io.scoreboard import ScoreState
 
 
@@ -31,3 +31,21 @@ def test_the_same_score_twice_has_no_winner():
 
 def test_a_won_set_goes_to_the_pair_that_led_it():
     assert point_winner(_s(("40", "0"), games=(5, 3)), _s(("0", "0"), games=(0, 0), set_number=2)) == 1
+
+
+def test_the_serving_row_plays_where_the_server_stands():
+    sides = serving_side(2, [(10, "far_1"), (40, "near_2")])
+    assert sides == {2: "far", 1: "near"}
+
+
+def test_no_serve_or_no_marker_tells_no_side():
+    assert serving_side(None, [(10, "far_1")]) == {}
+    assert serving_side(1, []) == {}
+
+
+def test_the_last_shot_of_the_winning_pair_is_a_winner():
+    assert credit("near", [(10, "far_1"), (40, "near_2")]) == ("near_2", "gagnant")
+
+
+def test_the_last_shot_of_the_losing_pair_is_an_error():
+    assert credit("far", [(10, "far_1"), (40, "near_2")]) == ("near_2", "faute")

@@ -33,3 +33,38 @@ def point_winner(before: ScoreState, after: ScoreState) -> Winner:
     if steps == (0, 1):
         return 2
     return None
+
+
+WINNER, ERROR = "gagnant", "faute"
+
+
+def side_of(slot: str) -> str:
+    """The half of the court a player slot stands in: "near" or "far"."""
+    return "near" if slot.startswith("near") else "far"
+
+
+def serving_side(server_row: int | None, strikes: list[tuple[int, str]]) -> dict[int, str]:
+    """Which half each scoreboard row plays in, for one rally.
+
+    The scoreboard marks the serving pair's row, and the rally's first strike is the
+    serve: the server's half is that pair's half, and the other row has the other one.
+    Empty when either is unknown.
+    """
+    if server_row is None or not strikes:
+        return {}
+    serving = side_of(min(strikes)[1])
+    other = "far" if serving == "near" else "near"
+    return {server_row: serving, 3 - server_row: other}
+
+
+def credit(winner_side: str, strikes: list[tuple[int, str]]) -> tuple[str, str] | None:
+    """Who the point goes to, and how: the rally's last striker.
+
+    Struck by the winning pair, the last shot is a winner; by the other pair, the ball
+    never came back and the point is that player's error. A strike the contact model
+    missed hands the point to the wrong player - the split is only as good as it is.
+    """
+    if not strikes:
+        return None
+    _, slot = max(strikes)
+    return slot, WINNER if side_of(slot) == winner_side else ERROR

@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from padel_analysis.analytics.live_stats import LiveTimeline, volley_flags
+from padel_analysis.analytics.live_stats import LiveTimeline, PointOutcome, volley_flags
 from padel_analysis.analytics.rally import Rally, RallyContact
 
 
@@ -136,3 +136,18 @@ def test_the_panel_follows_rallies_opened_by_splices():
 def test_without_splices_the_whole_clip_is_one_rally():
     stats = LiveTimeline(_rally()).at(90)
     assert stats.rally_number == 1 and stats.rally_shots == stats.shots
+
+
+def test_points_are_credited_once_over_and_not_before():
+    outcomes = [PointOutcome(40, "near", "near_1", "gagnant"),
+                PointOutcome(80, "near", "far_1", "faute")]
+    timeline = LiveTimeline(_rally(), points=outcomes)
+    assert timeline.at(39).pair_points == {"proche": 0, "fond": 0}
+    end = timeline.at(90)
+    assert end.pair_points == {"proche": 2, "fond": 0}
+    lines = {line.slot: line for line in end.players}
+    assert (lines["near_1"].winners, lines["far_1"].errors) == (1, 1)
+
+
+def test_without_a_score_read_no_points_are_shown():
+    assert LiveTimeline(_rally()).at(90).pair_points is None
