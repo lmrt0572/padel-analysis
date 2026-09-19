@@ -105,16 +105,11 @@ class StatsPanel:
         column = (x1 - x0 - round(20 * s)) / 3
         for line in stats.players:
             colour = _rgb(style.PLAYER.get(line.slot, style.TEXT))
-            bottom = y + card - round(12 * s)
-            pen.rounded_rectangle((x0, y, x1, bottom), radius=round(10 * s),
-                                  fill=_rgb(style.PANEL))
-            pen.rectangle((x0, y, x0 + round(6 * s), bottom), fill=colour)
             left = x0 + round(20 * s)
-            pen.text((left, y + round(8 * s)), self.names.get(line.slot, line.slot),
-                     font=self.fonts["name"], fill=colour)
+            self._card(pen, line, colour, x0, x1, y, y + card - round(12 * s), left)
             shots = f"{line.shots} frappe" + ("s" if line.shots > 1 else "")
-            pen.text((x1 - round(12 * s), y + round(10 * s)), shots, font=self.fonts["value"],
-                     fill=_rgb(style.TEXT), anchor="ra")
+            pen.text((x1 - round(12 * s), y + round(17 * s)), shots, font=self.fonts["value"],
+                     fill=_rgb(style.BACKGROUND), anchor="rm")
             detail = f"{line.volleys} volées · {line.after_bounce} après rebond"
             pen.text((x1 - round(12 * s), y + round(38 * s)), detail, font=self.fonts["small"],
                      fill=_rgb(style.MUTED), anchor="ra")
@@ -184,6 +179,16 @@ class StatsPanel:
                 px, py = point(*inside[-1])
                 pen.ellipse((px - radius, py - radius, px + radius, py + radius), fill=colour,
                             outline=_rgb(style.BACKGROUND), width=2)
+
+    def _card(self, pen, line, colour, x0, x1, top, bottom, left) -> None:
+        """The frame of one player's card: the name in a full band, as a broadcast does."""
+        s, name = self.scale, self.names.get(line.slot, line.slot)
+        radius, band = round(10 * s), top + round(34 * s)
+        pen.rounded_rectangle((x0, top, x1, bottom), radius=radius, fill=_rgb(style.PANEL))
+        pen.rounded_rectangle((x0, top, x1, band), radius=radius, fill=colour,
+                              corners=(True, True, False, False))
+        pen.text((left, top + round(17 * s)), name.upper(), font=self.fonts["name"],
+                 fill=_rgb(style.BACKGROUND), anchor="lm")
 
     def _section(self, pen, title: str, x0: int, x1: int, y: int) -> int:
         pen.text((x0, y), title, font=self.fonts["label"], fill=_rgb(style.MUTED))
