@@ -1134,6 +1134,30 @@ placée par convention au joueur à un mètre de haut. Les traces des joueurs so
 là où le suivi saute de plus de deux mètres en un dixième de seconde, plutôt que de
 tracer une course que personne n'a faite.
 
+#### Découper un match en échanges
+
+La vidéo du dataset garde les échanges et coupe les temps morts : un nouveau point
+s'ouvre au raccord. Un raccord se lit dans l'image elle-même — deux images successives
+de plans différents diffèrent partout, alors qu'en jeu seuls les joueurs et la balle
+bougent : l'écart moyen de niveaux de gris entre deux miniatures vaut 0,5 en médiane
+pendant le jeu, et de 5,6 à 11,5 aux raccords (`io/splices.py`).
+
+La vérité existe déjà : le dataset marque les services sur les 20 100 premières images
+de chaque finale. Un début d'échange annoncé est juste s'il tombe à deux secondes au
+plus d'un service. Les minutes qui ont entraîné le modèle de contacts ont réglé la
+règle, les six autres de la zone annotée l'ont jugée une fois.
+
+| | Services retrouvés | Débuts annoncés | Précision | Rappel |
+|---|---|---|---|---|
+| Réglage, 5 minutes | 16 / 17 | 18 | 89 % | 94 % |
+| **Juge, 6 minutes** | **14 / 16** | **15** | **93 %** | **88 %** |
+
+La règle la plus simple était la meilleure : un raccord ouvre un échange. Exiger une
+frappe après le raccord ne changeait rien ; ouvrir un point après un long silence sans
+contact ajoutait plus de faux débuts qu'il ne rattrapait de services filmés sans
+coupure — ce sont eux, les services manqués. Le seuil de raccord est stable entre 3
+et 4, et perd la moitié des points à 5.
+
 ## Limites connues
 
 **Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi

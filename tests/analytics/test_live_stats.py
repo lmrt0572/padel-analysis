@@ -117,3 +117,22 @@ def test_a_short_jump_does_not_count_as_a_sprint():
     rally = Rally(0, 90, 30.0, (), {"far_1": track})
     top = {line.slot: line for line in LiveTimeline(rally).at(90).players}["far_1"].top_speed
     assert top < 5.0
+
+
+def test_the_panel_follows_rallies_opened_by_splices():
+    contacts = (
+        RallyContact(5, "raquette", None, "near_1"), RallyContact(15, "sol", (0, 5, 0), None),
+        RallyContact(25, "raquette", None, "far_1"), RallyContact(35, "raquette", None, "near_1"),
+        RallyContact(60, "raquette", None, "far_1"), RallyContact(70, "raquette", None, "near_1"),
+    )
+    timeline = LiveTimeline(Rally(0, 90, 30.0, contacts, {}), splices=[50])
+    during_first = timeline.at(30)
+    assert (during_first.rally_number, during_first.rally_shots) == (1, 2)
+    during_second = timeline.at(65)
+    assert (during_second.rally_number, during_second.rally_shots) == (2, 1)
+    assert during_second.longest_rally == 3
+
+
+def test_without_splices_the_whole_clip_is_one_rally():
+    stats = LiveTimeline(_rally()).at(90)
+    assert stats.rally_number == 1 and stats.rally_shots == stats.shots

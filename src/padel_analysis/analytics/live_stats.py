@@ -14,6 +14,7 @@ from scipy.ndimage import median_filter
 from .basic_stats import smooth_positions
 from .net_control import at_net_states
 from .rally import RACKET, WALLS, Rally, ball_speeds
+from .segmentation import rallies
 
 SLOTS = ("near_1", "near_2", "far_1", "far_2")
 PAIRS = {"proche": ("near_1", "near_2"), "fond": ("far_1", "far_2")}
@@ -49,6 +50,9 @@ class LiveStats:
     last_shot_speed: float | None  # km/h, du dernier coup dont on connait l'arrivee
     top_shot_speed: float | None
     positions: dict[str, list[tuple[float, float]]]  # la trace recente, la plus recente a la fin
+    rally_number: int | None = None  # l'echange en cours, compte depuis le debut de l'extrait
+    rally_shots: int = 0  # frappes de l'echange en cours jusqu'ici
+    longest_rally: int = 0  # le plus d'echanges de frappes en un echange, jusqu'ici
 
 
 def volley_flags(rally: Rally) -> dict[int, bool | None]:
@@ -72,8 +76,13 @@ def volley_flags(rally: Rally) -> dict[int, bool | None]:
 class LiveTimeline:
     """Cumulative statistics for every frame of a rally, computed once."""
 
-    def __init__(self, rally: Rally, recent: float = 1.0) -> None:
+    def __init__(self, rally: Rally, recent: float = 1.0, splices=()) -> None:
+        """Args:
+            splices: where the broadcast splices, each opening a new rally.
+        """
         self.rally = rally
+        self._spans = rallies(splices, [(c.frame, c.kind) for c in rally.contacts],
+                              rally.start, rally.stop)
         self.recent = round(recent * rally.fps)
         frames = np.arange(rally.start, rally.stop + 1)
         self._volley = volley_flags(rally)
@@ -149,4 +158,14 @@ class LiveTimeline:
             last_shot_speed=known[-1] if known else None,
             top_shot_speed=max(known) if known else None,
             positions=positions,
+            **self._rally_at(frame),
         )
+
+    def _rally_at(self, frame: int) -> dict:
+        begun = [span for span in self._spans if span.start <= frame]
+        if not begun:
+            return {}
+        counts = [sum(1 for f, kind in span.contacts if kind == RACKET and f <= frame)
+                  for span in begun]
+        return {"rally_number": len(begun), "rally_shots": counts[-1],
+                "longest_rally": max(counts)}

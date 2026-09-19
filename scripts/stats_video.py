@@ -24,6 +24,8 @@ from padel_analysis.ball.smoothing import smooth_path
 from padel_analysis.contact.learned import ContactModel
 from padel_analysis.demo import learned_events, render, retrack
 from padel_analysis.geometry.calibration import Calibration
+from padel_analysis.io.splices import frame_changes, splices
+from padel_analysis.io.video_source import VideoSource
 from padel_analysis.rallies import DEFAULT_NAMES, RallySpec, build_rally
 from padel_analysis.render.figure_style import PLAYER
 from padel_analysis.render.stats_panel import StatsPanel
@@ -62,7 +64,9 @@ def main() -> None:
     print("suivi des joueurs rejoue", flush=True)
     analysis = retrack(analysis, Path(minutes.video(args.match)), calibration)
     spec = RallySpec("extrait", args.match, args.minute, start, stop, "")
-    timeline = LiveTimeline(build_rally(analysis, events, spec, FPS))
+    with VideoSource(Path(minutes.video(args.match))) as source:
+        cuts = splices(frame_changes(source.iter_frames(start=start, stop=stop + 1)))
+    timeline = LiveTimeline(build_rally(analysis, events, spec, FPS), splices=cuts)
     panel = StatsPanel(PANEL_WIDTH, analysis["size"][1], dict(DEFAULT_NAMES))
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
 

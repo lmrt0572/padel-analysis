@@ -75,12 +75,19 @@ class StatsPanel:
         self._minimap(pen, stats, x0, top, map_width, map_height)
         cx = x0 + map_width + round(26 * s)
         y = top
-        for value, label in ((str(stats.shots), "coups joués"),
-                             (str(stats.walls), "vitres et grillages")):
+        if stats.rally_number is None:
+            first = (str(stats.shots), "coups joués")
+        else:
+            first = (str(stats.rally_shots), f"coups, échange n° {stats.rally_number}")
+        for value, label in (first, (str(stats.walls), "vitres et grillages")):
             pen.text((cx, y), value, font=self.fonts["big"], fill=_rgb(style.TEXT))
             pen.text((cx, y + round(54 * s)), label, font=self.fonts["label"],
                      fill=_rgb(style.MUTED))
             y += round(88 * s)
+        if stats.rally_number is not None:
+            pen.text((cx, y - round(8 * s)), f"plus long échange : {stats.longest_rally} coups",
+                     font=self.fonts["small"], fill=_rgb(style.MUTED))
+            y += round(22 * s)
         pen.text((cx, y), "balle, dernier coup", font=self.fonts["label"],
                  fill=_rgb(style.MUTED))
         speed = stats.last_shot_speed
