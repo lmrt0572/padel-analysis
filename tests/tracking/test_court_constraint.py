@@ -169,3 +169,33 @@ def test_someone_on_the_court_is_preferred_to_someone_beside_it():
                                  _observation(2, 5), _observation(6.5, 2.0),
                                  _observation(-2, 6)])
     assert 4 in assignment.values() and 3 not in assignment.values()
+
+
+def _four(far_1, far_2, near=((-2, -5), (2, -5))):
+    return [_observation(*near[0]), _observation(*near[1]),
+            _observation(*far_1), _observation(*far_2)]
+
+
+def test_a_splice_does_not_leave_a_teleportation_speed_behind():
+    """Au raccord, la vitesse mesuree serait celle d'un saut de plusieurs metres."""
+    tracker = CourtSlotTracker()
+    for _ in range(10):
+        tracker.update(_four((-3, 5), (3, 5)))
+    tracker.update(_four((-1, 8), (2, 2), near=((3, -8), (-3, -2))))
+    assert all(np.allclose(slot.velocity, 0.0) for slot in tracker.slots)
+
+
+def test_ordinary_running_keeps_its_speed():
+    tracker = CourtSlotTracker()
+    for step in range(10):
+        tracker.update(_four((-3 + 0.1 * step, 5), (3 - 0.1 * step, 5)))
+    far = [slot for slot in tracker.slots if slot.side > 0]
+    assert all(abs(slot.velocity[0]) > 0.05 for slot in far)
+
+
+def test_ordinary_movement_keeps_every_identity():
+    tracker = CourtSlotTracker()
+    first = tracker.update(_four((-3, 5), (3, 5)))
+    for step in range(1, 30):
+        moved = tracker.update(_four((-3 + 0.1 * step, 5), (3 - 0.1 * step, 5)))
+    assert moved == first

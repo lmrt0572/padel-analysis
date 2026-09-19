@@ -7,6 +7,13 @@ appearance- or motion-based tracker swaps their identifiers when they do.
 
 The side of the net comes from the sign of the projected `y` coordinate, so the
 calibration of the previous milestone feeds the tracker directly.
+
+The video is a sequence of rallies spliced together, and at each splice the players
+reappear elsewhere. Measured on both finals, nearly every identity switch left happened
+there. A slot's velocity is the difference of its last two positions, so across a
+splice it becomes the speed of a teleportation, and the next predictions aim metres
+off. A splice is recognised by several players jumping further than anyone runs in one
+frame, and the velocity it produced is dropped.
 """
 
 from dataclasses import dataclass, field
@@ -77,6 +84,7 @@ class CourtSlotTracker:
         court_half_length: float = 10.0,
         margin: float = 0.8,
         off_court_penalty: float = 20.0,
+        cut_jump: float = 1.0,
     ) -> None:
         """Args:
             max_x, max_y: half-extents beyond which an observation is refused, in
@@ -97,6 +105,10 @@ class CourtSlotTracker:
                 ball boy sits there and never moves, so a slot that took them would
                 keep them. Larger than the court is long, so that no distance to a
                 player on the court can outweigh it.
+            cut_jump: metres a player would have to cover in one frame, 30 m/s. When
+                two players jump that far at once, the broadcast has cut to another
+                rally. Between 0.6 and 1 m the result does not move; at 1.5 m some
+                splices go unseen.
         """
         self.slots = [
             Slot(name="near_1", side=-1),
@@ -113,6 +125,7 @@ class CourtSlotTracker:
         self._half_length = court_half_length
         self._margin = margin
         self._off_court_penalty = off_court_penalty
+        self._cut_jump = cut_jump
 
     def cost(self, slot: Slot, observation: CourtObservation) -> float:
         """Cost of assigning `observation` to `slot`, in metres-equivalent."""
@@ -155,6 +168,7 @@ class CourtSlotTracker:
             [[self.cost(slot, obs) for obs in observations] for slot in self.slots]
         )
         rows, cols = linear_sum_assignment(matrix)
+        cut = self._is_cut(rows, cols, matrix, observations)
 
         assignment: dict[str, int] = {}
         assigned_slots: set[str] = set()
@@ -172,4 +186,19 @@ class CourtSlotTracker:
                 if slot.missing_frames > self._max_missing_frames:
                     slot.position = None
                     slot.velocity = np.zeros(2)
+        if cut:
+            # La vitesse mesuree a travers un raccord est celle d'une teleportation.
+            for slot in self.slots:
+                slot.velocity = np.zeros(2)
         return assignment
+
+    def _is_cut(self, rows, cols, matrix, observations) -> bool:
+        """Whether several players jumped further than anyone runs in one frame."""
+        jumps = tracked = 0
+        for row, col in zip(rows, cols):
+            predicted = self.slots[row].predict()
+            if predicted is None or matrix[row, col] >= IMPOSSIBLE:
+                continue
+            tracked += 1
+            jumps += np.linalg.norm(observations[col].court_xy - predicted) > self._cut_jump
+        return tracked >= 2 and jumps >= 2
