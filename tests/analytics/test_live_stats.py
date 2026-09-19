@@ -107,3 +107,13 @@ def test_the_minimap_trail_ends_on_the_current_position():
     stats = LiveTimeline(_rally()).at(60)
     assert stats.positions["near_1"][-1] == pytest.approx((2.0, -3.0), abs=0.01)
     assert len(stats.positions["near_1"]) <= 46
+
+
+def test_a_short_jump_does_not_count_as_a_sprint():
+    """Un saut leve les chevilles : le point au sol recule d'un metre en 0,2 s."""
+    track = {f: (0.0, 6.0) for f in range(91)}
+    for f in range(40, 46):
+        track[f] = (0.0, 6.0 + 0.2 * (f - 39))
+    rally = Rally(0, 90, 30.0, (), {"far_1": track})
+    top = {line.slot: line for line in LiveTimeline(rally).at(90).players}["far_1"].top_speed
+    assert top < 5.0

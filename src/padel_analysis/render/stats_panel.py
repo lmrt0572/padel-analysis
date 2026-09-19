@@ -126,7 +126,8 @@ class StatsPanel:
             y += card
 
         footer = ("Cumulé depuis le début de l'extrait. Contacts : 78 % justes, mesuré",
-                  "à la main. Vitesse de balle : estimation en ligne droite.")
+                  "à la main. Vitesse max : tenue pendant une seconde.",
+                  "Vitesse de balle : estimation en ligne droite.")
         for i, text in enumerate(reversed(footer)):
             pen.text((x0, self.height - pad - i * round(22 * s)), text,
                      font=self.fonts["small"], fill=_rgb(style.MUTED), anchor="ld")

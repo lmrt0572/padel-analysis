@@ -21,6 +21,7 @@ MAX_STEP = 0.5
 """Metres in one frame, 54 km/h: a larger step is the tracker jumping, not a player
 running, and it would set every running record on its own."""
 TRAIL = 45  # images de trace derriere chaque joueur sur la minimap, 1,5 s
+SUSTAINED = 31  # images : la vitesse max est tenue pendant une seconde
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,7 @@ class PlayerLine:
     volleys: int  # frappes sans rebond au sol depuis la frappe precedente
     after_bounce: int
     distance: float  # metres, lisses
-    top_speed: float  # km/h, pointe de course
+    top_speed: float  # km/h, la plus haute vitesse tenue pendant une seconde
     net_share: float  # part du temps passe au filet, sur les images ou il est vu
 
 
@@ -94,9 +95,12 @@ class LiveTimeline:
             steps = np.zeros(len(frames))
             steps[1:] = np.where(both & (deltas <= MAX_STEP), deltas, 0.0)
             self._distance[slot] = np.cumsum(steps)
-            # Une pointe de vitesse doit tenir quelques images : la mediane sur 5 efface
-            # les a-coups du suivi sans raboter une vraie acceleration.
-            speed = median_filter(steps * rally.fps * 3.6, size=5, mode="nearest")
+            # La vitesse max est une vitesse tenue une seconde. Plus court, deux artefacts
+            # passent pour des sprints : un petit saut leve les chevilles dans l'image, et
+            # le point au sol recule d'un metre au fond du court ; un echange d'identite
+            # entre partenaires deplace la position de plusieurs metres. Mesure sur deux
+            # echanges : 21 et 50 km/h avec une mediane sur 5 images, 15 et 19 sur 31.
+            speed = median_filter(steps * rally.fps * 3.6, size=SUSTAINED, mode="nearest")
             self._top[slot] = np.maximum.accumulate(speed)
             at_net = at_net_states(np.where(present, np.abs(smooth[:, 1]), np.nan))
             self._at_net[slot] = np.cumsum(at_net & present)
