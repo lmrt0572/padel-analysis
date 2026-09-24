@@ -1113,6 +1113,79 @@ invente autant : c'est un échange, pas un gain, et le score baisse. **Le modèl
 été changé.** Retrouver ces vitres demanderait une autre vue — une seconde caméra, ou
 un micro — plutôt qu'un autre réglage.
 
+#### Ce que l'affichage perdait
+
+La validation croisée note ce que le modèle décide ; la démonstration, et donc les
+juges, notent ce qu'elle affiche. Entre les deux, un contact était écarté quand la
+balle manquait à son image exacte, faute de position où l'éclairer. Elle y manque
+souvent : le filtre d'affichage retire le sommet d'un virage serré comme un point
+aberrant, et une frappe cache la balle derrière la raquette. Sur les onze minutes
+d'entraînement, chacune prédite par un modèle qui ne l'a pas vue, **51 contacts décidés
+disparaissaient ainsi, dont 43 justes**.
+
+La balle est désormais prise à l'image voisine la plus proche ; l'instant du contact
+reste celui que le modèle a choisi.
+
+| Portée de la recherche | Justes / 863 | Affichés | Score |
+|---|---|---|---|
+| 0 image (avant) | 654 (75,8 %) | 750 | 0,811 |
+| 1 image | 696 (80,6 %) | 799 | 0,838 |
+| **2 images (retenue)** | **697 (80,8 %)** | **801** | **0,838** |
+| 4, 6 ou 8 images | 697 | 801 | 0,838 |
+
+À deux images, l'affichage montre exactement ce que le modèle décide : les chiffres
+sont ceux du décodage, déjà mesurés sur trois jeux de graines. **Les trois juges
+ci-dessus ont été notés avant cette correction, sur ce qui était affiché** : ils
+sous-estiment le modèle de ce que l'affichage perdait.
+
+#### La logique du padel pour compléter l'image : un résultat négatif
+
+Ce que l'image ne montre pas, les règles du jeu pourraient le déduire : après une
+frappe, la balle rebondit une fois chez l'adversaire avant toute vitre ; un joueur au
+fond ne la prend pas de volée ; une frappe ne suit pas une frappe du même côté. La
+vérité terrain dit d'abord à quel point le jeu est prévisible. Entre deux frappes
+successives, sur les 1 579 contacts pointés :
+
+| Entre deux frappes | Part |
+|---|---|
+| Rien : volée | 47 % |
+| Un rebond | 24 % |
+| Rebond puis vitre | 16 % |
+| Rebond puis deux vitres | 3 % |
+| Autres enchaînements | 10 % |
+
+La même suite visible cache donc plusieurs suites réelles. Les règles ont été croisées
+avec ce que la table ne voit pas — le côté du frappeur, sa distance au filet, le côté
+et la profondeur d'un rebond — et mesurées sur les onze minutes d'entraînement,
+chacune prédite par un modèle qui ne l'a pas vue, affichage corrigé. Un contact déduit
+compte comme retrouvé si un contact réellement manqué de même nature se trouve entre
+les deux contacts qui l'encadrent, sans exiger l'instant exact ; il fallait neuf
+réussites sur dix pour garder une règle.
+
+| Règle | Contacts déduits | Réellement manqués là | Score (0,838 sans) |
+|---|---|---|---|
+| Rebond avant une frappe prise à plus de 7 m du filet | 57 | 7 (12 %) | 0,815 |
+| La même, à plus de 9 m | 11 | 1 (9 %) | 0,832 |
+| Rebond avant une vitre détectée sans rebond depuis la frappe | 8 | 2 (25 %) | 0,836 |
+| Vitre du fond, quand le joueur frappe plus près du filet que le rebond | 16 | 5 (31 %) | 0,829 |
+
+**Aucune n'a été gardée.** Les rebonds déduits à tort se répartissent en deux causes.
+La première tient au jeu : 25 sur 50 étaient de vraies volées, prises entre 7 et 9 m
+du filet — la bandeja et la víbora se jouent en l'air, loin du filet. La seconde tient
+aux entrées de la règle : 22 fois, une frappe manquée par le modèle s'intercalait
+entre les deux, et l'enchaînement sur lequel la règle raisonne était faux dès le départ.
+Les 3 derniers doublaient un rebond déjà affiché.
+
+La règle inverse, retirer l'une de deux frappes consécutives du même côté, ferait pire :
+sur 55 paires de ce genre, 38 sont deux frappes réelles. Entre elles, la frappe adverse
+a été manquée 9 fois — et **26 fois il n'y en avait aucune : l'une des deux frappes est
+attribuée au mauvais côté**. C'est une borne basse des erreurs d'attribution du
+frappeur, qui n'ont pas de vérité terrain ici, et une piste pour la suite plus qu'une
+règle.
+
+La logique du jeu n'apporte donc rien que le réseau n'ait déjà : il voit deux secondes
+autour de chaque instant, ce que l'enchaînement appris de l'échange avait déjà montré.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans
