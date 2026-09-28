@@ -1178,13 +1178,75 @@ Les 3 derniers doublaient un rebond déjà affiché.
 
 La règle inverse, retirer l'une de deux frappes consécutives du même côté, ferait pire :
 sur 55 paires de ce genre, 38 sont deux frappes réelles. Entre elles, la frappe adverse
-a été manquée 9 fois — et **26 fois il n'y en avait aucune : l'une des deux frappes est
-attribuée au mauvais côté**. C'est une borne basse des erreurs d'attribution du
-frappeur, qui n'ont pas de vérité terrain ici, et une piste pour la suite plus qu'une
-règle.
+a été manquée 9 fois — et 26 fois il n'y en avait aucune : l'une des deux frappes est
+attribuée au mauvais côté. Une frappe mal attribuée fait deux paires fautives, avec
+celle d'avant et celle d'après : ces 26 paires sont 12 frappes, mesurées plus bas.
 
 La logique du jeu n'apporte donc rien que le réseau n'ait déjà : il voit deux secondes
 autour de chaque instant, ce que l'enchaînement appris de l'échange avait déjà montré.
+
+#### Les vitres : la physique, le décodage, et un ensemble plus large
+
+Une règle de logique échoue parce que le jeu permet plusieurs suites. Une règle de
+physique n'a pas ce défaut. Une balle arrive sur un rebond à une vitesse que la frappe
+d'avant et le rebond donnent, et un rebond en garde bien plus de la moitié. Quand le
+joueur de ce côté frappe ensuite si près du rebond que la balle, à ce rythme, l'aurait
+atteint plusieurs fois, elle est allée ailleurs d'abord : sur le mur dans son axe.
+Sur 151 rebonds suivis d'une frappe du même côté, les retours directs vont de 40 à
+90 % de la vitesse d'arrivée, les détours restent sous 35 %. Dans ces cas-là, et quand
+le trajet par le mur reste possible dans le temps, une vitre réelle non détectée se
+trouve entre le rebond et la frappe **13 fois sur 14**.
+
+Savoir qu'une vitre a eu lieu ne dit pas quand. L'instant tiré de la physique tombe
+rarement à trois images près ; celui où le réseau voyait un mur le plus probable, même
+sous son seuil, y tombe bien plus souvent — et quand ce pic est sur le rebond, c'est
+que le rebond était la vitre. `contact/glass_inference.py` fait les deux.
+
+Trois autres changements ont suivi, chacun mesuré sur les onze minutes d'entraînement,
+chaque minute prédite par un modèle qui ne l'a pas vue, sur plusieurs jeux de graines :
+
+| Chaîne | Contacts justes / 863 | Vitres justes / 128 | Inventés | Score |
+|---|---|---|---|---|
+| Modèle, affichage corrigé | 696 à 697 | 64 à 66 | 54 à 56 | 0,838 à 0,839 |
+| + vitres déduites | 699 à 703 | 70 à 73 | 60 à 61 | 0,838 à 0,841 |
+| + un contact d'une autre nature à trois images | 708 à 713 | 72 à 75 | 62 à 66 | 0,840 à 0,847 |
+| **+ 18 réseaux moyennés au lieu de 3** | **718** | **75** | **57** | **0,855** |
+
+- **Deux contacts de nature différente peuvent se suivre de près.** Un rebond est
+  souvent suivi de la vitre du fond cinq ou six images plus tard, et le décodage
+  gardait un seul pic tous les quatre images. Deux contacts de même nature restent à
+  quatre images ; un contact d'une autre nature peut venir à trois, au-dessus de 0,85.
+- **Un ensemble plus large invente moins.** Trois réseaux donnent 0,844 en moyenne sur
+  six jeux de graines ; neuf, 0,847 et 0,856 ; dix-huit, 0,855, avec 57 contacts
+  inventés au lieu de 67 en moyenne.
+- **Le côté du frappeur alterne.** Contre l'alternance des frappes pointées, 12 frappes
+  sur 403 étaient attribuées à la mauvaise moitié du terrain, presque toutes un lob ou
+  un smash du joueur proche, qui monte dans l'image à côté des joueurs du fond. Trois
+  frappes de suite d'une même moitié étant impossibles dans un échange, celle du
+  milieu va au joueur le plus proche de l'autre moitié : 6 erreurs sur 403. Les vitres
+  n'y gagnent rien, les statistiques par joueur si.
+
+Ce qui a été essayé sans être gardé :
+
+| Essai | Résultat |
+|---|---|
+| Physique donnée au réseau comme indices, calculée sur les contacts des règles | score 0,843 à 0,845 sur 3 jeux de graines, vitres 62 à 63 : les rebonds des règles sont trop peu sûrs |
+| Deux passes : physique calculée sur les contacts du modèle, relue par un second réseau (validation emboîtée, 110 modèles) | vitres 67 à 70, score 0,836 à 0,843 : le même gain que la règle écrite, pour deux modèles |
+| Pondérer les murs ×1,5, ×2 ou ×3 à l'entraînement | +2 vitres en moyenne avec 3 réseaux ; avec 9, 75 vitres et 0,852 contre 77 et 0,856 |
+| Accepter les murs dès 0,3 à 0,6 | jusqu'à 79 vitres, autant d'inventés en plus : un échange, pas un gain |
+| Recaler l'instant d'une vitre sur le virage le plus net de la trajectoire | au mieux inchangé |
+| Une deuxième vitre quand le trajet par la première reste trop lent | 3 doubles vitres sur 52 cas, non séparables |
+| Une vitre entre deux frappes adverses sans rien de détecté entre elles | 2 vitres sur 70 cas : même lente, la balle est prise de volée |
+| Le frappeur choisi par la géométrie du rayon plutôt que par l'image | 11 à 25 % d'erreurs de moitié, contre 3 % |
+
+**Ce qui reste.** Au fond proche, 50 vitres sur 78 sont justes, 9 sur 10 sur les côtés.
+Au fond éloigné, 22 vitres sur 38 restent manquées : c'est la limite
+de la caméra décrite plus haut. Ailleurs, les vitres sont souvent trouvées au mauvais
+instant plutôt que manquées : 17 sont détectées entre quatre et huit images de
+l'instant pointé, contre 7 rebonds et 5 frappes sur des effectifs bien plus grands, et
+sans biais d'un côté ou de l'autre. L'instant exact d'un contact contre la vitre est
+peut-être aussi le plus difficile à pointer à la main. Ces chiffres sont ceux des
+minutes d'entraînement : les juges ont été notés avant tous ces changements.
 
 #### Les statistiques d'un échange
 
