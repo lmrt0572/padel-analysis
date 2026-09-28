@@ -9,6 +9,7 @@ from padel_analysis.rallies import (
     build_rally,
     load_specs,
     striker_slot,
+    strikers,
 )
 from padel_analysis.render.ball_overlay import ContactEvent
 
@@ -101,3 +102,27 @@ def test_without_a_ball_an_unknown_box_still_has_no_slot():
     frame = analysis["frames"][120]
     assert striker_slot(np.array([0.0, 0.0, 1.0, 1.0]), frame["people"],
                         frame["assignment"]) is None
+
+
+def test_a_player_of_the_asked_half_is_the_striker_even_when_another_is_nearer():
+    analysis, _ = _analysis()
+    frame = analysis["frames"][120]
+    assert striker_slot(None, frame["people"], frame["assignment"], ball=(130.0, 480.0),
+                        side="far") == "far_1"
+
+
+def test_the_middle_of_three_strikes_from_one_half_goes_to_the_other_half():
+    analysis, _ = _analysis()
+    far_box = analysis["frames"][120]["people"][1].bbox
+    ball = (915.0, 90.0)  # un lob du joueur proche, haut dans l'image, pres du fond
+    strikes = [(110, far_box, ball), (130, far_box, ball), (150, far_box, ball)]
+    assert strikers(analysis["frames"], strikes) == {110: "far_1", 130: "near_1", 150: "far_1"}
+
+
+def test_strikes_far_apart_are_not_made_to_alternate():
+    analysis, _ = _analysis()
+    frames = {**analysis["frames"], 400: analysis["frames"][120]}
+    far_box = frames[120]["people"][1].bbox
+    ball = (915.0, 90.0)
+    strikes = [(110, far_box, ball), (150, far_box, ball), (400, far_box, ball)]
+    assert strikers(frames, strikes)[150] == "far_1"

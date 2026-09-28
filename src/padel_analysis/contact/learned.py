@@ -34,6 +34,11 @@ CLASS_OF_ANSWER = {"raquette": 1, "sol": 2, "verre": 3, "grillage": 3, "filet": 
 RULE_LABELS = ("RAQUETTE", "SOL", "VITRE", "GRILLAGE", "FILET")
 NO_WALL, GLASS_WALL, MESH_WALL = 0, 1, 2
 IGNORED = -100
+SEEDS = tuple(range(18))
+"""One network per seed, their probabilities averaged. Over the eleven training
+minutes, each predicted by an ensemble that never saw it, 3 networks scored 0.844 on
+average over six sets of seeds, 9 networks 0.847 and 0.856, 18 networks 0.855, with
+fewer invented contacts: 67 on average, then 57."""
 
 Point = tuple[float, float]
 
@@ -234,29 +239,46 @@ def decode(
     start: int,
     threshold: float = 0.7,
     radius: int = 4,
+    other_radius: int = 3,
+    other_threshold: float = 0.85,
 ) -> dict[int, str]:
     """Contact frame -> answer, from per-frame class probabilities.
 
-    A contact is a frame whose contact probability reaches `threshold` and is the
-    highest within `radius` frames. 0.7 was chosen by cross-validation over the marked
-    minutes, each predicted by a model that never saw it.
+    A contact is a frame whose contact probability reaches `threshold` and where its
+    own class is the likeliest within `radius` frames. A contact of another kind may
+    stand closer, down to `other_radius` frames, when surer than `other_threshold`: a
+    bounce is often followed by the back glass five or six frames later, and one peak
+    used to hide the other. 0.7 was chosen by cross-validation over the marked minutes,
+    each predicted by a model that never saw it; letting another kind stand closer
+    brought 708 to 713 contacts of 863 right instead of 697 to 703, over three sets of
+    seeds, and 72 to 75 glass contacts of 128 instead of 70 to 73.
     """
     contact = 1.0 - probabilities[:, 0]
-    found: dict[int, str] = {}
+    kinds = probabilities[:, 1:].argmax(axis=1) + 1
+    found: dict[int, int] = {}
     for index in np.argsort(-contact, kind="stable"):
-        if contact[index] < threshold:
+        if contact[index] < min(threshold, other_threshold):
             break
+        kind = int(kinds[index])
+        near = [other for other in found if abs(index - other) <= max(radius, other_radius)]
+        if any(found[other] == kind and abs(index - other) <= radius for other in near):
+            continue
+        others = [other for other in near if found[other] != kind]
+        if any(abs(index - other) <= other_radius for other in others):
+            continue
+        if contact[index] < (other_threshold if others else threshold):
+            continue
         low, high = max(0, index - radius), index + radius + 1
-        if contact[index] < contact[low:high].max():
+        if probabilities[index, kind] < probabilities[low:high, kind].max():
             continue
-        if any(abs(index - other) <= radius for other in found):
-            continue
-        kind = int(probabilities[index, 1:].argmax()) + 1
+        found[int(index)] = kind
+    answers = {}
+    for index, kind in sorted(found.items()):
         if kind == CLASS_OF_ANSWER["verre"]:
-            found[int(index)] = "grillage" if material[index] == MESH_WALL else "verre"
+            answers[start + index] = "grillage" if material[index] == MESH_WALL else "verre"
         else:
-            found[int(index)] = CLASSES[kind]
-    return {start + index: answer for index, answer in sorted(found.items())}
+            answers[start + index] = CLASSES[kind]
+    return answers
 
 
 class ContactModel:
@@ -301,7 +323,7 @@ class ContactModel:
 
 def train(
     sequences: Sequence[tuple[np.ndarray, np.ndarray]],
-    seeds: Sequence[int] = (0, 1, 2),
+    seeds: Sequence[int] = SEEDS,
     steps: int = 1500,
     crop: int = 256,
     batch: int = 16,

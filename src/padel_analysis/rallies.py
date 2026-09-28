@@ -23,6 +23,8 @@ DEFAULT_NAMES = {
 }
 ANSWER_OF_LABEL = {"RAQUETTE": "raquette", "SOL": "sol", "VITRE": "verre",
                    "GRILLAGE": "grillage", "FILET": "filet"}
+ALTERNATION_SPAN = 150
+"""Three strikes within five seconds belong to one exchange, where the halves alternate."""
 
 
 @dataclass(frozen=True)
@@ -54,16 +56,18 @@ def load_specs(path: str | Path) -> list[RallySpec]:
 
 
 def striker_slot(
-    box: np.ndarray | None, people: Sequence, assignment: dict, ball=None
+    box: np.ndarray | None, people: Sequence, assignment: dict, ball=None,
+    side: str | None = None,
 ) -> str | None:
     """The slot of the player who struck.
 
     The player whose box was lit, when the tracker holds them. The lit box can belong to
     a detection the tracker left out - a player half hidden, or a figure beside the
     court - and a strike still has a striker: then it is the tracked player whose box
-    is nearest the ball.
+    is nearest the ball. With `side`, only a player of that half can be the striker.
     """
-    slot_of_index = {index: slot for slot, index in assignment.items()}
+    slot_of_index = {index: slot for slot, index in assignment.items()
+                     if side is None or slot.startswith(side)}
     if box is not None:
         for index, person in enumerate(people):
             if np.array_equal(person.bbox, box) and index in slot_of_index:
@@ -79,21 +83,49 @@ def striker_slot(
     return nearest
 
 
+def strikers(frames: dict, strikes: Sequence[tuple[int, np.ndarray | None, tuple]],
+             ) -> dict[int, str | None]:
+    """The striker of each (frame, lit box, ball) strike, the halves made to alternate.
+
+    Three strikes in a row from one half cannot happen within an exchange: the middle
+    one went to the wrong half, most often a lob or a smash near the camera, which rises
+    in the picture beside the far players. It is given to the nearest player of the
+    other half. Measured on the eleven training minutes, against the alternation of the
+    hand-marked strikes: 12 of 403 strikes on the wrong half before, 6 after.
+    """
+    slots = {}
+    for frame, box, ball in strikes:
+        data = frames.get(frame, {})
+        slots[frame] = striker_slot(box, data.get("people", []), data.get("assignment", {}),
+                                    ball)
+    ordered = sorted(slots)
+    half = {frame: None if slot is None else slot.split("_")[0] for frame, slot in slots.items()}
+    balls = {frame: ball for frame, _, ball in strikes}
+    corrected = dict(slots)
+    for first, middle, last in zip(ordered, ordered[1:], ordered[2:]):
+        if last - first > ALTERNATION_SPAN or half[middle] is None:
+            continue
+        if half[first] == half[middle] == half[last]:
+            data = frames.get(middle, {})
+            other = "near" if half[middle] == "far" else "far"
+            flipped = striker_slot(None, data.get("people", []), data.get("assignment", {}),
+                                   balls[middle], side=other)
+            if flipped is not None:
+                corrected[middle] = flipped
+    return corrected
+
+
 def build_rally(analysis: dict, events: Sequence, spec: RallySpec, fps: float) -> Rally:
     """The rally's contacts and player positions, from a saved analysis and its events."""
     frames = analysis["frames"]
+    chosen = [e for e in events if spec.start <= e.frame <= spec.stop]
+    players = strikers(frames, [(e.frame, e.box, e.pixel) for e in chosen
+                                if e.label == "RAQUETTE"])
     contacts = []
-    for event in events:
-        if not spec.start <= event.frame <= spec.stop:
-            continue
+    for event in chosen:
         kind = ANSWER_OF_LABEL[event.label]
         point = None if event.point is None else tuple(float(v) for v in event.point)
-        player = None
-        if kind == "raquette":
-            frame = frames.get(event.frame, {})
-            player = striker_slot(event.box, frame.get("people", []),
-                                  frame.get("assignment", {}), event.pixel)
-        contacts.append(RallyContact(event.frame, kind, point, player))
+        contacts.append(RallyContact(event.frame, kind, point, players.get(event.frame)))
 
     positions: dict[str, dict[int, tuple[float, float]]] = {}
     for frame in range(spec.start, spec.stop + 1):
