@@ -60,6 +60,7 @@ GESTURE_SPEED = 8.0
 STRIKE_SPEED = 20.0
 CONTACT_SPAN = 3
 CONTACT_SHARPNESS = 0.40
+CONTACT_REACH = 2
 LEFT_WRIST, RIGHT_WRIST = 9, 10
 
 
@@ -262,7 +263,7 @@ def learned_events(
     frames = analysis["frames"]
     events: list[ContactEvent] = []
     for frame, answer in answers.items():
-        ball = shown.get(frame) or path.get(frame)
+        ball = ball_near(frame, shown, path, CONTACT_REACH)
         if ball is None:
             continue
         label = LABEL_OF_ANSWER[answer]
@@ -276,6 +277,21 @@ def learned_events(
         point = verdict.point if verdict is not None else None
         events.append(ContactEvent(frame, label, ball, zone, point=point))
     return path, shown, events, pose
+
+
+def ball_near(frame: int, shown: dict, path: dict, reach: int) -> tuple | None:
+    """The ball at a contact, or at the nearest frame that has it, up to `reach` away.
+
+    The ball is often missing at the very frame of a contact: the display filter drops
+    the vertex of a sharp turn as a spike, and a strike hides the ball behind the
+    racket. The contact itself is decided on every frame, ball or not.
+    """
+    for gap in range(reach + 1):
+        for candidate in (frame - gap, frame + gap):
+            ball = shown.get(candidate) or path.get(candidate)
+            if ball is not None:
+                return ball
+    return None
 
 
 def _verdict_on(label: str, ball, pose, surfaces) -> Verdict | None:
