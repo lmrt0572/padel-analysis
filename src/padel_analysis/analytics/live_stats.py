@@ -14,6 +14,7 @@ from scipy.ndimage import median_filter
 from .basic_stats import smooth_positions
 from .net_control import at_net_states
 from .rally import RACKET, WALLS, Rally, ball_speeds
+from .segmentation import rallies
 
 SLOTS = ("near_1", "near_2", "far_1", "far_2")
 PAIRS = {"proche": ("near_1", "near_2"), "fond": ("far_1", "far_2")}
@@ -33,6 +34,18 @@ class PlayerLine:
     distance: float  # metres, lisses
     top_speed: float  # km/h, la plus haute vitesse tenue pendant une seconde
     net_share: float  # part du temps passe au filet, sur les images ou il est vu
+    winners: int = 0  # points finis par une frappe de ce joueur, gagnee
+    errors: int = 0  # points finis par une frappe de ce joueur, perdue
+
+
+@dataclass(frozen=True)
+class PointOutcome:
+    """A point over: when it ended, the half that won it, and who it is credited to."""
+
+    frame: int
+    winner_side: str  # near ou far
+    player: str | None
+    kind: str | None  # gagnant ou faute
 
 
 @dataclass(frozen=True)
@@ -49,6 +62,10 @@ class LiveStats:
     last_shot_speed: float | None  # km/h, du dernier coup dont on connait l'arrivee
     top_shot_speed: float | None
     positions: dict[str, list[tuple[float, float]]]  # la trace recente, la plus recente a la fin
+    rally_number: int | None = None  # l'echange en cours, compte depuis le debut de l'extrait
+    rally_shots: int = 0  # frappes de l'echange en cours jusqu'ici
+    longest_rally: int = 0  # le plus d'echanges de frappes en un echange, jusqu'ici
+    pair_points: dict[str, int] | None = None  # points gagnes par paire, si le score est lu
 
 
 def volley_flags(rally: Rally) -> dict[int, bool | None]:
@@ -72,8 +89,16 @@ def volley_flags(rally: Rally) -> dict[int, bool | None]:
 class LiveTimeline:
     """Cumulative statistics for every frame of a rally, computed once."""
 
-    def __init__(self, rally: Rally, recent: float = 1.0) -> None:
+    def __init__(self, rally: Rally, recent: float = 1.0, splices=(), points=None) -> None:
+        """Args:
+            splices: where the broadcast splices, each opening a new rally.
+            points: the points already decided, from the scoreboard; None when it
+                was not read.
+        """
         self.rally = rally
+        self._points = None if points is None else sorted(points, key=lambda p: p.frame)
+        self._spans = rallies(splices, [(c.frame, c.kind) for c in rally.contacts],
+                              rally.start, rally.stop)
         self.recent = round(recent * rally.fps)
         frames = np.arange(rally.start, rally.stop + 1)
         self._volley = volley_flags(rally)
@@ -113,6 +138,7 @@ class LiveTimeline:
         index = frame - rally.start
         past = [c for c in rally.contacts if c.frame <= frame]
         strikes = [c for c in past if c.kind == RACKET]
+        over = [p for p in self._points or () if p.frame <= frame]
         players = []
         for slot in SLOTS:
             mine = [c for c in strikes if c.player == slot]
@@ -125,6 +151,8 @@ class LiveTimeline:
                 distance=float(self._distance[slot][index]),
                 top_speed=float(self._top[slot][index]),
                 net_share=float(self._at_net[slot][index]) / seen if seen else math.nan,
+                winners=sum(1 for p in over if p.player == slot and p.kind == "gagnant"),
+                errors=sum(1 for p in over if p.player == slot and p.kind == "faute"),
             ))
         by_slot = {line.slot: line for line in players}
         last = past[-1] if past and frame - past[-1].frame <= self.recent else None
@@ -149,4 +177,18 @@ class LiveTimeline:
             last_shot_speed=known[-1] if known else None,
             top_shot_speed=max(known) if known else None,
             positions=positions,
+            pair_points=None if self._points is None else {
+                "proche": sum(1 for p in over if p.winner_side == "near"),
+                "fond": sum(1 for p in over if p.winner_side == "far"),
+            },
+            **self._rally_at(frame),
         )
+
+    def _rally_at(self, frame: int) -> dict:
+        begun = [span for span in self._spans if span.start <= frame]
+        if not begun:
+            return {}
+        counts = [sum(1 for f, kind in span.contacts if kind == RACKET and f <= frame)
+                  for span in begun]
+        return {"rally_number": len(begun), "rally_shots": counts[-1],
+                "longest_rally": max(counts)}

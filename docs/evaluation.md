@@ -1134,6 +1134,70 @@ placée par convention au joueur à un mètre de haut. Les traces des joueurs so
 là où le suivi saute de plus de deux mètres en un dixième de seconde, plutôt que de
 tracer une course que personne n'a faite.
 
+#### Découper un match en échanges
+
+La vidéo du dataset garde les échanges et coupe les temps morts : un nouveau point
+s'ouvre au raccord. Un raccord se lit dans l'image elle-même — deux images successives
+de plans différents diffèrent partout, alors qu'en jeu seuls les joueurs et la balle
+bougent : l'écart moyen de niveaux de gris entre deux miniatures vaut 0,5 en médiane
+pendant le jeu, et de 5,6 à 11,5 aux raccords (`io/splices.py`).
+
+La vérité existe déjà : le dataset marque les services sur les 20 100 premières images
+de chaque finale. Un début d'échange annoncé est juste s'il tombe à deux secondes au
+plus d'un service. Les minutes qui ont entraîné le modèle de contacts ont réglé la
+règle, les six autres de la zone annotée l'ont jugée une fois.
+
+| | Services retrouvés | Débuts annoncés | Précision | Rappel |
+|---|---|---|---|---|
+| Réglage, 5 minutes | 16 / 17 | 18 | 89 % | 94 % |
+| **Juge, 6 minutes** | **14 / 16** | **15** | **93 %** | **88 %** |
+
+La règle la plus simple était la meilleure : un raccord ouvre un échange. Exiger une
+frappe après le raccord ne changeait rien ; ouvrir un point après un long silence sans
+contact ajoutait plus de faux débuts qu'il ne rattrapait de services filmés sans
+coupure — ce sont eux, les services manqués. Le seuil de raccord est stable entre 3
+et 4, et perd la moitié des points à 5.
+
+#### Lire le score au tableau d'affichage
+
+Le tableau de la retransmission est à une place fixe, une ligne par paire : les noms,
+une colonne par set, puis une case claire pour les points. Cette case est le repère :
+c'est la seule claire — blanche, ou dorée au point en or — et elle se décale d'une
+colonne à chaque set, ce qui donne le set en cours ; les jeux sont dans la case sombre
+à sa gauche, et la paire au service porte un point jaune (`io/scoreboard.py`). Onze
+valeurs suffisent — 0, 15, 30, 40 et les jeux de 0 à 6 — et la police ne change
+jamais : chaque case est comparée à des modèles, sans moteur de reconnaissance de
+texte. Les modèles sont tirés d'images listées avec leur valeur
+(`ground_truth/scoreboard/templates.json`) et recalculés depuis la vidéo, que le dépôt
+ne contient pas.
+
+Le tableau est lu au début de chaque séquence entre deux raccords, et la grammaire du
+score dit qui a gagné le point : un seul pas de 0 à 15, 30, 40, ou un jeu gagné avec
+les points remis à zéro (`analytics/points.py`).
+
+| | Séquences | Tableau lu | Points attribués | Changements rejetés |
+|---|---|---|---|---|
+| Finale féminine | 63 | 54 | 48 | 5 |
+| Finale masculine | 141 | 83 | 69 | 7 |
+
+Deux contrôles. **À l'œil, 48 tableaux tirés au hasard, 24 par finale : les 48
+lectures sont justes**, jeux, points et service. **Par la grammaire** : les douze
+changements rejetés ont tous plusieurs points d'écart entre deux lectures — un point
+absent de la vidéo, ou joué pendant une séquence où le tableau était caché. Aucun n'est
+une lecture fausse : la règle refuse de deviner. Deux faits en ressortent au passage :
+aucune séquence féminine ne répète le même score, ce qui confirme qu'un raccord ouvre
+bien un point ; et le tableau manque sur deux séquences masculines sur cinq, ralentis
+et gros plans compris.
+
+**Du point de la paire au point du joueur.** La vidéo de statistiques crédite chaque
+point à un joueur : la paire gagnante vient du tableau, son côté du court de la paire
+au service — le point jaune — et de la première frappe de l'échange, qui est le
+service ; le dernier frappeur de l'échange reçoit un **point gagnant** s'il est de la
+paire gagnante, une **faute** sinon. Ce partage n'a pas de vérité terrain : les
+pointages de contacts ne disent pas qui frappe. Il hérite des frappes manquées par le
+modèle, environ une sur dix, qui donnent le point au mauvais joueur ; la vidéo le
+dit sous le panneau.
+
 ## Limites connues
 
 **Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi

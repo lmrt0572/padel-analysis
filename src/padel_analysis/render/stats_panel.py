@@ -75,12 +75,25 @@ class StatsPanel:
         self._minimap(pen, stats, x0, top, map_width, map_height)
         cx = x0 + map_width + round(26 * s)
         y = top
-        for value, label in ((str(stats.shots), "coups joués"),
-                             (str(stats.walls), "vitres et grillages")):
+        if stats.rally_number is None:
+            first = (str(stats.shots), "coups joués")
+        else:
+            first = (str(stats.rally_shots), f"coups, échange n° {stats.rally_number}")
+        for value, label in (first, (str(stats.walls), "vitres et grillages")):
             pen.text((cx, y), value, font=self.fonts["big"], fill=_rgb(style.TEXT))
             pen.text((cx, y + round(54 * s)), label, font=self.fonts["label"],
                      fill=_rgb(style.MUTED))
             y += round(88 * s)
+        if stats.rally_number is not None:
+            pen.text((cx, y - round(8 * s)), f"plus long échange : {stats.longest_rally} coups",
+                     font=self.fonts["small"], fill=_rgb(style.MUTED))
+            y += round(22 * s)
+        if stats.pair_points is not None:
+            won = stats.pair_points
+            pen.text((cx, y - round(8 * s)),
+                     f"points : proche {won['proche']} · fond {won['fond']}",
+                     font=self.fonts["small"], fill=_rgb(style.TEXT))
+            y += round(22 * s)
         pen.text((cx, y), "balle, dernier coup", font=self.fonts["label"],
                  fill=_rgb(style.MUTED))
         speed = stats.last_shot_speed
@@ -102,7 +115,7 @@ class StatsPanel:
         # Les joueurs : une carte chacun, frappes puis course.
         y = self._section(pen, "LES JOUEURS", x0, x1, top + map_height + round(22 * s))
         card = round(114 * s)
-        column = (x1 - x0 - round(20 * s)) / 3
+        column = (x1 - x0 - round(20 * s)) / 4
         for line in stats.players:
             colour = _rgb(style.PLAYER.get(line.slot, style.TEXT))
             left = x0 + round(20 * s)
@@ -116,8 +129,10 @@ class StatsPanel:
                      fill=_rgb(style.MUTED), anchor="ra")
             net = "—" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
             values = [(f"{line.distance:.0f} m", "parcourus"),
-                      (f"≈ {line.top_speed:.0f} km/h", "vitesse max"),
+                      (f"≈ {line.top_speed:.0f}", "km/h max"),
                       (net, "au filet")]
+            if stats.pair_points is not None:
+                values.append((f"{line.winners} · {line.errors}", "gagnés · fautes"))
             for i, (value, label) in enumerate(values):
                 vx = left + i * column
                 pen.text((vx, y + round(56 * s)), value, font=self.fonts["value"],
@@ -126,9 +141,11 @@ class StatsPanel:
                          fill=_rgb(style.MUTED))
             y += card
 
-        footer = ("Cumulé depuis le début de l'extrait. Contacts : 78 % justes, mesuré",
+        footer = ["Cumulé depuis le début de l'extrait. Contacts : 78 % justes, mesuré",
                   "à la main. Vitesse max : tenue pendant une seconde.",
-                  "Vitesse de balle : estimation en ligne droite.")
+                  "Vitesse de balle : estimation en ligne droite."]
+        if stats.pair_points is not None:
+            footer.append("Points : lus au tableau, crédités au dernier frappeur.")
         for i, text in enumerate(reversed(footer)):
             pen.text((x0, self.height - pad - i * round(22 * s)), text,
                      font=self.fonts["small"], fill=_rgb(style.MUTED), anchor="ld")

@@ -4,6 +4,10 @@ Les statistiques - coups, vitres, frappes, distance et temps au filet par joueur
 paire - sont cumulees depuis le debut de l'extrait et avancent avec la video. L'image
 de diffusion n'est pas recouverte : le panneau s'ajoute a cote.
 
+Les points viennent du tableau d'affichage, lu au debut de chaque echange et de celui
+qui suit : la paire gagnante, puis le dernier frappeur de l'echange, credite d'un point
+gagnant s'il est de cette paire, d'une faute sinon.
+
 Demande l'analyse sauvegardee de la minute (scripts/analyse_minutes.py) et ffmpeg.
 
 Usage:
@@ -14,16 +18,25 @@ Usage:
 import argparse
 import pickle
 import tempfile
+from collections import Counter
 from pathlib import Path
 
+import cv2
 import minutes
+import numpy as np
 from rally_page import to_h264
+from read_scores import EXAMPLES, READS, frame_of
 
-from padel_analysis.analytics.live_stats import LiveTimeline
+from padel_analysis.analytics.live_stats import LiveTimeline, PointOutcome
+from padel_analysis.analytics.points import credit, point_winner, serving_side
+from padel_analysis.analytics.segmentation import rallies
 from padel_analysis.ball.smoothing import smooth_path
 from padel_analysis.contact.learned import ContactModel
 from padel_analysis.demo import learned_events, render, retrack
 from padel_analysis.geometry.calibration import Calibration
+from padel_analysis.io.scoreboard import Scoreboard
+from padel_analysis.io.splices import SPLICE
+from padel_analysis.io.video_source import VideoSource
 from padel_analysis.rallies import DEFAULT_NAMES, RallySpec, build_rally
 from padel_analysis.render.figure_style import PLAYER
 from padel_analysis.render.stats_panel import StatsPanel
@@ -33,6 +46,56 @@ PANEL_WIDTH = 480
 # Les couleurs des joueurs du panneau, en BGR pour OpenCV : une joueuse a la meme
 # couleur sur l'image et dans les chiffres.
 PLAYER_BGR = {slot: tuple(int(c[i:i + 2], 16) for i in (5, 3, 1)) for slot, c in PLAYER.items()}
+AFTER = 900  # images lues apres l'extrait, pour le score qui suit son dernier echange
+
+
+def splices_and_scores(match: str, start: int, stop: int, board: Scoreboard):
+    """The splices inside the clip, and the score read at the start of each stretch."""
+    cuts, readings = [], []
+    stretch, previous, reads = start, None, []
+    with VideoSource(Path(minutes.video(match))) as source:
+        for index, image in source.iter_frames(start=start, stop=stop + AFTER):
+            small = cv2.cvtColor(cv2.resize(image, (160, 90)), cv2.COLOR_BGR2GRAY)
+            small = small.astype(np.float32)
+            change = 0.0 if previous is None else float(np.abs(small - previous).mean())
+            previous = small
+            if change > SPLICE:
+                if reads:
+                    readings.append((stretch, Counter(reads).most_common(1)[0][0]))
+                if index > stop and readings and readings[-1][0] > stop:
+                    break
+                stretch, reads = index, []
+                if index <= stop:
+                    cuts.append(index)
+            if index - stretch in READS:
+                state = board.read(image)
+                if state is not None:
+                    reads.append(state)
+    if reads:
+        readings.append((stretch, Counter(reads).most_common(1)[0][0]))
+    return cuts, readings
+
+
+def point_outcomes(rally, cuts, readings, start, stop) -> list[PointOutcome]:
+    """Each rally of the clip whose score change is clear, credited to a player."""
+    contacts = [(c.frame, c.kind) for c in rally.contacts]
+    outcomes = []
+    for span in rallies(cuts, contacts, start, stop):
+        before = next((state for first, state in readings if first == span.start), None)
+        after = next((state for first, state in readings if first > span.start), None)
+        if before is None or after is None:
+            continue
+        row = point_winner(before, after)
+        strikes = [(c.frame, c.player) for c in rally.contacts
+                   if c.kind == "raquette" and c.player and span.start <= c.frame <= span.stop]
+        sides = serving_side(before.server, strikes)
+        if row is None or row not in sides:
+            continue
+        credited = credit(sides[row], strikes)
+        # Le point est compte a la fin de l'echange : une seconde apres le dernier contact.
+        end = min(span.stop, span.contacts[-1][0] + 30)
+        outcomes.append(PointOutcome(end, sides[row], *(credited or (None, None))))
+    return outcomes
 
 
 def main() -> None:
@@ -62,7 +125,13 @@ def main() -> None:
     print("suivi des joueurs rejoue", flush=True)
     analysis = retrack(analysis, Path(minutes.video(args.match)), calibration)
     spec = RallySpec("extrait", args.match, args.minute, start, stop, "")
-    timeline = LiveTimeline(build_rally(analysis, events, spec, FPS))
+    print("tableau d'affichage lu", flush=True)
+    board = Scoreboard.from_examples(EXAMPLES, frame_of)
+    cuts, readings = splices_and_scores(args.match, start, stop, board)
+    rally = build_rally(analysis, events, spec, FPS)
+    outcomes = point_outcomes(rally, cuts, readings, start, stop)
+    print(f"{len(outcomes)} points attribues", flush=True)
+    timeline = LiveTimeline(rally, splices=cuts, points=outcomes)
     panel = StatsPanel(PANEL_WIDTH, analysis["size"][1], dict(DEFAULT_NAMES))
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
 

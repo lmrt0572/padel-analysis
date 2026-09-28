@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from padel_analysis.analytics.live_stats import LiveTimeline, volley_flags
+from padel_analysis.analytics.live_stats import LiveTimeline, PointOutcome, volley_flags
 from padel_analysis.analytics.rally import Rally, RallyContact
 
 
@@ -117,3 +117,37 @@ def test_a_short_jump_does_not_count_as_a_sprint():
     rally = Rally(0, 90, 30.0, (), {"far_1": track})
     top = {line.slot: line for line in LiveTimeline(rally).at(90).players}["far_1"].top_speed
     assert top < 5.0
+
+
+def test_the_panel_follows_rallies_opened_by_splices():
+    contacts = (
+        RallyContact(5, "raquette", None, "near_1"), RallyContact(15, "sol", (0, 5, 0), None),
+        RallyContact(25, "raquette", None, "far_1"), RallyContact(35, "raquette", None, "near_1"),
+        RallyContact(60, "raquette", None, "far_1"), RallyContact(70, "raquette", None, "near_1"),
+    )
+    timeline = LiveTimeline(Rally(0, 90, 30.0, contacts, {}), splices=[50])
+    during_first = timeline.at(30)
+    assert (during_first.rally_number, during_first.rally_shots) == (1, 2)
+    during_second = timeline.at(65)
+    assert (during_second.rally_number, during_second.rally_shots) == (2, 1)
+    assert during_second.longest_rally == 3
+
+
+def test_without_splices_the_whole_clip_is_one_rally():
+    stats = LiveTimeline(_rally()).at(90)
+    assert stats.rally_number == 1 and stats.rally_shots == stats.shots
+
+
+def test_points_are_credited_once_over_and_not_before():
+    outcomes = [PointOutcome(40, "near", "near_1", "gagnant"),
+                PointOutcome(80, "near", "far_1", "faute")]
+    timeline = LiveTimeline(_rally(), points=outcomes)
+    assert timeline.at(39).pair_points == {"proche": 0, "fond": 0}
+    end = timeline.at(90)
+    assert end.pair_points == {"proche": 2, "fond": 0}
+    lines = {line.slot: line for line in end.players}
+    assert (lines["near_1"].winners, lines["far_1"].errors) == (1, 1)
+
+
+def test_without_a_score_read_no_points_are_shown():
+    assert LiveTimeline(_rally()).at(90).pair_points is None
