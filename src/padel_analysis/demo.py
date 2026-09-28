@@ -39,7 +39,7 @@ from .io.video_source import VideoSource
 from .perception.appearance import torso_histogram
 from .perception.ground_point import AnkleMidpoint
 from .perception.pose_detector import PoseDetector
-from .rallies import striker_slot
+from .rallies import strikers
 from .render.ball_overlay import (
     ContactEvent,
     contact_label,
@@ -297,22 +297,24 @@ def with_inferred_walls(answers: dict[int, str], probabilities: np.ndarray, mate
     from .contact.learned import CLASS_OF_ANSWER, MESH_WALL
 
     start, frames = analysis["start"], analysis["frames"]
+    balls = {frame: ball_near(frame, shown, path, CONTACT_REACH) for frame in answers}
+    players = strikers(frames, [(frame, hitter_box(balls[frame], frames[frame]["people"]),
+                                 balls[frame])
+                                for frame, answer in answers.items()
+                                if answer == "raquette" and balls[frame] is not None])
     touches = []
     for frame, answer in sorted(answers.items()):
-        ball = ball_near(frame, shown, path, CONTACT_REACH)
+        ball = balls[frame]
         side = place = None
         if ball is not None and answer == "sol":
             meeting = surfaces[0].intersect(*pose.ray(ball))
             if meeting is not None:
                 place = (float(meeting[0]), float(meeting[1]))
                 side = "far" if place[1] > 0 else "near"
-        elif ball is not None and answer == "raquette":
-            data = frames[frame]
-            slot = striker_slot(hitter_box(ball, data["people"]), data["people"],
-                                data["assignment"], ball)
-            if slot is not None:
-                side = slot.split("_")[0]
-                place = data["positions"].get(slot)
+        elif players.get(frame) is not None:
+            slot = players[frame]
+            side = slot.split("_")[0]
+            place = frames[frame]["positions"].get(slot)
         touches.append(Touch(frame, answer, side, place))
 
     result = dict(answers)
