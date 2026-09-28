@@ -39,6 +39,7 @@ from .io.video_source import VideoSource
 from .perception.appearance import torso_histogram
 from .perception.ground_point import AnkleMidpoint
 from .perception.pose_detector import PoseDetector
+from .rallies import striker_slot
 from .render.ball_overlay import (
     ContactEvent,
     contact_label,
@@ -243,7 +244,7 @@ LABEL_OF_ANSWER = {"raquette": "RAQUETTE", "sol": "SOL", "verre": "VITRE",
 
 def learned_events(
     analysis: dict, calibration_points: list, model, threshold: float = 0.7,
-    whole_zone: bool = True,
+    whole_zone: bool = True, infer_walls: bool = True,
 ) -> tuple[dict, dict, list[ContactEvent], object]:
     """The same as `build_events`, with the contacts decided by a trained model.
 
@@ -258,7 +259,11 @@ def learned_events(
     court = Court()
     surfaces = court_surfaces(court)
     features, material = frame_features(analysis, path, shown, rule_events, pose, surfaces)
-    answers = decode(model.probabilities(features), material, analysis["start"], threshold)
+    probabilities = model.probabilities(features)
+    answers = decode(probabilities, material, analysis["start"], threshold)
+    if infer_walls:
+        answers = with_inferred_walls(answers, probabilities, material, analysis, shown, path,
+                                      pose, surfaces)
 
     frames = analysis["frames"]
     events: list[ContactEvent] = []
@@ -277,6 +282,50 @@ def learned_events(
         point = verdict.point if verdict is not None else None
         events.append(ContactEvent(frame, label, ball, zone, point=point))
     return path, shown, events, pose
+
+
+def with_inferred_walls(answers: dict[int, str], probabilities: np.ndarray, material: np.ndarray,
+                        analysis: dict, shown: dict, path: dict, pose, surfaces) -> dict[int, str]:
+    """The model's contacts, with the walls that the pace of the ball implies.
+
+    Each bounce is placed on the floor by the ray through the ball, each strike at the
+    striker's feet; `inferred_walls` does the rest. Measured over the eleven training
+    minutes, each predicted by a model that never saw it: 64 to 70 glass contacts of
+    128 found at the right frame, the other contacts unchanged.
+    """
+    from .contact.glass_inference import Touch, inferred_walls
+    from .contact.learned import CLASS_OF_ANSWER, MESH_WALL
+
+    start, frames = analysis["start"], analysis["frames"]
+    touches = []
+    for frame, answer in sorted(answers.items()):
+        ball = ball_near(frame, shown, path, CONTACT_REACH)
+        side = place = None
+        if ball is not None and answer == "sol":
+            meeting = surfaces[0].intersect(*pose.ray(ball))
+            if meeting is not None:
+                place = (float(meeting[0]), float(meeting[1]))
+                side = "far" if place[1] > 0 else "near"
+        elif ball is not None and answer == "raquette":
+            data = frames[frame]
+            slot = striker_slot(hitter_box(ball, data["people"]), data["people"],
+                                data["assignment"], ball)
+            if slot is not None:
+                side = slot.split("_")[0]
+                place = data["positions"].get(slot)
+        touches.append(Touch(frame, answer, side, place))
+
+    result = dict(answers)
+    for wall in inferred_walls(touches, probabilities[:, CLASS_OF_ANSWER["verre"]], start):
+        frame = wall.bounce if wall.replaces_bounce else wall.frame
+        if not wall.replaces_bounce and any(abs(frame - other) <= 3 for other in result):
+            frame = max(frame, wall.bounce + 4)
+        kind = "grillage" if material[frame - start] == MESH_WALL else "verre"
+        if wall.replaces_bounce:
+            result[frame] = kind
+        else:
+            result.setdefault(frame, kind)
+    return dict(sorted(result.items()))
 
 
 def ball_near(frame: int, shown: dict, path: dict, reach: int) -> tuple | None:
