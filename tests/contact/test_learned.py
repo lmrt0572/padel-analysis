@@ -134,3 +134,21 @@ def test_features_give_one_row_per_frame_and_mark_a_missing_ball(synthetic_pose)
     assert (features[3] != features[15]).any()
     assert features[5, -5:].tolist() == [0.0, 1.0, 0.0, 0.0, 0.0]
     assert not features[6, -5:].any()
+
+
+def test_a_contact_of_another_kind_may_follow_closely_when_sure():
+    sol, wall = CLASSES.index("sol"), CLASSES.index("mur")
+    probs = _probabilities(30, {10: (0.95, sol), 14: (0.9, wall)})
+    assert decode(probs, np.full(30, GLASS_WALL), start=0) == {10: "sol", 14: "verre"}
+
+
+def test_a_close_contact_of_another_kind_needs_more_confidence():
+    sol, wall = CLASSES.index("sol"), CLASSES.index("mur")
+    probs = _probabilities(30, {10: (0.95, sol), 14: (0.75, wall)})
+    assert decode(probs, np.full(30, GLASS_WALL), start=0) == {10: "sol"}
+
+
+def test_two_contacts_of_the_same_kind_stay_apart():
+    sol = CLASSES.index("sol")
+    probs = _probabilities(30, {10: (0.95, sol), 14: (0.9, sol)})
+    assert decode(probs, np.zeros(30), start=0) == {10: "sol"}
