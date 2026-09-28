@@ -23,7 +23,8 @@ def main() -> None:
     parser.add_argument("--tag", required=True, help="nom court du jeu de poids, ex. 360 ou 720")
     args = parser.parse_args()
 
-    todo = minutes.TUNING + minutes.USED + minutes.EXTRA + minutes.JUDGE + minutes.JUDGE_2 + minutes.JUDGE_3 + minutes.IDENTITY_JUDGE
+    todo = (minutes.TUNING + minutes.USED + minutes.EXTRA + minutes.JUDGE + minutes.JUDGE_2
+            + minutes.JUDGE_3 + minutes.JUDGE_4 + minutes.IDENTITY_JUDGE)
     for number, (match, start) in enumerate(todo, 1):
         out = Path(minutes.analysis(match, start, args.tag))
         if out.exists():
