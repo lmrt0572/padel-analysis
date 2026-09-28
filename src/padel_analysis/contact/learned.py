@@ -34,6 +34,11 @@ CLASS_OF_ANSWER = {"raquette": 1, "sol": 2, "verre": 3, "grillage": 3, "filet": 
 RULE_LABELS = ("RAQUETTE", "SOL", "VITRE", "GRILLAGE", "FILET")
 NO_WALL, GLASS_WALL, MESH_WALL = 0, 1, 2
 IGNORED = -100
+SEEDS = tuple(range(18))
+"""One network per seed, their probabilities averaged. Over the eleven training
+minutes, each predicted by an ensemble that never saw it, 3 networks scored 0.844 on
+average over six sets of seeds, 9 networks 0.847 and 0.856, 18 networks 0.855, with
+fewer invented contacts: 67 on average, then 57."""
 
 Point = tuple[float, float]
 
@@ -318,7 +323,7 @@ class ContactModel:
 
 def train(
     sequences: Sequence[tuple[np.ndarray, np.ndarray]],
-    seeds: Sequence[int] = (0, 1, 2),
+    seeds: Sequence[int] = SEEDS,
     steps: int = 1500,
     crop: int = 256,
     batch: int = 16,
