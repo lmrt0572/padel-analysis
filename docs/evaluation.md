@@ -1248,6 +1248,24 @@ sans biais d'un côté ou de l'autre. L'instant exact d'un contact contre la vit
 peut-être aussi le plus difficile à pointer à la main. Ces chiffres sont ceux des
 minutes d'entraînement : les juges ont été notés avant tous ces changements.
 
+#### Le verdict des juges, après ces changements
+
+Tout ce qui précède a été décidé sur les onze minutes d'entraînement. La chaîne ainsi
+figée a ensuite été notée une seule fois sur les neuf minutes de juge. Elles avaient
+déjà servi au premier verdict, mais aucun des changements n'a été choisi en les
+regardant :
+
+| Contacts affichés avec la bonne surface | Juge 1 (239) | Juge 2 (238) | Juge 3 (239) | Trois juges (716) |
+|---|---|---|---|---|
+| Premier verdict | 78,7 % | 79,0 % | 75,3 % | 77,7 % |
+| **Chaîne actuelle** | **83,7 %** | **82,8 %** | **84,1 %** | **83,5 %** |
+
+Les trois juges progressent, de 3,8 à 8,8 points. Sur les 716 contacts : frappes justes
+à 93,2 % (355 sur 381), rebonds à 81,4 % (180 sur 221), **vitres à 61,4 % (62 sur
+101)**, comme les 59 % des minutes d'entraînement. Les contacts affichés sont réels à
+93 %, 92,5 % et 95 % selon le juge. Le filet reste manqué (0 sur 9) : trop rare pour
+être appris.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans
