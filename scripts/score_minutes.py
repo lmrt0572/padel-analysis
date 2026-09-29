@@ -4,7 +4,8 @@ Les comptes sont additionnes sur les minutes, pas les taux : une minute a 90 con
 pese plus qu'une a 70.
 
 Les minutes de juge ne sont notees qu'avec --juge, pour que le verdict final ne puisse
-pas etre regarde par megarde pendant qu'on regle encore.
+pas etre regarde par megarde pendant qu'on regle encore. Les quatre premiers juges
+entrainent desormais le modele : les noter avec le modele livre ne mesure plus rien.
 
 Usage:
     python scripts/score_minutes.py --tag 360

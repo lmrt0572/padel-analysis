@@ -60,6 +60,11 @@ réel ; les vitres y sont justes à 61 %. Un quatrième juge, trois minutes poin
 après coup et jamais regardées, confirme : **83,0 %** des 247 contacts, vitres à 63 %,
 97 % de ce qui est affiché réel.
 
+Les juges ayant rendu leur verdict, leurs pointages ont rejoint l'entraînement : 23
+minutes et 1 826 contacts au lieu de 11 et 863. En validation croisée, chaque minute
+prédite par un modèle qui ne l'a jamais vue, la chaîne passe de **83,3 % à 87,1 %**
+des contacts avec la bonne surface, et les vitres de 60 % à 68 %.
+
 Quatre résultats valent d'être soulignés :
 
 - **Choisir la balle sur toute la séquence** plutôt qu'image par image fait passer le

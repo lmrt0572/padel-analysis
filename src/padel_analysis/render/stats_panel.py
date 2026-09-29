@@ -141,7 +141,7 @@ class StatsPanel:
                          fill=_rgb(style.MUTED))
             y += card
 
-        footer = ["Cumulé depuis le début de l'extrait. Contacts : 83,5 % justes, mesuré",
+        footer = ["Cumulé depuis le début de l'extrait. Contacts : 87 % justes, mesuré",
                   "à la main. Vitesse max : tenue pendant une seconde.",
                   "Vitesse de balle : estimation en ligne droite."]
         if stats.pair_points is not None:

@@ -20,6 +20,12 @@ JUDGE_3 = [("FinalF", 12000), ("FinalF", 43000), ("FinalM", 50000)]
 # Les trois juges ont note la chaine de contacts deux fois : au premier verdict, puis
 # apres les vitres deduites. Le quatrieme notera le prochain changement, une seule fois.
 JUDGE_4 = [("FinalF", 32000), ("FinalM", 16000), ("FinalM", 45000)]
+# Les quatre juges ont rendu leur verdict. Leurs pointages entrainent desormais le
+# modele de contacts : 963 contacts de plus, qui portent la validation croisee de 83,3 a
+# 87,1 %. Un juge qui n'a pas encore note ne doit jamais y entrer.
+RETIRED_JUDGES = JUDGE + JUDGE_2 + JUDGE_3 + JUDGE_4
+PENDING_JUDGES: list[tuple[str, int]] = []
+CONTACT_TRAINING = TUNING + USED + EXTRA + RETIRED_JUDGES
 # Juge du suivi d'identite : la verite d'identite couvre les deux matchs en entier, ces
 # minutes n'ont donc besoin d'aucun pointage, seulement d'etre analysees.
 IDENTITY_JUDGE = [("FinalF", 3000), ("FinalF", 27000), ("FinalF", 34000), ("FinalF", 37000),

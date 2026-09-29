@@ -1278,6 +1278,29 @@ trois premiers juges, à un point près. 217 des 224 contacts affichés sont ré
 (96,9 %). Par paroi, les vitres latérales sont toutes trouvées (5 sur 5), celles du
 fond proche à 12 sur 21, celles du fond éloigné à 10 sur 17.
 
+#### Les juges deviennent des données
+
+Un juge qui a rendu son verdict ne peut plus juger, mais ses contacts pointés à la main
+restent des exemples. Les douze minutes de juge ont rejoint l'entraînement : 23
+minutes, 1 826 contacts, 272 vitres au lieu de 128. La validation croisée porte sur
+les 23 minutes, chacune prédite par 18 réseaux entraînés sur les 22 autres, et compare
+sur les mêmes minutes le modèle entraîné sur les onze minutes d'origine :
+
+| Validation croisée, 1 826 contacts | 11 minutes d'entraînement | 22 minutes d'entraînement |
+|---|---|---|
+| Surface juste | 1 521 (83,3 %) | **1 591 (87,1 %)** |
+| Vitres | 164 / 272 (60,3 %) | **184 / 272 (67,6 %)** |
+| Rebonds | 467 / 568 (82,2 %) | 490 / 568 (86,3 %) |
+| Frappes | 884 / 951 (93,0 %) | 905 / 951 (95,2 %) |
+| Contacts inventés | 108 | 98 |
+| Score | 0,859 | **0,888** |
+
+Le gain est le même sur les onze minutes d'entraînement d'origine (83,2 → 87,1 %) et
+sur les douze minutes de juge (83,4 → 87,1 %). La courbe d'apprentissage, à plat pour
+le premier modèle entre huit et dix minutes, ne l'est plus pour la chaîne actuelle :
+doubler les données vaut près de quatre points, et sept sur les vitres. Le modèle
+livré est entraîné sur les 23 minutes. Aucun juge neuf ne l'a encore noté.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans
