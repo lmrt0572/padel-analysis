@@ -24,7 +24,9 @@ JUDGE_4 = [("FinalF", 32000), ("FinalM", 16000), ("FinalM", 45000)]
 # modele de contacts : 963 contacts de plus, qui portent la validation croisee de 83,3 a
 # 87,1 %. Un juge qui n'a pas encore note ne doit jamais y entrer.
 RETIRED_JUDGES = JUDGE + JUDGE_2 + JUDGE_3 + JUDGE_4
-PENDING_JUDGES: list[tuple[str, int]] = []
+# Le cinquieme juge note le modele entraine sur les 23 minutes, une seule fois.
+JUDGE_5 = [("FinalF", 5000), ("FinalF", 23000), ("FinalM", 33000)]
+PENDING_JUDGES = JUDGE_5
 CONTACT_TRAINING = TUNING + USED + EXTRA + RETIRED_JUDGES
 # Juge du suivi d'identite : la verite d'identite couvre les deux matchs en entier, ces
 # minutes n'ont donc besoin d'aucun pointage, seulement d'etre analysees.

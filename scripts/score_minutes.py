@@ -57,6 +57,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", required=True)
     parser.add_argument("--contact-model", type=Path, help="noter le modele appris")
+    parser.add_argument("--juge-5", action="store_true",
+                        help="noter le cinquieme juge : une seule fois")
     parser.add_argument("--juge-4", action="store_true",
                         help="noter le quatrieme juge : une seule fois")
     parser.add_argument("--juge-3", action="store_true",
@@ -65,7 +67,10 @@ def main() -> None:
     parser.add_argument("--juge", action="store_true", help="noter les minutes de juge : une seule fois")
     args = parser.parse_args()
     model = ContactModel.load(args.contact_model) if args.contact_model else None
-    if args.juge_4:
+    if args.juge_5:
+        print("=== CINQUIEME JUGE : minutes jamais regardees ===")
+        score(minutes.JUDGE_5, args.tag, model)
+    elif args.juge_4:
         print("=== QUATRIEME JUGE : minutes jamais regardees ===")
         score(minutes.JUDGE_4, args.tag, model)
     elif args.juge_3:

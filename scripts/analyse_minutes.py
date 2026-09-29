@@ -24,7 +24,7 @@ def main() -> None:
     args = parser.parse_args()
 
     todo = (minutes.TUNING + minutes.USED + minutes.EXTRA + minutes.JUDGE + minutes.JUDGE_2
-            + minutes.JUDGE_3 + minutes.JUDGE_4 + minutes.IDENTITY_JUDGE)
+            + minutes.JUDGE_3 + minutes.JUDGE_4 + minutes.JUDGE_5 + minutes.IDENTITY_JUDGE)
     for number, (match, start) in enumerate(todo, 1):
         out = Path(minutes.analysis(match, start, args.tag))
         if out.exists():
