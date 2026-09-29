@@ -56,7 +56,9 @@ a été pointé à la main, dont neuf jamais regardées avant leur verdict.
 Chaque juge est un lot de trois minutes pointées à la main, noté après que la chaîne a
 été figée : une fois pour le premier verdict, une seconde fois pour le dernier, décidé
 sans les regarder. 95 % de ce que la chaîne affiche au dernier juge est un contact
-réel ; les vitres y sont justes à 61 %.
+réel ; les vitres y sont justes à 61 %. Un quatrième juge, trois minutes pointées
+après coup et jamais regardées, confirme : **83,0 %** des 247 contacts, vitres à 63 %,
+97 % de ce qui est affiché réel.
 
 Quatre résultats valent d'être soulignés :
 

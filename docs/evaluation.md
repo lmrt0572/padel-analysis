@@ -1266,6 +1266,18 @@ Les trois juges progressent, de 3,8 à 8,8 points. Sur les 716 contacts : frappe
 93 %, 92,5 % et 95 % selon le juge. Le filet reste manqué (0 sur 9) : trop rare pour
 être appris.
 
+Ces minutes avaient déjà servi. Trois minutes neuves ont donc été pointées après coup,
+sans rien voir de ce que la chaîne détecte, et notées une seule fois :
+
+| Quatrième juge (247 contacts) | FinalF 32000 | FinalM 16000 | FinalM 45000 | Total |
+|---|---|---|---|---|
+| Surface juste | 70 / 81 | 66 / 76 | 69 / 90 | **205 / 247 (83,0 %)** |
+
+Frappes à 92,8 %, rebonds à 81,3 %, **vitres à 62,8 % (27 sur 43)** : les chiffres des
+trois premiers juges, à un point près. 217 des 224 contacts affichés sont réels
+(96,9 %). Par paroi, les vitres latérales sont toutes trouvées (5 sur 5), celles du
+fond proche à 12 sur 21, celles du fond éloigné à 10 sur 17.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans
