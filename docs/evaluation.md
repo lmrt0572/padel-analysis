@@ -1298,8 +1298,27 @@ sur les mêmes minutes le modèle entraîné sur les onze minutes d'origine :
 Le gain est le même sur les onze minutes d'entraînement d'origine (83,2 → 87,1 %) et
 sur les douze minutes de juge (83,4 → 87,1 %). La courbe d'apprentissage, à plat pour
 le premier modèle entre huit et dix minutes, ne l'est plus pour la chaîne actuelle :
-doubler les données vaut près de quatre points, et sept sur les vitres. Le modèle
-livré est entraîné sur les 23 minutes. Aucun juge neuf ne l'a encore noté.
+doubler les données vaut près de quatre points, et sept sur les vitres. Minute par
+minute, 21 des 23 minutes progressent, de 1 à 7 contacts ; deux ne bougent pas, une
+recule de 3.
+
+Un cinquième juge a ensuite été pointé, trois minutes jamais regardées, et noté une
+seule fois avec les deux modèles, tous deux figés avant :
+
+| Cinquième juge (253 contacts) | FinalF 5000 | FinalF 23000 | FinalM 33000 | Total | Vitres |
+|---|---|---|---|---|---|
+| Modèle entraîné sur 11 minutes | 69 / 83 | 70 / 79 | 68 / 91 | 207 (81,8 %) | 24 / 38 |
+| Modèle entraîné sur 23 minutes | 69 / 83 | 71 / 79 | 68 / 91 | 208 (82,2 %) | 25 / 38 |
+
+**Le juge ne confirme pas le gain** : un contact de plus, là où la validation croisée
+en annonçait une dizaine. Trois minutes à 0, +1 et 0 existent dans la validation
+croisée, mais les tirer toutes les trois est peu probable, de l'ordre de 2 %. Soit
+l'ajout des juges aide moins qu'elle ne le dit, soit ce juge est tombé sur des minutes
+où il ne change rien ; un indice va dans le premier sens : les trois minutes du
+quatrième juge, pointées elles aussi plus tard, gagnaient moins que les autres (+2,7
+contre +3,5 en moyenne). Le modèle livré reste celui des 23 minutes, jamais moins bon
+sur les minutes neuves ; **le chiffre à retenir pour une minute jamais vue est celui
+des juges neufs, 82 à 83 %**, et non celui de la validation croisée.
 
 #### Les statistiques d'un échange
 

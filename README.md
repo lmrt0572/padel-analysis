@@ -61,9 +61,11 @@ après coup et jamais regardées, confirme : **83,0 %** des 247 contacts, vitres
 97 % de ce qui est affiché réel.
 
 Les juges ayant rendu leur verdict, leurs pointages ont rejoint l'entraînement : 23
-minutes et 1 826 contacts au lieu de 11 et 863. En validation croisée, chaque minute
-prédite par un modèle qui ne l'a jamais vue, la chaîne passe de **83,3 % à 87,1 %**
-des contacts avec la bonne surface, et les vitres de 60 % à 68 %.
+minutes et 1 826 contacts au lieu de 11 et 863. En validation croisée, la chaîne passe
+de 83,3 % à 87,1 % et 21 minutes sur 23 progressent. **Un cinquième juge, trois minutes
+neuves, ne le confirme pas** : 82,2 % contre 81,8 % pour l'ancien modèle sur les mêmes
+253 contacts, vitres 25 sur 38 contre 24. Le chiffre à retenir pour une minute jamais
+vue reste donc autour de 82-83 %.
 
 Quatre résultats valent d'être soulignés :
 
