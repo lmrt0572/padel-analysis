@@ -6,6 +6,7 @@ mesures ensuite se refont sans elle.
 
 Usage:
     python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
+    python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360         --match FinalF --minute 8000
 """
 
 import argparse
@@ -21,10 +22,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--weights", type=Path, required=True)
     parser.add_argument("--tag", required=True, help="nom court du jeu de poids, ex. 360 ou 720")
+    parser.add_argument("--match", help="n'analyser qu'une minute : son match")
+    parser.add_argument("--minute", type=int, help="n'analyser qu'une minute : sa premiere image")
     args = parser.parse_args()
 
     todo = (minutes.TUNING + minutes.USED + minutes.EXTRA + minutes.JUDGE + minutes.JUDGE_2
             + minutes.JUDGE_3 + minutes.JUDGE_4 + minutes.JUDGE_5 + minutes.IDENTITY_JUDGE)
+    if args.match is not None and args.minute is not None:
+        todo = [(args.match, args.minute)]
     for number, (match, start) in enumerate(todo, 1):
         out = Path(minutes.analysis(match, start, args.tag))
         if out.exists():

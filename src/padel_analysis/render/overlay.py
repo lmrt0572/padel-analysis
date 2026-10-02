@@ -24,12 +24,15 @@ def draw_people(
     keypoint_threshold: float = 0.3,
     labels: dict[str, str] | None = None,
     colours: dict[str, tuple[int, int, int]] | None = None,
+    tracked_only: bool = False,
 ) -> np.ndarray:
     """Return a copy of `frame` with boxes, skeletons and identifiers drawn.
 
     Args:
         labels: text written above each slot's box; the slot name by default.
         colours: BGR colour per slot; the team colours by default.
+        tracked_only: leave out the people the tracker holds in no slot - spectators,
+            referee, ball boys.
     """
     canvas = frame.copy()
     name_of_index = {index: name for name, index in assignment.items()}
@@ -37,6 +40,8 @@ def draw_people(
 
     for index, detection in enumerate(detections):
         slot = name_of_index.get(index)
+        if tracked_only and slot is None:
+            continue
         colour = palette.get(slot, UNASSIGNED) if slot else UNASSIGNED
         name = (labels or {}).get(slot, slot) if slot else None
 
