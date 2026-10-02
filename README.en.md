@@ -77,6 +77,27 @@ measured on minutes **never looked at while tuning**; when cross-validation prom
 The details — measurements, ablations, abandoned attempts and why — are in the
 **[evaluation report](docs/evaluation.md)** (in French).
 
+## A match report
+
+Both finals analysed in full, by pair: the points read off the scoreboard, the
+strokes, volleys, shots after the glass, distance covered and time at the net. Every
+figure is checked: movement against the dataset's annotated positions (within 1 %),
+strokes against the hand-marked minutes (within 1 %; volleys within 7 %), points
+against the scoreboard.
+
+![Report by pair for both finals](docs/figures/bilan_paires.png)
+
+<p align="center">
+  <img src="docs/figures/points_longueur.png" alt="Points won by rally length" width="62%">
+  <img src="docs/figures/occupation_paires.png" alt="Court occupancy by pair" width="34%">
+</p>
+
+The report is given **by pair, not by player**: when tracking confuses two partners,
+the pair's total stays right, but one player's distance is off by more than 12 % once
+in ten. The teams are followed from one change of ends to the next by the score, which
+says when they change; the report therefore starts at the first scoreboard reading.
+Occupancy is folded onto one half: the net at the top. (Figure labels are in French.)
+
 ## Limitations
 
 - **Post-match analysis**, at a few frames per second on a GTX 1650.

@@ -81,6 +81,27 @@ qui est retenu.
 Le détail — mesures, ablations, essais abandonnés et pourquoi — est dans le
 **[rapport d'évaluation](docs/evaluation.md)**.
 
+## Le bilan d'un match
+
+Les deux finales analysées en entier, par paire : les points lus au tableau
+d'affichage, les frappes, les volées, les frappes après une vitre, la distance
+parcourue et le temps au filet. Chaque chiffre est vérifié : les déplacements contre
+les positions annotées du dataset (à 1 % près), les frappes contre les minutes pointées
+à la main (à 1 % près ; les volées à 7 %), les points contre le tableau.
+
+![Bilan par paire des deux finales](docs/figures/bilan_paires.png)
+
+<p align="center">
+  <img src="docs/figures/points_longueur.png" alt="Points gagnés selon la longueur de l'échange" width="62%">
+  <img src="docs/figures/occupation_paires.png" alt="Occupation du terrain par paire" width="34%">
+</p>
+
+Le bilan est donné **par paire, pas par joueur** : quand le suivi confond deux
+partenaires, la somme de la paire reste juste, mais la distance d'un joueur est fausse
+de plus de 12 % une fois sur dix. Les équipes sont suivies d'un changement de côté à
+l'autre par le score, qui dit quand elles changent ; le bilan part donc de la première
+lecture du tableau. L'occupation est repliée sur une moitié : le filet en haut.
+
 ## Limites
 
 - **Analyse après match**, à quelques images par seconde sur une GTX 1650.

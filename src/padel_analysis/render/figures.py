@@ -263,3 +263,116 @@ def net_control_chart(depths: np.ndarray, threshold: float, control: dict, path:
     right.set_title("Qui tient le filet")
     right.grid(axis="x", visible=False)
     _save(figure, path)
+
+
+PAIR_COLOURS = ("#3987e5", "#d95926")
+"""The two pairs, top row of the scoreboard then bottom: the first two categorical slots of
+the reference palette, checked for colour-blind separation on the dark panel."""
+DUEL_ROWS = (
+    ("points_won", "Points gagnés", "exact : lus au tableau"),
+    ("strikes", "Frappes", "± 1 %"),
+    ("volleys", "Volées", "± 7 %"),
+    ("after_glass", "Frappes après une vitre", "± 6 %"),
+    ("distance_m", "Distance parcourue", "± 1 %"),
+)
+MATCH_NAMES = {"FinalF": "Finale féminine", "FinalM": "Finale masculine"}
+
+
+def _pair_legend(axis, names) -> None:
+    from matplotlib.patches import Patch
+
+    axis.legend(handles=[Patch(color=c, label=n) for c, n in zip(PAIR_COLOURS, names,
+                                                                  strict=False)],
+                loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, fontsize=10,
+                labelcolor=style.TEXT, handlelength=1.2)
+
+
+def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
+    """Each pair's share of the points, strikes, volleys, glass shots and distance."""
+    style.use()
+    import matplotlib.pyplot as plt
+
+    figure, axes = plt.subplots(len(reports), 1, figsize=(10.5, 3.3 * len(reports)))
+    for axis, report in zip(np.atleast_1d(axes), reports, strict=True):
+        names = list(report["pairs"])
+        first, second = (report["pairs"][n] for n in names)
+        for row, (key, label, reliability) in enumerate(DUEL_ROWS):
+            a, b = first[key], second[key]
+            share = a / (a + b) if a + b else 0.5
+            y = len(DUEL_ROWS) - 1 - row
+            axis.barh(y, share, color=PAIR_COLOURS[0], height=0.62, edgecolor=style.PANEL,
+                      linewidth=2)
+            axis.barh(y, 1 - share, left=share, color=PAIR_COLOURS[1], height=0.62,
+                      edgecolor=style.PANEL, linewidth=2)
+            unit = " m" if key == "distance_m" else ""
+            axis.text(0.015, y, f"{a:,.0f}{unit}".replace(",", " "), va="center",
+                      color=style.TEXT, fontsize=10, fontweight="bold")
+            axis.text(0.985, y, f"{b:,.0f}{unit}".replace(",", " "), va="center", ha="right",
+                      color=style.TEXT, fontsize=10, fontweight="bold")
+            axis.text(1.02, y, reliability, va="center", color=style.MUTED, fontsize=9,
+                      transform=axis.get_yaxis_transform())
+        axis.axvline(0.5, color=style.MUTED, linewidth=0.8, linestyle=(0, (2, 3)))
+        axis.set_yticks(range(len(DUEL_ROWS)))
+        axis.set_yticklabels([label for _, label, _ in reversed(DUEL_ROWS)], color=style.TEXT)
+        axis.set_xlim(0, 1)
+        axis.set_xticks([])
+        axis.grid(False)
+        for spine in axis.spines.values():
+            spine.set_visible(False)
+        net = " · ".join(f"{n} {report['pairs'][n]['net_share']:.0%}" for n in names)
+        axis.set_title(f"{MATCH_NAMES.get(report['match'], report['match'])} — "
+                       f"{report['minutes']:.0f} min de jeu, temps au filet {net} (± 0,3 pt)",
+                       loc="left", pad=28, fontsize=11)
+        _pair_legend(axis, names)
+    _save(figure, path)
+
+
+def points_by_length_chart(reports: Sequence[dict], path: Path) -> None:
+    """The points each pair won, by the number of strikes in the rally."""
+    from ..analytics.match_stats import LENGTHS
+
+    style.use()
+    import matplotlib.pyplot as plt
+
+    buckets = [name for _, _, name in LENGTHS]
+    figure, axes = plt.subplots(1, len(reports), figsize=(5.2 * len(reports), 3.8), sharey=True)
+    for axis, report in zip(np.atleast_1d(axes), reports, strict=True):
+        names = list(report["pairs"])
+        x = np.arange(len(buckets))
+        for k, name in enumerate(names):
+            won = [report["pairs"][name]["won_by_length"].get(b, 0) for b in buckets]
+            bars = axis.bar(x + (k - 0.5) * 0.36, won, width=0.34, color=PAIR_COLOURS[k],
+                            edgecolor=style.PANEL, linewidth=2, label=name)
+            for bar, value in zip(bars, won, strict=True):
+                axis.text(bar.get_x() + bar.get_width() / 2, value + 0.4, str(value),
+                          ha="center", va="bottom", color=style.TEXT, fontsize=9)
+        axis.set_xticks(x)
+        axis.set_xticklabels(buckets)
+        axis.set_title(MATCH_NAMES.get(report["match"], report["match"]), loc="left", pad=28,
+                       fontsize=11)
+        axis.grid(axis="x", visible=False)
+        _pair_legend(axis, names)
+    np.atleast_1d(axes)[0].set_ylabel("points gagnés")
+    _save(figure, path)
+
+
+def pair_occupancy_chart(reports: Sequence[dict], path: Path) -> None:
+    """Where each pair stood, folded onto one half: the net on top, its back wall below."""
+    from matplotlib.colors import LinearSegmentedColormap
+
+    style.use()
+    import matplotlib.pyplot as plt
+
+    ramp = LinearSegmentedColormap.from_list(
+        "bleu", ["#184f95", "#3987e5", "#86b6ef", "#cde2fb"])
+    figure, axes = plt.subplots(len(reports), 2, figsize=(7.2, 4.2 * len(reports)))
+    for row_axes, report in zip(np.atleast_2d(axes), reports, strict=True):
+        for axis, (name, occupancy) in zip(row_axes, report["occupancy"].items(), strict=True):
+            grid = np.array(occupancy["grid"])
+            style.draw_court(axis)
+            axis.imshow(np.ma.masked_less(grid, grid.max() * 0.02), origin="lower",
+                        extent=occupancy["extent"], cmap=ramp, alpha=0.9, zorder=2)
+            axis.set_ylim(-10.6, 0.6)
+            axis.set_title(f"{name}\n{MATCH_NAMES.get(report['match'], report['match'])}",
+                           fontsize=10)
+    _save(figure, path)

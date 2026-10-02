@@ -53,6 +53,27 @@ Avec `--replay`, la même vidéo est dessinée sur le court reconstruit à parti
 calibration, sans aucune image de la retransmission : joueurs, balle, contacts et
 panneau, c'est-à-dire tout ce que l'analyse a reconstruit, et seulement cela.
 
+## Le bilan d'un match entier
+
+Analyser les deux finales en entier, minute par minute (environ trois heures et demie
+sur une GTX 1650 ; relancer la commande reprend à la minute suivante) :
+
+```bash
+python scripts/analyse_match.py --weights weights/ball_net.pt
+```
+
+Lire le tableau d'affichage, puis assembler le bilan par paire — suivi des joueurs
+rejoué sur tout le match, contacts, échanges, changements de côté, points et
+déplacements — dans `outputs/match_stats/<match>.json` :
+
+```bash
+python scripts/read_scores.py --match FinalF --out outputs/scores/FinalF.json
+python scripts/match_stats.py --match FinalF --contact-model weights/contact_net.pt
+```
+
+Les figures du bilan se refont avec `scripts/make_figures.py`, qui lit
+`outputs/match_stats/`.
+
 ## La chaîne complète et la vidéo annotée
 
 Vidéo annotée avec minimap, et positions mises en cache :

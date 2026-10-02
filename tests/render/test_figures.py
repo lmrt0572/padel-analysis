@@ -77,3 +77,28 @@ def test_the_player_charts_are_written(tmp_path):
                               {"near_percent": 40.0, "far_percent": 30.0,
                                "contested_percent": 30.0}, tmp_path / "f.png")
     assert _written(tmp_path / "e.png") and _written(tmp_path / "f.png")
+
+
+def _match_report(match):
+    pair = {"points_won": 5, "strikes": 40, "volleys": 18, "after_bounce": 15,
+            "after_glass": 9, "distance_m": 800.0, "net_share": 0.5,
+            "won_by_length": {"1 à 3 coups": 1, "8 coups et plus": 4}}
+    grid = [[0.0] * 20 for _ in range(40)]
+    grid[10][5] = 1.0
+    occupancy = {"grid": grid, "extent": [-5.0, 5.0, -10.0, 10.0]}
+    return {"match": match, "minutes": 5.0, "pairs": {"A / B": pair, "C / D": dict(pair)},
+            "occupancy": {"A / B": occupancy, "C / D": occupancy}}
+
+
+def test_the_match_figures_are_drawn(tmp_path):
+    from padel_analysis.render.figures import (
+        pair_duel_chart,
+        pair_occupancy_chart,
+        points_by_length_chart,
+    )
+
+    reports = [_match_report("FinalF"), _match_report("FinalM")]
+    for draw, name in ((pair_duel_chart, "duel.png"), (points_by_length_chart, "longueur.png"),
+                       (pair_occupancy_chart, "occupation.png")):
+        draw(reports, tmp_path / name)
+        assert (tmp_path / name).stat().st_size > 0

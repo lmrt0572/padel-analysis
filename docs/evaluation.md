@@ -1463,6 +1463,77 @@ trois frappes ; **les trois vitres manquées sont silencieuses** dans l'enregist
 Le micro de diffusion ne capte pas ce que la caméra ne voit pas : le son aiderait les
 frappes, déjà trouvées à 93 %, et non les vitres du fond.
 
+### Le bilan d'un match entier
+
+Les deux finales ont été analysées en entier, minute par minute
+(`scripts/analyse_match.py`, trois heures et demie sur une GTX 1650), puis assemblées en
+un bilan par paire (`scripts/match_stats.py`). Trois difficultés n'existaient pas à
+l'échelle d'un échange ; chacune est mesurée.
+
+**Suivre les joueurs d'un bout à l'autre.** Le suivi repart de zéro à chaque minute
+analysée. Rejoué d'un seul tenant sur le match, contre la vérité d'identité :
+
+| IDF1 sur le match entier | Minute par minute | D'un seul tenant |
+|---|---|---|
+| Finale féminine | 0,615 (80 changements d'identité) | **0,791** (30) |
+| Finale masculine | 0,662 (159) | **0,639** (87) |
+
+Presque toutes les confusions restantes sont entre partenaires. Leur effet sur les
+chiffres se mesure en appliquant le même calcul aux positions annotées du dataset,
+segment par segment entre deux changements de côté :
+
+| Écart à la vérité, par segment | Femmes | Hommes |
+|---|---|---|
+| Distance d'un **joueur** : médiane, 1 sur 10, pire | 2,3 %, 12,5 %, 28 % | 3,2 %, 11,9 %, 19 % |
+| Temps au filet d'un **joueur** : médiane, 1 sur 10 | 1,6 pt, 5,4 pt | 5,3 pt, 9,2 pt |
+| Distance d'une **paire** : médiane, pire | 0,5 %, 2,4 % | 0,7 %, 6,0 % |
+
+Quand le suivi confond deux partenaires, les mètres de l'un passent à l'autre, et la
+somme de la paire n'en est pas changée. **Le bilan est donc donné par paire** ; un
+chiffre par joueur faux de plus de 12 % une fois sur dix n'est pas publié.
+
+**Savoir quelle paire joue où.** Les équipes changent de côté après le premier, le
+troisième et chaque jeu impair d'un set, et le tableau d'affichage dit combien de jeux
+ont été joués (`analytics/sides.py`). Contre la vérité d'identité, cette règle retrouve
+tous les changements de côté postérieurs à la première lecture du tableau, sur l'image
+même : 6 sur 6 chez les femmes, 7 sur 7 chez les hommes. Elle en trouve un huitième
+chez les hommes, à l'image 32 137, que la vérité terrain n'avait pas : vérifié à l'image,
+la paire en noir est côté caméra à l'image 31 900 et celle en bleu clair à l'image 32 287. La
+vérité avait manqué ce changement. Le service, première frappe de chaque échange, dit
+ensuite laquelle des deux lignes du tableau joue de quel côté : 50 services sur 54 et
+74 sur 80 votent pour la même orientation, les autres étant des frappeurs attribués à
+la mauvaise moitié. Le changement de côté qui précède la première lecture échappe à la
+règle ; le bilan commence donc à cette lecture, soit 23 minutes de jeu sur 25 chez les
+femmes et 29 sur 30 chez les hommes. La couleur des maillots a été essayée pour le
+retrouver, et pour vérifier les autres : vue de dos au premier plan et de face au
+fond, une même tenue ne donne pas la même couleur, et elle ne voit que 2 changements
+chez les femmes pour 18, la plupart faux, chez les hommes.
+
+**Ce que valent les chiffres du bilan :**
+
+| Statistique | Vérifiée contre | Écart |
+|---|---|---|
+| Points gagnés | le tableau d'affichage | exacts : 48 et 69 points que le tableau tranche |
+| Distance d'une paire, match entier | les positions annotées | +0,3 % à +1,3 % |
+| Temps au filet d'une paire | les positions annotées | 0,3 point au plus |
+| Frappes | 26 minutes pointées, 1 077 frappes | +1,2 % (2,6 % par minute, en médiane) |
+| Volées | les mêmes | +7,2 % |
+| Frappes après un rebond | les mêmes | −4,9 % |
+| Frappes après une vitre | les mêmes | −5,8 % (14 % par minute) |
+| Échanges de 1-3, 4-7, 8 coups et plus | les mêmes | 14, 25, 52 contre 15, 24, 53 |
+
+Les frappes sont comptées à chaque minute par un modèle qui ne l'a pas vue. Un rebond
+manqué transforme une frappe après rebond en volée : le partage entre les deux penche
+de quelques pour cent vers les volées, toujours dans le même sens. Les points gagnants
+et les fautes par joueur, crédités au dernier frappeur, n'ont pas de vérité terrain et
+restent dans la vidéo de statistiques, hors du bilan.
+
+![Bilan par paire des deux finales](figures/bilan_paires.png)
+
+![Points gagnés selon la longueur de l'échange](figures/points_longueur.png)
+
+![Occupation du terrain par paire](figures/occupation_paires.png)
+
 ## Limites connues
 
 **Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi

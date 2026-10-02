@@ -3,7 +3,8 @@
 Le match est parcouru une fois : les raccords decoupent les echanges, et le tableau est
 lu sur quelques images au debut de chacun ; la lecture la plus frequente est gardee.
 Entre deux echanges successifs, la grammaire du score dit qui a gagne le point, ou
-qu'une lecture est douteuse. Avec --mosaique, des tableaux tires au hasard sont ecrits
+qu'une lecture est douteuse. Le fichier ecrit garde aussi chaque lecture, paire au
+service comprise, et le debut de chaque sequence. Avec --mosaique, des tableaux tires au hasard sont ecrits
 avec leur lecture, pour la verifier a l'oeil.
 
 Usage:
@@ -85,7 +86,16 @@ def main() -> None:
           f"changements de score, {decided} points attribues, {undecided} douteux, "
           f"{same} sequences sans changement (meme point)")
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps({"points": points}, indent=1), encoding="utf-8")
+    payload = {
+        "points": points,
+        # Toutes les lectures, une par sequence lue : le debut de la sequence, le score et
+        # la ligne de la paire au service, que le bilan du match croise avec le service.
+        "readings": [{"start": start, "set": state.set_number, "games": list(state.games),
+                      "points": list(state.points), "server": state.server}
+                     for start, state in readings],
+        "stretches": [stretch["start"] for stretch in stretches],
+    }
+    args.out.write_text(json.dumps(payload, indent=1), encoding="utf-8")
 
     if args.mosaique:
         chosen = random.Random(0).sample(sorted(crops), min(24, len(crops)))
