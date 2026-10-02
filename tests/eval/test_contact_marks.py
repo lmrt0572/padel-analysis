@@ -30,6 +30,18 @@ def test_marking_the_same_instant_twice_keeps_the_latest():
     assert marks.marks == {151: "verre", 200: "verre", 300: "raquette"}
 
 
+def test_two_contacts_a_frame_apart_are_both_kept():
+    marks = _marks()
+    marks.mark(201, "verre")  # une balle dans un coin touche deux vitres
+    assert marks.marks[200] == "verre" and marks.marks[201] == "verre"
+
+
+def test_marking_the_same_frame_again_changes_its_kind():
+    marks = _marks()
+    marks.mark(200, "grillage")
+    assert marks.marks[200] == "grillage" and len(marks.marks) == 3
+
+
 def test_undo_removes_the_last_mark():
     marks = _marks()
     assert marks.undo() == (300, "raquette")

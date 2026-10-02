@@ -1320,6 +1320,19 @@ contre +3,5 en moyenne). Le modèle livré reste celui des 23 minutes, jamais mo
 sur les minutes neuves ; **le chiffre à retenir pour une minute jamais vue est celui
 des juges neufs, 82 à 83 %**, et non celui de la validation croisée.
 
+#### Les coins, une limite connue
+
+Jusqu'au 29 septembre, l'outil de pointage remplaçait toute marque posée à deux images
+ou moins d'une autre. Une balle qui touche deux vitres dans un coin, d'une image à
+l'autre, n'en gardait qu'une : les minutes pointées avant comptent 12,0 vitres par
+minute, les deux derniers juges 13 à 14. L'outil accepte désormais deux contacts
+voisins. La relecture des vitres pointées près d'un coin a été faite sur trois minutes
+sur dix-neuf : 4 secondes vitres ajoutées pour 19 moments revus, environ une par
+minute. Le modèle, lui, n'affiche jamais deux contacts de même nature à moins de cinq
+images : la seconde vitre d'un coin est toujours manquée. L'apprendre vaudrait moins
+d'un contact par minute, sous l'écart d'un lot de minutes à l'autre, et demanderait un
+nouveau juge pour le prouver ; ce n'a pas été fait.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans
