@@ -92,3 +92,10 @@ def test_mean_position_ignores_absent_frames():
 def test_mean_position_of_an_entirely_absent_player_is_nan():
     positions = np.full((3, 2), np.nan)
     assert np.isnan(mean_position(positions)).all()
+
+
+def test_a_track_shorter_than_the_window_is_smoothed_over_its_own_length():
+    positions = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
+    smoothed = smooth_positions(positions, window=9)
+    assert smoothed.shape == positions.shape
+    assert smoothed[1] == pytest.approx([1.0, 0.0])
