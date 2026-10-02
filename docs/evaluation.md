@@ -1418,6 +1418,51 @@ pointages de contacts ne disent pas qui frappe. Il hérite des frappes manquées
 modèle, environ une sur dix, qui donnent le point au mauvais joueur ; la vidéo le
 dit sous le panneau.
 
+### Un autre tournoi, avec le son
+
+Tout ce qui précède est mesuré sur deux matchs d'un même tournoi, filmés par la même
+caméra. Un second jeu de données public, publié avec l'article de Decorte et al.
+(*Multi-Modal Hit Detection and Positional Analysis in Padel Competitions*, CVPR
+Workshops 2024), offre d'autres tournois du circuit, filmés de la même place mais dans
+d'autres salles, à 25 images par seconde au lieu de 30, **et avec le son**. Il n'annote
+que des fenêtres de frappe. Un de ses échanges, `20230528_VIGO_11`, une minute de jeu,
+a servi de test : aucune vidéo ni image n'est versionnée, seulement sa calibration et
+ses contacts pointés à la main.
+
+**La calibration** d'un nouveau court prend dix minutes : 3,4 px d'erreur au sol (5,5 cm),
+3,7 px en médiane pour la pose de la caméra, mieux que les 5,8 px de la finale féminine.
+
+**La chaîne, sans rien réentraîner**, notée contre les 88 contacts de l'échange (46 frappes
+— les 46 fenêtres des auteurs —, 25 rebonds, 15 vitres, 2 grillages) :
+
+| VIGO_11, 88 contacts | Modèle entraîné sur 11 minutes | Sur 23 minutes |
+|---|---|---|
+| Surface juste | 68 (77 %) | **76 (86 %)** |
+| Frappes | 41 / 46 | 43 / 46 |
+| Rebonds | 19 / 25 | 21 / 25 |
+| Vitres | 8 / 15 | **12 / 15** |
+| Inventés | 2 | 1 |
+
+Un autre court, une autre lumière et une autre cadence ne font pas décrocher la chaîne.
+Sur un seul échange, l'écart entre les deux modèles est une tendance, pas une mesure.
+
+**Le son.** Un impact de balle est un front d'énergie très bref dans les aigus, que la
+voix et le public n'ont pas : le flux spectral entre 2 et 12 kHz, comparé à sa médiane
+glissante, retrouve 44 des 46 frappes annotées. Mais chaque contact ne s'entend pas
+autant :
+
+| Force médiane du pic sonore | Frappes | Vitres | Rebonds |
+|---|---|---|---|
+| | **48** | 6 | 4 |
+| Entendus au-dessus de 8 | 43 / 46 | 6 / 15 | 4 / 25 |
+
+À ce niveau de 8, l'échange compte 46 autres pics sans aucun contact — chaussures, voix,
+échos des frappes. Le timbre sépare la frappe du reste (41 sur 46), pas le rebond de la
+vitre. Sur les douze erreurs restantes de la chaîne, le son aurait rattrapé deux ou
+trois frappes ; **les trois vitres manquées sont silencieuses** dans l'enregistrement.
+Le micro de diffusion ne capte pas ce que la caméra ne voit pas : le son aiderait les
+frappes, déjà trouvées à 93 %, et non les vitres du fond.
+
 ## Limites connues
 
 **Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi
