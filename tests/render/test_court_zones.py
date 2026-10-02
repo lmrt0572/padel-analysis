@@ -81,10 +81,12 @@ def test_a_faded_zone_lights_less(synthetic_pose):
     assert draw_zone(frame, zone, pose, 1.0).sum() > draw_zone(frame, zone, pose, 0.3).sum()
 
 
-def test_the_near_back_wall_lights_only_its_foot():
-    """La camera est derriere : le panneau entier couvrirait la moitie de l'image."""
-    zone = zone_of(_v("back_wall_negative_y", (0.0, -10.0, 1.5), "verre"), Court())
-    assert max(corner[2] for corner in zone.corners) <= 0.5
+def test_the_near_back_wall_lights_whole_but_faintly():
+    """La camera est derriere : la paroi couvre la moitie de l'image, sans la masquer."""
+    near = zone_of(_v("back_wall_negative_y", (0.0, -10.0, 1.5), "verre"), Court())
+    far = zone_of(_v("back_wall_positive_y", (0.0, 10.0, 1.5), "verre"), Court())
+    assert max(corner[2] for corner in near.corners) == Court().back_wall_glass_height
+    assert near.opacity < far.opacity
 
 
 def test_an_impact_patch_is_a_square_centred_on_the_bounce():

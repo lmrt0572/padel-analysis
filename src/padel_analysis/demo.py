@@ -458,6 +458,7 @@ def render(
     video: Path, analysis: dict, events: list[ContactEvent], pose, drawn: dict, out: Path,
     start: int, stop: int, glow: int = 30, hitter_glow: int = 12, side=None,
     minimap: bool = True, labels: dict | None = None, colours: dict | None = None,
+    backdrop: np.ndarray | None = None, tracked_only: bool = False,
 ) -> None:
     """Second pass: draw players, minimap, ball trail and lit contacts on each frame.
 
@@ -466,6 +467,10 @@ def render(
             an image of the video's height. The picture itself is left whole.
         minimap: paste the minimap in the picture's top-right corner.
         labels, colours: names and BGR colours of the players' boxes, by slot.
+        backdrop: a picture drawn on instead of the broadcast, for a replay that shows
+            only what the analysis reconstructed.
+        tracked_only: draw only the four players the tracker holds, not the people
+            around the court; always so on a backdrop.
     """
     frames = analysis["frames"]
     court_map = Minimap(Court()) if minimap else None
@@ -475,10 +480,13 @@ def render(
     with VideoSource(video) as source, VideoWriter(
         out, source.metadata.fps, (width, height)
     ) as writer:
-        for index, frame in source.iter_frames(start=start, stop=stop + 1):
+        pictures = (source.iter_frames(start=start, stop=stop + 1) if backdrop is None
+                    else ((index, backdrop) for index in range(start, stop + 1)))
+        for index, frame in pictures:
             data = frames.get(index, {})
             canvas = draw_people(frame, data.get("people", []), data.get("assignment", {}),
-                                 labels=labels, colours=colours)
+                                 labels=labels, colours=colours,
+                                 tracked_only=tracked_only or backdrop is not None)
             for event in visible_events(events, index, glow):
                 if event.zone is not None:
                     strength = 1.0 - (index - event.frame) / glow

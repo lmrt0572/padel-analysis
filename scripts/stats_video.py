@@ -38,6 +38,7 @@ from padel_analysis.io.scoreboard import Scoreboard
 from padel_analysis.io.splices import SPLICE
 from padel_analysis.io.video_source import VideoSource
 from padel_analysis.rallies import DEFAULT_NAMES, RallySpec, build_rally
+from padel_analysis.render.court_drawing import court_backdrop
 from padel_analysis.render.figure_style import PLAYER
 from padel_analysis.render.stats_panel import StatsPanel
 
@@ -107,6 +108,8 @@ def main() -> None:
     parser.add_argument("--contact-model", type=Path, required=True)
     parser.add_argument("--tag", default="360")
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--replay", action="store_true",
+                        help="dessiner sur le court reconstruit, sans l'image de diffusion")
     args = parser.parse_args()
 
     analysis = pickle.loads(
@@ -139,7 +142,8 @@ def main() -> None:
         raw = Path(scratch) / "brut.mp4"
         render(Path(minutes.video(args.match)), analysis, events, pose, drawn, raw, start,
                stop, side=lambda frame: panel.draw(timeline.at(frame)), minimap=False,
-               labels=dict(DEFAULT_NAMES), colours=PLAYER_BGR)
+               labels=dict(DEFAULT_NAMES), colours=PLAYER_BGR, tracked_only=True,
+               backdrop=court_backdrop(pose, analysis["size"]) if args.replay else None)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         to_h264(raw, args.out)
     print(f"ecrit {args.out}")

@@ -35,6 +35,12 @@ def test_an_unassigned_detection_is_still_drawn():
     assert not np.array_equal(frame, drawn)
 
 
+def test_an_untracked_person_can_be_left_out():
+    frame = np.zeros((200, 320, 3), dtype=np.uint8)
+    drawn = draw_people(frame, [_detection(20, 30, 80, 150)], {}, tracked_only=True)
+    np.testing.assert_array_equal(frame, drawn)
+
+
 def test_a_bbox_outside_the_frame_does_not_crash():
     frame = np.zeros((200, 320, 3), dtype=np.uint8)
     drawn = draw_people(frame, [_detection(-50, -60, 10, 20)], {"near_1": 0})
