@@ -27,7 +27,8 @@ FLOOR = (80, 200, 80)
 GLASS = (255, 200, 60)
 MESH = (170, 170, 170)
 NET = (80, 220, 255)
-NEAR_WALL_BAND = 0.4
+ZONE_OPACITY = 0.55
+NEAR_WALL_OPACITY = 0.25
 PATCH_SIZE = 1.5
 
 
@@ -40,6 +41,7 @@ class Zone:
     points: tuple[Point, ...]
     colour: tuple[int, int, int]
     corners: tuple[Corner, ...] = ()
+    opacity: float = ZONE_OPACITY
 
 
 def zone_of(verdict: Verdict, court: Court) -> Zone | None:
@@ -76,14 +78,13 @@ def zone_of(verdict: Verdict, court: Court) -> Zone | None:
             if material == "grillage"
             else (0.0, court.back_wall_glass_height)
         )
-        if sign < 0:
-            # La camera est juste derriere le fond proche : le panneau entier, projete,
-            # couvrirait toute la moitie basse de l'image et se lirait comme du sol.
-            # On n'en eclaire que le pied, qui suffit a designer la paroi touchee.
-            low, high = 0.0, NEAR_WALL_BAND
+        # La camera est juste derriere le fond proche : la paroi entiere, projetee,
+        # couvre toute la moitie basse de l'image. Elle s'eclaire en entier, mais
+        # legerement, pour que les joueurs restent lisibles a travers.
+        opacity = NEAR_WALL_OPACITY if sign < 0 else ZONE_OPACITY
         return Zone(f"fond_{half}_{material}", "line", ((-w, l_signed), (w, l_signed)), colour,
                     ((-w, l_signed, low), (w, l_signed, low),
-                     (w, l_signed, high), (-w, l_signed, high)))
+                     (w, l_signed, high), (-w, l_signed, high)), opacity)
 
     side = "droite" if verdict.surface.endswith("positive_x") else "gauche"
     wall_x = w if side == "droite" else -w
@@ -173,7 +174,7 @@ def draw_zone(
     polygon = np.round(corners).astype(np.int32)
     overlay = frame.copy()
     cv2.fillPoly(overlay, [polygon], zone.colour)
-    alpha = 0.55 * max(0.0, min(1.0, strength))
+    alpha = zone.opacity * max(0.0, min(1.0, strength))
     lit = cv2.addWeighted(overlay, alpha, frame, 1.0 - alpha, 0.0)
     cv2.polylines(lit, [polygon], True, zone.colour, 2)
     return lit

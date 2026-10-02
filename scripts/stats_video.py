@@ -142,7 +142,7 @@ def main() -> None:
         raw = Path(scratch) / "brut.mp4"
         render(Path(minutes.video(args.match)), analysis, events, pose, drawn, raw, start,
                stop, side=lambda frame: panel.draw(timeline.at(frame)), minimap=False,
-               labels=dict(DEFAULT_NAMES), colours=PLAYER_BGR,
+               labels=dict(DEFAULT_NAMES), colours=PLAYER_BGR, tracked_only=True,
                backdrop=court_backdrop(pose, analysis["size"]) if args.replay else None)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         to_h264(raw, args.out)
