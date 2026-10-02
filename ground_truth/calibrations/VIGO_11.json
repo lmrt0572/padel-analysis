@@ -1,0 +1,303 @@
+{
+  "points": [
+    {
+      "name": "corner_near_left",
+      "court_xy": [
+        -5.0,
+        -10.0
+      ],
+      "image_xy": [
+        211.0,
+        945.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "corner_near_right",
+      "court_xy": [
+        5.0,
+        -10.0
+      ],
+      "image_xy": [
+        1715.0,
+        944.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "corner_far_right",
+      "court_xy": [
+        5.0,
+        10.0
+      ],
+      "image_xy": [
+        1319.0,
+        315.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "corner_far_left",
+      "court_xy": [
+        -5.0,
+        10.0
+      ],
+      "image_xy": [
+        601.0,
+        315.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "service_near_left",
+      "court_xy": [
+        -5.0,
+        -6.95
+      ],
+      "image_xy": [
+        318.0,
+        776.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "service_near_right",
+      "court_xy": [
+        5.0,
+        -6.95
+      ],
+      "image_xy": [
+        1609.0,
+        775.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "service_far_left",
+      "court_xy": [
+        -5.0,
+        6.95
+      ],
+      "image_xy": [
+        570.0,
+        365.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "service_far_right",
+      "court_xy": [
+        5.0,
+        6.95
+      ],
+      "image_xy": [
+        1350.0,
+        364.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "net_left",
+      "court_xy": [
+        -5.0,
+        0.0
+      ],
+      "image_xy": [
+        480.0,
+        516.0
+      ],
+      "is_control": false,
+      "height": 0.0
+    },
+    {
+      "name": "net_right",
+      "court_xy": [
+        5.0,
+        0.0
+      ],
+      "image_xy": [
+        1442.0,
+        520.0
+      ],
+      "is_control": true,
+      "height": 0.0
+    },
+    {
+      "name": "service_near_centre",
+      "court_xy": [
+        0.0,
+        -6.95
+      ],
+      "image_xy": [
+        962.0,
+        774.0
+      ],
+      "is_control": true,
+      "height": 0.0
+    },
+    {
+      "name": "service_far_centre",
+      "court_xy": [
+        0.0,
+        6.95
+      ],
+      "image_xy": [
+        960.0,
+        364.0
+      ],
+      "is_control": true,
+      "height": 0.0
+    },
+    {
+      "name": "net_centre",
+      "court_xy": [
+        0.0,
+        0.0
+      ],
+      "image_xy": [
+        960.0,
+        520.0
+      ],
+      "is_control": true,
+      "height": 0.0
+    },
+    {
+      "name": "glass_top_near_left",
+      "court_xy": [
+        -5.0,
+        -10.0
+      ],
+      "image_xy": [
+        169.0,
+        522.0
+      ],
+      "is_control": false,
+      "height": 3.0
+    },
+    {
+      "name": "glass_top_near_right",
+      "court_xy": [
+        5.0,
+        -10.0
+      ],
+      "image_xy": [
+        1754.0,
+        530.0
+      ],
+      "is_control": false,
+      "height": 3.0
+    },
+    {
+      "name": "mesh_top_near_left",
+      "court_xy": [
+        -5.0,
+        -10.0
+      ],
+      "image_xy": [
+        148.0,
+        366.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "mesh_top_near_right",
+      "court_xy": [
+        5.0,
+        -10.0
+      ],
+      "image_xy": [
+        1770.0,
+        366.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "glass_top_far_left",
+      "court_xy": [
+        -5.0,
+        10.0
+      ],
+      "image_xy": [
+        589.0,
+        99.0
+      ],
+      "is_control": true,
+      "height": 3.0
+    },
+    {
+      "name": "glass_top_far_right",
+      "court_xy": [
+        5.0,
+        10.0
+      ],
+      "image_xy": [
+        1330.0,
+        97.0
+      ],
+      "is_control": true,
+      "height": 3.0
+    },
+    {
+      "name": "mesh_top_far_left",
+      "court_xy": [
+        -5.0,
+        10.0
+      ],
+      "image_xy": [
+        588.0,
+        22.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "mesh_top_far_right",
+      "court_xy": [
+        5.0,
+        10.0
+      ],
+      "image_xy": [
+        1335.0,
+        20.0
+      ],
+      "is_control": true,
+      "height": 4.0
+    },
+    {
+      "name": "net_top_left",
+      "court_xy": [
+        -5.0,
+        0.0
+      ],
+      "image_xy": [
+        476.0,
+        434.0
+      ],
+      "is_control": true,
+      "height": 0.92
+    },
+    {
+      "name": "net_top_right",
+      "court_xy": [
+        5.0,
+        0.0
+      ],
+      "image_xy": [
+        1446.0,
+        432.0
+      ],
+      "is_control": true,
+      "height": 0.92
+    }
+  ]
+}
