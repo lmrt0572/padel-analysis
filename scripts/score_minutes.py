@@ -4,7 +4,8 @@ Les comptes sont additionnes sur les minutes, pas les taux : une minute a 90 con
 pese plus qu'une a 70.
 
 Les minutes de juge ne sont notees qu'avec --juge, pour que le verdict final ne puisse
-pas etre regarde par megarde pendant qu'on regle encore.
+pas etre regarde par megarde pendant qu'on regle encore. Les quatre premiers juges
+entrainent desormais le modele : les noter avec le modele livre ne mesure plus rien.
 
 Usage:
     python scripts/score_minutes.py --tag 360
@@ -56,13 +57,23 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", required=True)
     parser.add_argument("--contact-model", type=Path, help="noter le modele appris")
+    parser.add_argument("--juge-5", action="store_true",
+                        help="noter le cinquieme juge : une seule fois")
+    parser.add_argument("--juge-4", action="store_true",
+                        help="noter le quatrieme juge : une seule fois")
     parser.add_argument("--juge-3", action="store_true",
                         help="noter le troisieme juge : une seule fois")
     parser.add_argument("--juge-2", action="store_true", help="noter le second juge : une seule fois")
     parser.add_argument("--juge", action="store_true", help="noter les minutes de juge : une seule fois")
     args = parser.parse_args()
     model = ContactModel.load(args.contact_model) if args.contact_model else None
-    if args.juge_3:
+    if args.juge_5:
+        print("=== CINQUIEME JUGE : minutes jamais regardees ===")
+        score(minutes.JUDGE_5, args.tag, model)
+    elif args.juge_4:
+        print("=== QUATRIEME JUGE : minutes jamais regardees ===")
+        score(minutes.JUDGE_4, args.tag, model)
+    elif args.juge_3:
         print("=== TROISIEME JUGE : minutes jamais regardees ===")
         score(minutes.JUDGE_3, args.tag, model)
     elif args.juge_2:

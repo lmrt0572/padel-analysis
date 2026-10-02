@@ -1248,6 +1248,78 @@ sans biais d'un côté ou de l'autre. L'instant exact d'un contact contre la vit
 peut-être aussi le plus difficile à pointer à la main. Ces chiffres sont ceux des
 minutes d'entraînement : les juges ont été notés avant tous ces changements.
 
+#### Le verdict des juges, après ces changements
+
+Tout ce qui précède a été décidé sur les onze minutes d'entraînement. La chaîne ainsi
+figée a ensuite été notée une seule fois sur les neuf minutes de juge. Elles avaient
+déjà servi au premier verdict, mais aucun des changements n'a été choisi en les
+regardant :
+
+| Contacts affichés avec la bonne surface | Juge 1 (239) | Juge 2 (238) | Juge 3 (239) | Trois juges (716) |
+|---|---|---|---|---|
+| Premier verdict | 78,7 % | 79,0 % | 75,3 % | 77,7 % |
+| **Chaîne actuelle** | **83,7 %** | **82,8 %** | **84,1 %** | **83,5 %** |
+
+Les trois juges progressent, de 3,8 à 8,8 points. Sur les 716 contacts : frappes justes
+à 93,2 % (355 sur 381), rebonds à 81,4 % (180 sur 221), **vitres à 61,4 % (62 sur
+101)**, comme les 59 % des minutes d'entraînement. Les contacts affichés sont réels à
+93 %, 92,5 % et 95 % selon le juge. Le filet reste manqué (0 sur 9) : trop rare pour
+être appris.
+
+Ces minutes avaient déjà servi. Trois minutes neuves ont donc été pointées après coup,
+sans rien voir de ce que la chaîne détecte, et notées une seule fois :
+
+| Quatrième juge (247 contacts) | FinalF 32000 | FinalM 16000 | FinalM 45000 | Total |
+|---|---|---|---|---|
+| Surface juste | 70 / 81 | 66 / 76 | 69 / 90 | **205 / 247 (83,0 %)** |
+
+Frappes à 92,8 %, rebonds à 81,3 %, **vitres à 62,8 % (27 sur 43)** : les chiffres des
+trois premiers juges, à un point près. 217 des 224 contacts affichés sont réels
+(96,9 %). Par paroi, les vitres latérales sont toutes trouvées (5 sur 5), celles du
+fond proche à 12 sur 21, celles du fond éloigné à 10 sur 17.
+
+#### Les juges deviennent des données
+
+Un juge qui a rendu son verdict ne peut plus juger, mais ses contacts pointés à la main
+restent des exemples. Les douze minutes de juge ont rejoint l'entraînement : 23
+minutes, 1 826 contacts, 272 vitres au lieu de 128. La validation croisée porte sur
+les 23 minutes, chacune prédite par 18 réseaux entraînés sur les 22 autres, et compare
+sur les mêmes minutes le modèle entraîné sur les onze minutes d'origine :
+
+| Validation croisée, 1 826 contacts | 11 minutes d'entraînement | 22 minutes d'entraînement |
+|---|---|---|
+| Surface juste | 1 521 (83,3 %) | **1 591 (87,1 %)** |
+| Vitres | 164 / 272 (60,3 %) | **184 / 272 (67,6 %)** |
+| Rebonds | 467 / 568 (82,2 %) | 490 / 568 (86,3 %) |
+| Frappes | 884 / 951 (93,0 %) | 905 / 951 (95,2 %) |
+| Contacts inventés | 108 | 98 |
+| Score | 0,859 | **0,888** |
+
+Le gain est le même sur les onze minutes d'entraînement d'origine (83,2 → 87,1 %) et
+sur les douze minutes de juge (83,4 → 87,1 %). La courbe d'apprentissage, à plat pour
+le premier modèle entre huit et dix minutes, ne l'est plus pour la chaîne actuelle :
+doubler les données vaut près de quatre points, et sept sur les vitres. Minute par
+minute, 21 des 23 minutes progressent, de 1 à 7 contacts ; deux ne bougent pas, une
+recule de 3.
+
+Un cinquième juge a ensuite été pointé, trois minutes jamais regardées, et noté une
+seule fois avec les deux modèles, tous deux figés avant :
+
+| Cinquième juge (253 contacts) | FinalF 5000 | FinalF 23000 | FinalM 33000 | Total | Vitres |
+|---|---|---|---|---|---|
+| Modèle entraîné sur 11 minutes | 69 / 83 | 70 / 79 | 68 / 91 | 207 (81,8 %) | 24 / 38 |
+| Modèle entraîné sur 23 minutes | 69 / 83 | 71 / 79 | 68 / 91 | 208 (82,2 %) | 25 / 38 |
+
+**Le juge ne confirme pas le gain** : un contact de plus, là où la validation croisée
+en annonçait une dizaine. Trois minutes à 0, +1 et 0 existent dans la validation
+croisée, mais les tirer toutes les trois est peu probable, de l'ordre de 2 %. Soit
+l'ajout des juges aide moins qu'elle ne le dit, soit ce juge est tombé sur des minutes
+où il ne change rien ; un indice va dans le premier sens : les trois minutes du
+quatrième juge, pointées elles aussi plus tard, gagnaient moins que les autres (+2,7
+contre +3,5 en moyenne). Le modèle livré reste celui des 23 minutes, jamais moins bon
+sur les minutes neuves ; **le chiffre à retenir pour une minute jamais vue est celui
+des juges neufs, 82 à 83 %**, et non celui de la validation croisée.
+
 #### Les statistiques d'un échange
 
 `scripts/rally_page.py` construit, pour des échanges choisis à la main dans

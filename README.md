@@ -50,11 +50,22 @@ a été pointé à la main, dont neuf jamais regardées avant leur verdict.
 | Contacts affichés avec la bonne surface | Validation croisée (863) | Juge 1 (239) | Juge 2 (238) | Juge 3 (239) | **Trois juges (716)** |
 |---|---|---|---|---|---|
 | Règles réglées à la main | 59,2 % | 66,1 % | 58,4 % | 62,3 % | 62,3 % |
-| **Modèle appris** | 80,8 % | 78,7 % | 79,0 % | 75,3 % | **77,7 %** |
+| Modèle appris, premier verdict | 80,8 % | 78,7 % | 79,0 % | 75,3 % | 77,7 % |
+| **Modèle, vitres déduites, 18 réseaux** | 83,2 % | 83,7 % | 82,8 % | 84,1 % | **83,5 %** |
 
-Chaque juge est un lot de trois minutes pointées à la main et noté une seule fois, après
-que le modèle a été figé ; 94,5 % de ce que le modèle affiche au dernier juge est un
-contact réel.
+Chaque juge est un lot de trois minutes pointées à la main, noté après que la chaîne a
+été figée : une fois pour le premier verdict, une seconde fois pour le dernier, décidé
+sans les regarder. 95 % de ce que la chaîne affiche au dernier juge est un contact
+réel ; les vitres y sont justes à 61 %. Un quatrième juge, trois minutes pointées
+après coup et jamais regardées, confirme : **83,0 %** des 247 contacts, vitres à 63 %,
+97 % de ce qui est affiché réel.
+
+Les juges ayant rendu leur verdict, leurs pointages ont rejoint l'entraînement : 23
+minutes et 1 826 contacts au lieu de 11 et 863. En validation croisée, la chaîne passe
+de 83,3 % à 87,1 % et 21 minutes sur 23 progressent. **Un cinquième juge, trois minutes
+neuves, ne le confirme pas** : 82,2 % contre 81,8 % pour l'ancien modèle sur les mêmes
+253 contacts, vitres 25 sur 38 contre 24. Le chiffre à retenir pour une minute jamais
+vue reste donc autour de 82-83 %.
 
 Quatre résultats valent d'être soulignés :
 
@@ -66,9 +77,10 @@ Quatre résultats valent d'être soulignés :
   vingt minutes de match, avec des outils qui n'affichent
   jamais ce que l'algorithme prédit.
 - **Apprendre a battu régler.** Chaque seuil de la chaîne de contacts avait été
-  balayé jusqu'au plateau ; un réseau qui voit tous les indices ensemble donne la bonne
-  surface à 78 % des contacts réels contre 62 % sur trois juges, et plus de 90 % de ce
-  qu'il affiche est réel. Apprendre l'enchaînement de l'échange, en plus, n'apporte rien.
+  balayé jusqu'au plateau ; un réseau qui voit tous les indices ensemble, aidé de la
+  physique de la balle pour les vitres, donne la bonne surface à 83,5 % des contacts
+  réels contre 62 % sur trois juges, et plus de 90 % de ce qu'il affiche est réel.
+  Apprendre l'enchaînement de l'échange, en plus, n'apporte rien.
 - **Le chiffre le moins flatteur était le bon.** Une vérité d'identité construite
   automatiquement annonçait un IDF1 de 0,956 et aucune erreur ; vérifiée à la main, elle
   en révèle quatre et descend à 0,819.

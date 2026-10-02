@@ -62,8 +62,8 @@ def main() -> None:
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    keys = minutes.TUNING + minutes.USED + minutes.EXTRA
-    if set(keys) & set(minutes.JUDGE + minutes.JUDGE_2 + minutes.JUDGE_3):
+    keys = minutes.CONTACT_TRAINING
+    if set(keys) & set(minutes.PENDING_JUDGES):
         raise SystemExit("une minute de juge est dans l'entrainement")
     data = {key: load(*key, args.tag) for key in keys}
     results: dict = {}
