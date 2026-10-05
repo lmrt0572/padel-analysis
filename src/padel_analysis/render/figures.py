@@ -1,7 +1,7 @@
-"""The figures of the README and of the evaluation report, in the page's dark style.
+"""The figures of the README and of the evaluation report, in a dark style.
 
-Each function takes plain data - measured counts, a rally as the page receives it,
-player trajectories - and writes one PNG. None of them draws a video frame: the
+Each function takes plain data - measured counts, player trajectories, a match
+report - and writes one PNG. None of them draws a video frame: the
 footage belongs to the broadcaster, the numbers drawn from it do not.
 """
 
@@ -119,101 +119,6 @@ def confusion_chart(confusion: Sequence[dict], path: Path) -> None:
     axis.set_ylabel("vérité, pointée à la main")
     axis.set_title("Qui est pris pour qui")
     axis.grid(False)
-    _save(figure, path)
-
-
-def _name(payload: dict, slot: str | None) -> str:
-    if slot is None:
-        return "?"
-    return payload["players"].get(slot, {}).get("name", slot)
-
-
-def rally_court_chart(payload: dict, path: Path) -> None:
-    """The rally seen from above: where each player went, and where the ball landed."""
-    style.use()
-    import matplotlib.pyplot as plt
-
-    figure, axis = plt.subplots(figsize=(4.4, 7.4))
-    style.draw_court(axis)
-    for slot, player in payload["players"].items():
-        # Les None coupent la trace aux sauts du suivi ; NaN fait de meme pour matplotlib.
-        path_xy = np.array([[p[1], p[2]] if p else [np.nan, np.nan] for p in player["path"]])
-        if not len(path_xy):
-            continue
-        colour = style.PLAYER.get(slot, style.TEXT)
-        axis.plot(path_xy[:, 0], path_xy[:, 1], color=colour, alpha=0.7, linewidth=1.4,
-                  label=player["name"], zorder=2)
-    shown = set()
-    for impact in payload["impacts"]:
-        x, y, _ = impact["point"]
-        kind = impact["kind"]
-        label = style.KIND_NAMES[kind] if kind not in shown else None
-        shown.add(kind)
-        if kind == "sol":
-            axis.scatter(x, y, s=50, color=style.KIND[kind], edgecolor=style.BACKGROUND,
-                         zorder=3, label=label)
-        else:
-            on_back = abs(y) > 9.7
-            px, py = (x, np.sign(y) * 10) if on_back else (np.sign(x) * 5, y)
-            axis.scatter(px, py, s=70, marker="D", color=style.KIND[kind], zorder=3,
-                         label=label)
-    axis.legend(loc="upper center", bbox_to_anchor=(0.5, -0.01), ncol=2, fontsize=9)
-    axis.set_title(payload["title"], fontsize=11)
-    _save(figure, path)
-
-
-def rally_timeline_chart(payload: dict, path: Path) -> None:
-    """Every contact of the rally in order, coloured by what the ball touched."""
-    style.use()
-    import matplotlib.pyplot as plt
-
-    figure, axis = plt.subplots(figsize=(11, 2.3))
-    axis.axhline(0, color=style.LINE, linewidth=2, zorder=1)
-    for contact in payload["contacts"]:
-        kind = contact["kind"]
-        colour = (style.PLAYER.get(contact["player"], style.TEXT) if kind == "raquette"
-                  else style.KIND[kind])
-        axis.scatter(contact["t"], 0, s=160, color=colour, edgecolor=style.BACKGROUND,
-                     zorder=2)
-        if kind == "raquette":
-            axis.text(contact["t"], 0, _name(payload, contact["player"])[:1], ha="center",
-                      va="center", fontsize=7, color=style.BACKGROUND, fontweight="bold",
-                      zorder=3)
-    axis.set_xlim(-0.5, payload["duration"] + 0.5)
-    axis.set_ylim(-1, 1)
-    axis.set_yticks([])
-    axis.set_xlabel("secondes")
-    axis.grid(axis="y", visible=False)
-    axis.set_title("Chronologie : frappes (initiale du joueur), sol, vitre, grillage, filet",
-                   fontsize=11)
-    _save(figure, path)
-
-
-def rally_shots_chart(payload: dict, path: Path) -> None:
-    """Strikes per player, split by what the ball touched next."""
-    style.use()
-    import matplotlib.pyplot as plt
-
-    order = ("sol", "verre", "grillage", "filet", "raquette", "fin")
-    players = sorted((p for p in payload["players"].items() if p[1]["shots"]),
-                     key=lambda item: -item[1]["shots"])
-    figure, axis = plt.subplots(figsize=(7, 0.7 + 0.6 * max(len(players), 1)))
-    for row, (_, player) in enumerate(players):
-        left = 0
-        for kind in order:
-            count = player["after"].get(kind, 0)
-            if count:
-                axis.barh(row, count, left=left, color=style.KIND[kind], zorder=2,
-                          label=style.KIND_NAMES[kind] if row == 0 else None)
-                left += count
-    axis.set_yticks(range(len(players)), [p["name"] for _, p in players])
-    axis.invert_yaxis()
-    axis.set_xlabel("frappes, découpées par ce que la balle touche ensuite")
-    axis.grid(axis="y", visible=False)
-    handles = [plt.Rectangle((0, 0), 1, 1, color=style.KIND[k]) for k in order]
-    axis.legend(handles, [style.KIND_NAMES[k] for k in order], ncol=3, fontsize=8,
-                loc="lower right")
-    axis.set_title("Qui frappe quoi", fontsize=11)
     _save(figure, path)
 
 

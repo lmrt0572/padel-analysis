@@ -1,5 +1,3 @@
-import json
-
 import numpy as np
 
 from padel_analysis.perception.pose_detector import PersonDetection
@@ -7,7 +5,6 @@ from padel_analysis.rallies import (
     DEFAULT_NAMES,
     RallySpec,
     build_rally,
-    load_specs,
     striker_slot,
     strikers,
 )
@@ -34,17 +31,6 @@ def _analysis():
 
 def _spec(start=110, stop=180):
     return RallySpec("r1", "FinalF", 16000, start, stop, "Un echange", {})
-
-
-def test_specs_are_read_with_their_optional_names(tmp_path):
-    path = tmp_path / "rallies.json"
-    path.write_text(json.dumps({"rallies": [
-        {"id": "a", "match": "FinalF", "minute": 16000, "start": 1, "stop": 9, "title": "A"},
-        {"id": "b", "match": "FinalM", "minute": 8000, "start": 2, "stop": 8, "title": "B",
-         "players": {"near_1": "Alice"}},
-    ]}), encoding="utf-8")
-    first, second = load_specs(path)
-    assert first.players == {} and second.players == {"near_1": "Alice"}
 
 
 def test_a_player_without_a_given_name_keeps_a_neutral_one():

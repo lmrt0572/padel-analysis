@@ -5,7 +5,6 @@ main :
   - docs/figures/verdicts.json : les trois juges, consignes une fois rendus ;
   - outputs/measures/cv.json : validation croisee, confusion et courbe d'apprentissage
     (scripts/train_contact_model.py --cv --curve --results ...) ;
-  - outputs/rallies/data.json : les echanges de la page (scripts/rally_page.py) ;
   - un cache de positions d'un match entier, pour les figures des joueurs ;
   - outputs/match_stats/<match>.json : le bilan de chaque finale, par paire
     (scripts/match_stats.py).
@@ -37,7 +36,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verdicts", type=Path, default=Path("docs/figures/verdicts.json"))
     parser.add_argument("--measures", type=Path, default=Path("outputs/measures/cv.json"))
-    parser.add_argument("--rallies", type=Path, default=Path("outputs/rallies/data.json"))
     parser.add_argument("--cache", type=Path, help="cache de positions d'un match entier")
     parser.add_argument("--fps", type=float, default=30.0)
     parser.add_argument("--bilans", type=Path, default=Path("outputs/match_stats"),
@@ -53,13 +51,6 @@ def main() -> None:
         figures.learning_curve_chart(measures["curve"], args.out / "courbe.png")
     if "confusion" in measures:
         figures.confusion_chart(measures["confusion"], args.out / "confusion.png")
-
-    rallies = read(args.rallies)
-    if rallies:
-        rally = rallies[0]
-        figures.rally_court_chart(rally, args.out / "echange_plan.png")
-        figures.rally_timeline_chart(rally, args.out / "echange_frise.png")
-        figures.rally_shots_chart(rally, args.out / "echange_frappes.png")
 
     if args.cache is not None:
         trajectories = MatchTrajectories.from_cache(PositionCache.load(args.cache), args.fps)

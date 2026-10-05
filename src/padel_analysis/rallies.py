@@ -6,10 +6,8 @@ a neutral name, which is always right, whereas a real name is only as right as w
 typed it.
 """
 
-import json
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import numpy as np
 
@@ -29,7 +27,7 @@ ALTERNATION_SPAN = 150
 
 @dataclass(frozen=True)
 class RallySpec:
-    """One rally as written in the rallies file."""
+    """One rally: the match and the frames it spans."""
 
     id: str
     match: str
@@ -41,18 +39,6 @@ class RallySpec:
 
     def name_of(self, slot: str) -> str:
         return self.players.get(slot, DEFAULT_NAMES.get(slot, slot))
-
-
-def load_specs(path: str | Path) -> list[RallySpec]:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    return [
-        RallySpec(
-            id=item["id"], match=item["match"], minute=int(item["minute"]),
-            start=int(item["start"]), stop=int(item["stop"]), title=item["title"],
-            players=dict(item.get("players", {})),
-        )
-        for item in payload["rallies"]
-    ]
 
 
 def striker_slot(

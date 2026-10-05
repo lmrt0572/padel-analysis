@@ -17,6 +17,8 @@ Usage:
 
 import argparse
 import pickle
+import shutil
+import subprocess
 import tempfile
 from collections import Counter
 from pathlib import Path
@@ -25,7 +27,6 @@ import cv2
 import minutes
 import numpy as np
 from match_stats import PAIRS
-from rally_page import to_h264
 from read_scores import EXAMPLES, READS, frame_of
 
 from padel_analysis.analytics.live_stats import LiveTimeline, PointOutcome
@@ -49,6 +50,18 @@ PANEL_WIDTH = 480
 # couleur sur l'image et dans les chiffres.
 PLAYER_BGR = {slot: tuple(int(c[i:i + 2], 16) for i in (5, 3, 1)) for slot, c in PLAYER.items()}
 AFTER = 900  # images lues apres l'extrait, pour le score qui suit son dernier echange
+
+
+def to_h264(source: Path, target: Path) -> None:
+    """Reencode for browsers: OpenCV writes MPEG-4 part 2, which they do not play."""
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        raise SystemExit("ffmpeg est introuvable dans le PATH")
+    subprocess.run(
+        [ffmpeg, "-y", "-loglevel", "error", "-i", str(source), "-c:v", "libx264",
+         "-pix_fmt", "yuv420p", "-crf", "23", "-movflags", "+faststart", str(target)],
+        check=True,
+    )
 
 
 def splices_and_scores(match: str, start: int, stop: int, board: Scoreboard):

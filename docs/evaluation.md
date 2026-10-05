@@ -1333,27 +1333,6 @@ images : la seconde vitre d'un coin est toujours manquée. L'apprendre vaudrait 
 d'un contact par minute, sous l'écart d'un lot de minutes à l'autre, et demanderait un
 nouveau juge pour le prouver ; ce n'a pas été fait.
 
-#### Les statistiques d'un échange
-
-`scripts/rally_page.py` construit, pour des échanges choisis à la main dans
-`config/rallies.json`, une page où la vidéo et les statistiques avancent ensemble :
-chronologie des contacts, plan du court avec les impacts et les traces des joueurs,
-frappes par joueur selon ce que la balle touche ensuite, vitesse de la balle,
-déplacements et temps au filet. Chaque panneau porte sa fiabilité, et un mode vérité
-superpose le pointage fait à la main quand l'échange en a un.
-
-Les échanges de la page sont pris dans des minutes de juge, jamais vues par le modèle :
-le mode vérité y montre ses vraies erreurs — 34 contacts justes sur 44 pour l'échange
-féminin, 32 sur 41 pour le masculin — plutôt que le score flatteur d'une minute
-d'entraînement, où il en montrait 33 sur 36.
-
-Trois limites sont écrites dans la page elle-même. Les statistiques héritent des
-erreurs du modèle, une surface sur cinq. La vitesse de la balle est une borne basse,
-en ligne droite entre deux contacts, et une estimation quand un bout est une frappe,
-placée par convention au joueur à un mètre de haut. Les traces des joueurs sont coupées
-là où le suivi saute de plus de deux mètres en un dixième de seconde, plutôt que de
-tracer une course que personne n'a faite.
-
 #### Découper un match en échanges
 
 La vidéo du dataset garde les échanges et coupe les temps morts : un nouveau point

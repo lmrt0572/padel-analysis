@@ -115,14 +115,6 @@ python -m padel_analysis.demo --video <video.mp4> \
     --contact-model weights/contact_net.pt
 ```
 
-Une page de statistiques par échange met la vidéo et les chiffres côte à côte. Les
-échanges se choisissent dans `config/rallies.json` ; la page et ses extraits vidéo sont
-écrits dans `outputs/rallies/`, hors du dépôt :
-
-```bash
-python scripts/rally_page.py --contact-model weights/contact_net.pt
-```
-
 ## Pointer les contacts à la main
 
 L'outil montre la vidéo et rien de ce que le système détecte. `s v g t f` marquent un

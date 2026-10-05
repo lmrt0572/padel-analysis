@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from padel_analysis.geometry.court import Court
 from padel_analysis.render import figures
@@ -19,23 +18,6 @@ VERDICTS = {"judges": [
     {"name": "Juge 1", "rules": _counts(60, 90, 100), "model": _counts(80, 85, 100)},
     {"name": "Juge 2", "rules": _counts(55, 80, 100), "model": _counts(78, 84, 100)},
 ]}
-RALLY = {
-    "title": "Un echange", "duration": 3.0,
-    "contacts": [
-        {"t": 0.0, "kind": "raquette", "player": "near_1", "point": None},
-        {"t": 0.5, "kind": "sol", "player": None, "point": [0.0, 6.0, 0.0]},
-        {"t": 1.5, "kind": "verre", "player": None, "point": [5.0, -8.0, 1.0]},
-    ],
-    "impacts": [
-        {"t": 0.5, "kind": "sol", "point": [0.0, 6.0, 0.0]},
-        {"t": 1.5, "kind": "verre", "point": [5.0, -8.0, 1.0]},
-    ],
-    "players": {
-        "near_1": {"name": "Proche 1", "path": [[0.0, 0.0, -6.0], [0.1, 0.2, -5.8]],
-                   "shots": 1, "after": {"sol": 1}},
-        "far_1": {"name": "Fond 1", "path": [[0.0, 1.0, 8.0]], "shots": 0, "after": {}},
-    },
-}
 
 
 def test_the_judges_chart_is_written_with_or_without_cross_validation(tmp_path):
@@ -60,13 +42,6 @@ def test_the_confusion_chart_takes_missed_and_invented_contacts(tmp_path):
     ]
     figures.confusion_chart(confusion, tmp_path / "d.png")
     assert _written(tmp_path / "d.png")
-
-
-@pytest.mark.parametrize("chart", ["rally_court_chart", "rally_timeline_chart",
-                                   "rally_shots_chart"])
-def test_each_rally_chart_is_written(tmp_path, chart):
-    getattr(figures, chart)(RALLY, tmp_path / f"{chart}.png")
-    assert _written(tmp_path / f"{chart}.png")
 
 
 def test_the_player_charts_are_written(tmp_path):
