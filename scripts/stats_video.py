@@ -24,6 +24,7 @@ from pathlib import Path
 import cv2
 import minutes
 import numpy as np
+from match_stats import PAIRS
 from rally_page import to_h264
 from read_scores import EXAMPLES, READS, frame_of
 
@@ -99,6 +100,28 @@ def point_outcomes(rally, cuts, readings, start, stop) -> list[PointOutcome]:
     return outcomes
 
 
+def pair_names(match, rally, cuts, readings, start, stop) -> dict[str, str] | None:
+    """The scoreboard's name of the pair in each half, voted by the serves of the clip."""
+    rows = PAIRS.get(match)
+    if rows is None:
+        return None
+    contacts = [(c.frame, c.kind) for c in rally.contacts]
+    votes = Counter()
+    for span in rallies(cuts, contacts, start, stop):
+        before = next((state for first, state in readings if first == span.start), None)
+        strikes = [(c.frame, c.player) for c in rally.contacts
+                   if c.kind == "raquette" and c.player and span.start <= c.frame <= span.stop]
+        if before is None:
+            continue
+        for row, side in serving_side(before.server, strikes).items():
+            if side == "near":
+                votes[row] += 1
+    if not votes:
+        return None
+    near = votes.most_common(1)[0][0]
+    return {"proche": rows[near], "fond": rows[3 - near]}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--match", required=True)
@@ -135,7 +158,8 @@ def main() -> None:
     outcomes = point_outcomes(rally, cuts, readings, start, stop)
     print(f"{len(outcomes)} points attribues", flush=True)
     timeline = LiveTimeline(rally, splices=cuts, points=outcomes)
-    panel = StatsPanel(PANEL_WIDTH, analysis["size"][1], dict(DEFAULT_NAMES))
+    panel = StatsPanel(PANEL_WIDTH, analysis["size"][1], dict(DEFAULT_NAMES),
+                       pair_names(args.match, rally, cuts, readings, start, stop))
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
 
     with tempfile.TemporaryDirectory() as scratch:

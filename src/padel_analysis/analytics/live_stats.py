@@ -66,6 +66,7 @@ class LiveStats:
     rally_shots: int = 0  # frappes de l'echange en cours jusqu'ici
     longest_rally: int = 0  # le plus d'echanges de frappes en un echange, jusqu'ici
     pair_points: dict[str, int] | None = None  # points gagnes par paire, si le score est lu
+    rally_pair_shots: dict[str, int] | None = None  # frappes de chaque paire dans l'echange
 
 
 def volley_flags(rally: Rally) -> dict[int, bool | None]:
@@ -190,5 +191,10 @@ class LiveTimeline:
             return {}
         counts = [sum(1 for f, kind in span.contacts if kind == RACKET and f <= frame)
                   for span in begun]
+        striker = {c.frame: c.player for c in self.rally.contacts if c.kind == RACKET}
+        current = [striker.get(f) for f, kind in begun[-1].contacts
+                   if kind == RACKET and f <= frame]
         return {"rally_number": len(begun), "rally_shots": counts[-1],
-                "longest_rally": max(counts)}
+                "longest_rally": max(counts),
+                "rally_pair_shots": {pair: sum(1 for slot in current if slot in slots)
+                                     for pair, slots in PAIRS.items()}}
