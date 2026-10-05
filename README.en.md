@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/figures/banniere.gif" alt="A rally played on the padel court rebuilt in 3D" width="100%">
+</p>
+
 # Padel Analysis
 
 > 🇫🇷 [Version française](README.md)
@@ -10,23 +14,20 @@ statistics of the game, rally by rally.
 **86 %** on a tournament never seen · checked against more than **2,000 contacts marked
 by hand**.
 
-https://github.com/user-attachments/assets/111e80e8-f60e-4d82-b6d0-e2ef6630682d
+https://github.com/user-attachments/assets/9fa6b9ac-fb8e-4987-953b-c2bf9bcf2624
 
-<sub>A replay drawn entirely by the project: the court rebuilt from the calibration,
-the players, the ball, the contacts and the statistics panel. No broadcast image.</sub>
-
-https://github.com/user-attachments/assets/52971024-b38a-432d-917a-c96244127089
-
-<sub>The same rally, on the original video. Footage: PadelTracker100 dataset
-(CC-BY-4.0), World Padel Tour broadcast.</sub>
+<sub>The rally on the original video, then the same rally redrawn entirely by the
+project: the court rebuilt from the calibration, the players, the ball, the contacts
+and the statistics panel. Footage: PadelTracker100 dataset (CC-BY-4.0), World Padel
+Tour broadcast.</sub>
 
 ## What the project produces
 
 A video of the rally with, beside it, a panel that moves with the play: the players'
-minimap, the rally number and length, the points read off the scoreboard and credited
-to the last striker, and for each player their strokes, volleys, distance covered, top
-speed and time at the net. At each contact, the area touched — service box, back court,
-glass panel — lights up in perspective.
+minimap, the rally number and length, each pair's strokes in the rally, the points read
+off the scoreboard and credited to the last striker, and for each player their strokes,
+volleys, distance covered, top speed and time at the net. At each contact, the area
+touched — service box, back court, glass panel — lights up in perspective.
 
 <p align="center">
   <img src="docs/figures/panneau.png" alt="Statistics panel of a rally" width="300">

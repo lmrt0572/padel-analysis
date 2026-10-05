@@ -151,3 +151,14 @@ def test_points_are_credited_once_over_and_not_before():
 
 def test_without_a_score_read_no_points_are_shown():
     assert LiveTimeline(_rally()).at(90).pair_points is None
+
+
+def test_the_rally_in_play_counts_each_pair_s_strikes():
+    contacts = (
+        RallyContact(5, "raquette", None, "near_1"), RallyContact(25, "raquette", None, "far_1"),
+        RallyContact(35, "raquette", None, "near_2"), RallyContact(60, "raquette", None, "far_2"),
+        RallyContact(70, "raquette", None, "near_1"),
+    )
+    timeline = LiveTimeline(Rally(0, 90, 30.0, contacts, {}), splices=[50])
+    assert timeline.at(40).rally_pair_shots == {"proche": 2, "fond": 1}
+    assert timeline.at(80).rally_pair_shots == {"proche": 1, "fond": 1}

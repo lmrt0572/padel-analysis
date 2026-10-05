@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/figures/banniere.gif" alt="Un échange joué sur le court de padel reconstruit en 3D" width="100%">
+</p>
+
 # Padel Analysis
 
 > 🇬🇧 [English version](README.en.md)
@@ -10,23 +14,20 @@ filet — puis les statistiques du jeu, échange par échange.
 **86 %** sur un tournoi jamais vu · vérifié contre plus de **2 000 contacts pointés à
 la main**.
 
-https://github.com/user-attachments/assets/111e80e8-f60e-4d82-b6d0-e2ef6630682d
+https://github.com/user-attachments/assets/9fa6b9ac-fb8e-4987-953b-c2bf9bcf2624
 
-<sub>Replay entièrement rendu par le projet : le court reconstruit à partir de la
-calibration, les joueurs, la balle, les contacts et le panneau de statistiques. Aucune
-image de la retransmission.</sub>
-
-https://github.com/user-attachments/assets/52971024-b38a-432d-917a-c96244127089
-
-<sub>Le même échange, sur la vidéo d'origine. Images : dataset PadelTracker100
-(CC-BY-4.0), retransmission World Padel Tour.</sub>
+<sub>L'échange sur la vidéo d'origine, puis le même échange redessiné entièrement par le
+projet : le court reconstruit à partir de la calibration, les joueurs, la balle, les
+contacts et le panneau de statistiques. Images : dataset PadelTracker100 (CC-BY-4.0),
+retransmission World Padel Tour.</sub>
 
 ## Ce que produit le projet
 
 Une vidéo de l'échange avec, à côté, un panneau qui avance avec le jeu : la minicarte
-des joueurs, le numéro et la longueur de l'échange, les points lus au tableau
-d'affichage et crédités au dernier frappeur, et pour chaque joueur ses frappes, ses
-volées, la distance parcourue, sa vitesse maximale et son temps au filet. À chaque
+des joueurs, le numéro et la longueur de l'échange, les frappes de chaque paire dans
+l'échange, les points lus au tableau d'affichage et crédités au dernier frappeur, et
+pour chaque joueur ses frappes, ses volées, la distance parcourue, sa vitesse maximale
+et son temps au filet. À chaque
 contact, la zone touchée — carré de service, fond, panneau de vitre — s'éclaire en
 perspective.
 
