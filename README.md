@@ -8,28 +8,36 @@
 
 Analyse de matchs de padel filmés par **une seule caméra** : les joueurs, la balle,
 chaque contact et **ce que la balle a touché** — raquette, sol, vitre, grillage ou
-filet — puis les statistiques du jeu, échange par échange.
+filet — puis **les statistiques du jeu** : distance parcourue, vitesse, temps au filet,
+frappes et volées, par joueur sur un échange et par paire sur un match.
 
 **82 à 83 %** des contacts reconnus avec la bonne surface sur des minutes jamais vues ·
-**86 %** sur un tournoi jamais vu · vérifié contre plus de **2 000 contacts pointés à
-la main**.
+**86 %** sur un tournoi jamais vu · la distance d'une paire **à 1 % près** sur un match
+entier · vérifié contre plus de **2 000 contacts pointés à la main**.
 
-https://github.com/user-attachments/assets/9fa6b9ac-fb8e-4987-953b-c2bf9bcf2624
+## Le projet en une minute
 
-<sub>L'échange sur la vidéo d'origine, puis le même échange redessiné entièrement par le
-projet : le court reconstruit à partir de la calibration, les joueurs, la balle, les
-contacts et le panneau de statistiques. Images : dataset PadelTracker100 (CC-BY-4.0),
-retransmission World Padel Tour.</sub>
+https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
+
+<sub>Avec le son. L'échange du film, ses contacts et ses statistiques sont ceux que le
+projet a mesurés ; entre deux contacts, la trajectoire de la balle en 3D est une
+illustration. Images : dataset PadelTracker100 (CC-BY-4.0), retransmission World Padel
+Tour.</sub>
 
 ## Ce que produit le projet
+
+https://github.com/user-attachments/assets/a1eb8fcd-89af-4678-96fa-427a242407b9
+
+<sub>L'échange en entier, tel que le projet le rend : les joueurs suivis, la balle, la
+zone touchée à chaque contact et le panneau de statistiques. Images : dataset
+PadelTracker100 (CC-BY-4.0), retransmission World Padel Tour.</sub>
 
 Une vidéo de l'échange avec, à côté, un panneau qui avance avec le jeu : la minicarte
 des joueurs, le numéro et la longueur de l'échange, les frappes de chaque paire dans
 l'échange, les points lus au tableau d'affichage et crédités au dernier frappeur, et
 pour chaque joueur ses frappes, ses volées, la distance parcourue, sa vitesse maximale
-et son temps au filet. À chaque
-contact, la zone touchée — carré de service, fond, panneau de vitre — s'éclaire en
-perspective.
+et son temps au filet. À chaque contact, la zone touchée — carré de service, fond,
+panneau de vitre — s'éclaire en perspective.
 
 <p align="center">
   <img src="docs/figures/panneau.png" alt="Panneau de statistiques d'un échange" width="300">
