@@ -1,4 +1,7 @@
+import pickle
+
 import numpy as np
+import pytest
 import torch
 
 from padel_analysis.ball.candidates import Candidate
@@ -89,6 +92,30 @@ def test_a_saved_model_predicts_the_same(tmp_path):
     again = ContactModel.load(tmp_path / "m.pt")
     np.testing.assert_allclose(again.probabilities(features), model.probabilities(features),
                                atol=1e-6)
+
+
+def test_a_model_saved_with_numpy_arrays_still_loads(tmp_path):
+    """Les poids ecrits avant la sauvegarde en tenseurs gardent leur normalisation en NumPy."""
+    net = ContactNet(4).eval()
+    torch.save({"cues": 4, "mean": np.zeros(4, np.float32), "std": np.ones(4, np.float32),
+                "nets": [net.state_dict()]}, tmp_path / "old.pt")
+    model = ContactModel.load(tmp_path / "old.pt")
+    features = np.random.default_rng(0).normal(size=(40, 4)).astype(np.float32)
+    np.testing.assert_allclose(model.probabilities(features),
+                               ContactModel([net], np.zeros(4), np.ones(4)).probabilities(features),
+                               atol=1e-6)
+
+
+class _Payload:
+    def __reduce__(self):
+        return (print, ("code execute au chargement",))
+
+
+def test_a_model_file_cannot_run_code_when_loaded(tmp_path):
+    torch.save({"cues": 4, "mean": _Payload(), "std": np.ones(4, np.float32), "nets": []},
+               tmp_path / "piege.pt")
+    with pytest.raises(pickle.UnpicklingError):
+        ContactModel.load(tmp_path / "piege.pt")
 
 
 def test_training_learns_a_cue_that_marks_the_contacts():
