@@ -10,13 +10,13 @@ fourteen moments.
 """
 
 import json
-import os
-import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+
+from ..io.atomic import write_json_atomically
 
 SLOTS: tuple[str, ...] = ("near_1", "near_2", "far_1", "far_2")
 NEAR_SLOTS = ("near_1", "near_2")
@@ -109,26 +109,8 @@ class IdentityGroundTruth:
             "boundaries": self.boundaries,
             "decisions": self.decisions,
         }
-        target = Path(path)
-        target.parent.mkdir(parents=True, exist_ok=True)
-
-        # Ecriture atomique. Le fichier est reecrit apres chaque episode arbitre, et
-        # une ecriture directe le tronque avant de le remplir : une coupure a cet
-        # instant laissait un fichier de zeros, effacant les quarante-cinq mille
-        # frames d'assignation et tous les arbitrages deja rendus. Le nouveau
-        # contenu n'est publie qu'une fois complet et sur le disque.
-        descriptor, temporary = tempfile.mkstemp(
-            dir=target.parent, prefix=f"{target.name}.", suffix=".tmp"
-        )
-        try:
-            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-                json.dump(payload, handle)
-                handle.flush()
-                os.fsync(handle.fileno())
-            os.replace(temporary, target)
-        except BaseException:
-            Path(temporary).unlink(missing_ok=True)
-            raise
+        # Le fichier est reecrit apres chaque episode arbitre : jamais en place.
+        write_json_atomically(path, payload)
 
     @classmethod
     def load(cls, path: Path) -> "IdentityGroundTruth":

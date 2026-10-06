@@ -134,7 +134,7 @@ def test_a_failed_save_does_not_destroy_the_previous_file(tmp_path, monkeypatch)
     def explode(*args, **kwargs):
         raise OSError("disque plein")
 
-    monkeypatch.setattr("padel_analysis.eval.surface_truth.os.replace", explode)
+    monkeypatch.setattr("padel_analysis.io.atomic.os.replace", explode)
     with pytest.raises(OSError):
         _truth().save(path)
     assert path.read_text(encoding="utf-8") == before
