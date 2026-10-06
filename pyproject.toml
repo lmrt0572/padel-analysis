@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.5"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.5", "pylint>=3.2"]
 eval = ["supervision>=0.25,<0.31", "motmetrics>=1.4"]
 
 [project.scripts]
@@ -32,3 +32,15 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.pylint.main]
+# OpenCV est une extension compilee : sans cela, chaque appel a cv2 passe pour une erreur.
+extension-pkg-allow-list = ["cv2"]
+# Les scripts s'importent entre eux par leur nom, comme lances depuis scripts/.
+init-hook = "import sys; sys.path.append('scripts')"
+
+[tool.pylint.typecheck]
+generated-members = ["cv2.*"]
+
+[tool.pylint.format]
+max-line-length = 100

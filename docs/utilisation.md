@@ -148,3 +148,14 @@ python scripts/make_figures.py --cache cache/<match entier>.json
 
 Les commandes qui reproduisent chaque mesure sont dans le
 [rapport d'évaluation](evaluation.md#reproduire-lévaluation).
+
+## Vérifier le code
+
+Les tests n'ont besoin ni des vidéos ni des poids. Le réglage de pylint est dans
+`pyproject.toml` :
+
+```bash
+python -m ruff check src scripts tests
+python -m pytest -q --cov=padel_analysis
+python -m pylint src/padel_analysis scripts
+```
