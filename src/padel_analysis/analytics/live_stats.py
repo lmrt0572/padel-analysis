@@ -6,6 +6,7 @@ drawn. The work is done once, frame by frame, so drawing a frame only reads a ro
 """
 
 import math
+from collections import Counter
 from dataclasses import dataclass
 
 import numpy as np
@@ -87,6 +88,22 @@ def volley_flags(rally: Rally) -> dict[int, bool | None]:
     return flags
 
 
+def _mean_share(shares) -> float:
+    """The mean of the shares that are known, or NaN when none is."""
+    known = [share for share in shares if not math.isnan(share)]
+    return float(np.mean(known)) if known else math.nan
+
+
+def _until(items, frame: int) -> list:
+    """The items, in order, that have happened by `frame`."""
+    return [item for item in items if item.frame <= frame]
+
+
+def _by_pair(value, combine) -> dict:
+    """For each pair, `combine` of `value(slot)` over its two players."""
+    return {pair: combine(value(slot) for slot in slots) for pair, slots in PAIRS.items()}
+
+
 class LiveTimeline:
     """Cumulative statistics for every frame of a rally, computed once."""
 
@@ -137,53 +154,67 @@ class LiveTimeline:
         rally = self.rally
         frame = min(max(frame, rally.start), rally.stop)
         index = frame - rally.start
-        past = [c for c in rally.contacts if c.frame <= frame]
+        past = _until(rally.contacts, frame)
         strikes = [c for c in past if c.kind == RACKET]
-        over = [p for p in self._points or () if p.frame <= frame]
-        players = []
-        for slot in SLOTS:
-            mine = [c for c in strikes if c.player == slot]
-            seen = int(self._seen[slot][index])
-            players.append(PlayerLine(
-                slot=slot,
-                shots=len(mine),
-                volleys=sum(1 for c in mine if self._volley.get(c.frame) is True),
-                after_bounce=sum(1 for c in mine if self._volley.get(c.frame) is False),
-                distance=float(self._distance[slot][index]),
-                top_speed=float(self._top[slot][index]),
-                net_share=float(self._at_net[slot][index]) / seen if seen else math.nan,
-                winners=sum(1 for p in over if p.player == slot and p.kind == "gagnant"),
-                errors=sum(1 for p in over if p.player == slot and p.kind == "faute"),
-            ))
+        over = _until(self._points or (), frame)
+        players = tuple(self._player_line(slot, index, strikes, over) for slot in SLOTS)
         by_slot = {line.slot: line for line in players}
-        last = past[-1] if past and frame - past[-1].frame <= self.recent else None
-        known = [s.kmh for s in self._speeds if s.stop <= frame]
-        positions = {}
-        for slot in SLOTS:
-            recent = self._smooth[slot][max(0, index - TRAIL):index + 1]
-            positions[slot] = [(float(x), float(y)) for x, y in recent if not math.isnan(x)]
+        last_speed, top_speed = self._shot_speeds(frame)
         return LiveStats(
             elapsed=index / rally.fps,
             shots=len(strikes),
-            walls=sum(1 for c in past if c.kind in WALLS),
-            last=last.kind if last else None,
-            players=tuple(players),
-            pair_shots={pair: sum(by_slot[s].shots for s in slots)
-                        for pair, slots in PAIRS.items()},
-            pair_net={
-                pair: float(np.nanmean([by_slot[s].net_share for s in slots]))
-                if any(not math.isnan(by_slot[s].net_share) for s in slots) else math.nan
-                for pair, slots in PAIRS.items()
-            },
-            last_shot_speed=known[-1] if known else None,
-            top_shot_speed=max(known) if known else None,
-            positions=positions,
-            pair_points=None if self._points is None else {
-                "proche": sum(1 for p in over if p.winner_side == "near"),
-                "fond": sum(1 for p in over if p.winner_side == "far"),
-            },
+            walls=sum(c.kind in WALLS for c in past),
+            last=self._recent_kind(past, frame),
+            players=players,
+            pair_shots=_by_pair(lambda slot: by_slot[slot].shots, sum),
+            pair_net=_by_pair(lambda slot: by_slot[slot].net_share, _mean_share),
+            last_shot_speed=last_speed,
+            top_shot_speed=top_speed,
+            positions={slot: self._trail(slot, index) for slot in SLOTS},
+            pair_points=self._pair_points(over),
             **self._rally_at(frame),
         )
+
+    def _recent_kind(self, past: list, frame: int) -> str | None:
+        """What the last contact was, if it is recent enough to still be shown."""
+        if past and frame - past[-1].frame <= self.recent:
+            return past[-1].kind
+        return None
+
+    def _shot_speeds(self, frame: int) -> tuple[float | None, float | None]:
+        """The speed of the last shot whose arrival is known by `frame`, and the fastest."""
+        known = [s.kmh for s in self._speeds if s.stop <= frame]
+        return (known[-1], max(known)) if known else (None, None)
+
+    def _player_line(self, slot: str, index: int, strikes: list, over: list) -> PlayerLine:
+        """One player's figures up to the frame at `index`."""
+        mine = [c for c in strikes if c.player == slot]
+        volley = Counter(self._volley.get(c.frame) for c in mine)
+        ended = Counter(p.kind for p in over if p.player == slot)
+        seen = int(self._seen[slot][index])
+        return PlayerLine(
+            slot=slot,
+            shots=len(mine),
+            volleys=volley[True],
+            after_bounce=volley[False],
+            distance=float(self._distance[slot][index]),
+            top_speed=float(self._top[slot][index]),
+            net_share=float(self._at_net[slot][index]) / seen if seen else math.nan,
+            winners=ended["gagnant"],
+            errors=ended["faute"],
+        )
+
+    def _trail(self, slot: str, index: int) -> list[tuple[float, float]]:
+        """Where the player was over the last frames, the most recent last."""
+        recent = self._smooth[slot][max(0, index - TRAIL):index + 1]
+        return [(float(x), float(y)) for x, y in recent if not math.isnan(x)]
+
+    def _pair_points(self, over: list) -> dict[str, int] | None:
+        """The points each pair has won so far, or None when the score was not read."""
+        if self._points is None:
+            return None
+        won = Counter(p.winner_side for p in over)
+        return {"proche": won["near"], "fond": won["far"]}
 
     def _rally_at(self, frame: int) -> dict:
         begun = [span for span in self._spans if span.start <= frame]
