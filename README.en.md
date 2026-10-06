@@ -7,21 +7,30 @@
 > 🇫🇷 [Version française](README.md)
 
 Analysis of padel matches filmed by **a single camera**: the players, the ball, every
-contact and **what the ball touched** — racket, floor, glass, mesh or net — then the
-statistics of the game, rally by rally.
+contact and **what the ball touched** — racket, floor, glass, mesh or net — then **the
+statistics of the game**: distance covered, speed, time at the net, strokes and
+volleys, per player over a rally and per pair over a match.
 
 **82 to 83 %** of contacts recognised with the right surface on minutes never seen ·
-**86 %** on a tournament never seen · checked against more than **2,000 contacts marked
-by hand**.
+**86 %** on a tournament never seen · a pair's distance **within 1 %** over a whole
+match · checked against more than **2,000 contacts marked by hand**.
 
-https://github.com/user-attachments/assets/9fa6b9ac-fb8e-4987-953b-c2bf9bcf2624
+## The project in one minute
 
-<sub>The rally on the original video, then the same rally redrawn entirely by the
-project: the court rebuilt from the calibration, the players, the ball, the contacts
-and the statistics panel. Footage: PadelTracker100 dataset (CC-BY-4.0), World Padel
-Tour broadcast.</sub>
+https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
+
+<sub>With sound; the captions are in French. The rally in the film, its contacts and its
+statistics are the ones the project measured; between two contacts, the ball's 3D
+trajectory is an illustration. Footage: PadelTracker100 dataset (CC-BY-4.0), World
+Padel Tour broadcast.</sub>
 
 ## What the project produces
+
+https://github.com/user-attachments/assets/a1eb8fcd-89af-4678-96fa-427a242407b9
+
+<sub>The whole rally as the project renders it: the tracked players, the ball, the area
+touched at each contact and the statistics panel. Footage: PadelTracker100 dataset
+(CC-BY-4.0), World Padel Tour broadcast.</sub>
 
 A video of the rally with, beside it, a panel that moves with the play: the players'
 minimap, the rally number and length, each pair's strokes in the rally, the points read
