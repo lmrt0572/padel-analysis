@@ -8,10 +8,10 @@ Written atomically after every mark, like every hand-made truth in this project.
 """
 
 import json
-import os
-import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from ..io.atomic import write_json_atomically
 
 ANSWERS = ("sol", "verre", "grillage", "filet", "raquette")
 
@@ -44,8 +44,6 @@ class ContactMarks:
         return frame, self.marks.pop(frame)
 
     def save(self, path: Path) -> None:
-        target = Path(path)
-        target.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "video": self.video,
             "frame_range": list(self.frame_range),
@@ -53,18 +51,7 @@ class ContactMarks:
             "marks": {str(f): a for f, a in sorted(self.marks.items())},
             "order": self.order,
         }
-        descriptor, temporary = tempfile.mkstemp(
-            dir=target.parent, prefix=f"{target.name}.", suffix=".tmp"
-        )
-        try:
-            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-                json.dump(payload, handle, indent=1)
-                handle.flush()
-                os.fsync(handle.fileno())
-            os.replace(temporary, target)
-        except BaseException:
-            Path(temporary).unlink(missing_ok=True)
-            raise
+        write_json_atomically(path, payload, indent=1)
 
     @classmethod
     def load(cls, path: Path) -> "ContactMarks":

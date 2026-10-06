@@ -42,6 +42,13 @@ fewer invented contacts: 67 on average, then 57."""
 
 Point = tuple[float, float]
 
+try:
+    from numpy._core.multiarray import _reconstruct as _rebuild_array
+except ImportError:  # NumPy 1.x
+    from numpy.core.multiarray import _reconstruct as _rebuild_array
+_NUMPY_ARRAYS = [_rebuild_array, np.ndarray, np.dtype, type(np.dtype(np.float32))]
+"""What a model file may hold besides tensors: an array of 32-bit floats."""
+
 
 def frame_features(
     analysis: dict,
@@ -300,11 +307,12 @@ class ContactModel:
         return total / len(self.nets)
 
     def save(self, path: str | Path) -> None:
+        """Write the ensemble as plain tensors, which load without running any code."""
         torch.save(
             {
                 "cues": int(self.mean.shape[0]),
-                "mean": self.mean,
-                "std": self.std,
+                "mean": torch.from_numpy(self.mean),
+                "std": torch.from_numpy(self.std),
                 "nets": [net.state_dict() for net in self.nets],
             },
             path,
@@ -312,13 +320,19 @@ class ContactModel:
 
     @classmethod
     def load(cls, path: str | Path) -> "ContactModel":
-        saved = torch.load(path, map_location="cpu", weights_only=False)
+        """Read a saved ensemble without letting the file run code.
+
+        Files written before this version hold the normalisation as NumPy arrays:
+        those, and nothing else, are allowed besides tensors.
+        """
+        with torch.serialization.safe_globals(_NUMPY_ARRAYS):
+            saved = torch.load(path, map_location="cpu", weights_only=True)
         nets = []
         for state in saved["nets"]:
             net = ContactNet(saved["cues"])
             net.load_state_dict(state)
             nets.append(net)
-        return cls(nets, saved["mean"], saved["std"])
+        return cls(nets, np.asarray(saved["mean"]), np.asarray(saved["std"]))
 
 
 def train(

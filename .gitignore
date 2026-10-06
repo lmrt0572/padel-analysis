@@ -41,3 +41,4 @@ weights/
 
 # Restes d une ecriture atomique interrompue
 *.tmp
+.coverage

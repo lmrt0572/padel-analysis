@@ -140,7 +140,7 @@ def test_a_save_interrupted_at_the_last_moment_keeps_the_previous_file(
     def interrupted(*args: object, **kwargs: object) -> None:
         raise OSError("coupure de courant")
 
-    monkeypatch.setattr(identity.os, "replace", interrupted)
+    monkeypatch.setattr("padel_analysis.io.atomic.os.replace", interrupted)
     with pytest.raises(OSError):
         IdentityGroundTruth(
             assignments={1: {"near_1": 1}}, episodes=[], resolved=[]
@@ -168,7 +168,7 @@ def test_a_failed_save_leaves_no_temporary_file_behind(tmp_path, monkeypatch):
     def interrupted(*args: object, **kwargs: object) -> None:
         raise OSError("coupure de courant")
 
-    monkeypatch.setattr(identity.os, "replace", interrupted)
+    monkeypatch.setattr("padel_analysis.io.atomic.os.replace", interrupted)
     with pytest.raises(OSError):
         IdentityGroundTruth(
             assignments={1: {"near_1": 1}}, episodes=[], resolved=[]

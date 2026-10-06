@@ -12,10 +12,10 @@ number was the artefact.
 """
 
 import json
-import os
-import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from ..io.atomic import write_json_atomically
 
 UNREADABLE = "x"
 NO_CONTACT = "aucun"
@@ -89,8 +89,6 @@ class SurfaceGroundTruth:
 
     def save(self, path: Path) -> None:
         """Write atomically: a crash costs the answer in progress, not the campaign."""
-        target = Path(path)
-        target.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "video": self.video,
             "frame_range": list(self.frame_range),
@@ -98,18 +96,7 @@ class SurfaceGroundTruth:
             "tasks": [{"frame": t.frame, "stratum": t.stratum} for t in self.tasks],
             "answers": {str(f): a for f, a in sorted(self.answers.items())},
         }
-        descriptor, temporary = tempfile.mkstemp(
-            dir=target.parent, prefix=f"{target.name}.", suffix=".tmp"
-        )
-        try:
-            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-                json.dump(payload, handle, indent=1)
-                handle.flush()
-                os.fsync(handle.fileno())
-            os.replace(temporary, target)
-        except BaseException:
-            Path(temporary).unlink(missing_ok=True)
-            raise
+        write_json_atomically(path, payload, indent=1)
 
     @classmethod
     def load(cls, path: Path) -> "SurfaceGroundTruth":
