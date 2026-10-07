@@ -12,8 +12,9 @@ statistics of the game**: distance covered, speed, time at the net, strokes and
 volleys, per player over a rally and per pair over a match.
 
 **82 to 83 %** of contacts recognised with the right surface on minutes never seen ·
-**86 %** on a tournament never seen · a pair's distance **within 1 %** over a whole
-match · checked against more than **2,000 contacts marked by hand**.
+**86 %** on a tournament never seen · distance covered by each pair measured **to within
+about 1 %** over a whole match · checked against more than **2,000 contacts marked by
+hand**.
 
 ## The project in one minute
 

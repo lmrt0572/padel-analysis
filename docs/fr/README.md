@@ -12,8 +12,9 @@ filet), puis **les statistiques du jeu** : distance parcourue, vitesse, temps au
 frappes et volées, par joueur sur un échange et par paire sur un match.
 
 **82 à 83 %** des contacts reconnus avec la bonne surface sur des minutes jamais vues ·
-**86 %** sur un tournoi jamais vu · la distance d'une paire **à 1 % près** sur un match
-entier · vérifié contre plus de **2 000 contacts pointés à la main**.
+**86 %** sur un tournoi jamais vu · distance parcourue par chaque paire mesurée **à
+environ 1 % près** sur un match entier · vérifié contre plus de **2 000 contacts pointés
+à la main**.
 
 ## Le projet en une minute
 
