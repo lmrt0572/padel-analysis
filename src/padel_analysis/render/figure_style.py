@@ -23,8 +23,8 @@ KIND = {
 PLAYER = {"near_1": "#ffd166", "near_2": "#f4845f", "far_1": "#9d7bea", "far_2": "#f15bb5"}
 RULES = "#8b95a5"
 MODEL = "#3ddc97"
-KIND_NAMES = {"raquette": "frappe", "sol": "sol", "verre": "vitre", "grillage": "grillage",
-              "filet": "filet", "aucun": "rien", "fin": "rien ensuite"}
+KIND_NAMES = {"raquette": "stroke", "sol": "floor", "verre": "glass", "grillage": "mesh",
+              "filet": "net", "aucun": "nothing", "fin": "nothing after"}
 
 
 def use() -> None:

@@ -40,7 +40,7 @@ et son temps au filet. À chaque contact, la zone touchée (carré de service, f
 panneau de vitre) s'éclaire en perspective.
 
 <p align="center">
-  <img src="figures/panneau.png" alt="Panneau de statistiques d'un échange" width="300">
+  <img src="figures/panneau_fr.png" alt="Panneau de statistiques d'un échange" width="300">
 </p>
 
 ## Comment ça marche
@@ -109,7 +109,8 @@ Le bilan est donné **par paire, pas par joueur** : quand le suivi confond deux
 partenaires, la somme de la paire reste juste, mais la distance d'un joueur est fausse
 de plus de 12 % une fois sur dix. Les équipes sont suivies d'un changement de côté à
 l'autre par le score, qui dit quand elles changent ; le bilan part donc de la première
-lecture du tableau. L'occupation est repliée sur une moitié : le filet en haut.
+lecture du tableau. L'occupation est repliée sur une moitié : le filet en haut. (Les
+libellés des figures sont en anglais.)
 
 ## Limites
 
