@@ -225,7 +225,7 @@ def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
         for spine in axis.spines.values():
             spine.set_visible(False)
         net = " · ".join(f"{n} {report['pairs'][n]['net_share']:.0%}" for n in names)
-        axis.set_title(f"{MATCH_NAMES.get(report['match'], report['match'])} — "
+        axis.set_title(f"{MATCH_NAMES.get(report['match'], report['match'])}, "
                        f"{report['minutes']:.0f} min de jeu, temps au filet {net} (± 0,3 pt)",
                        loc="left", pad=28, fontsize=11)
         _pair_legend(axis, names)

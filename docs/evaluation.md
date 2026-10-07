@@ -1,6 +1,6 @@
-# Padel Analysis — rapport d'évaluation
+# Padel Analysis : rapport d'évaluation
 
-Ce document détaille chaque mesure résumée dans le [README](../README.md) : comment elle a été obtenue, ce qu'elle vaut, et ce qu'elle ne dit pas. Les chiffres portent sur deux matchs du dataset PadelTracker100 — la finale féminine sert à régler, la finale masculine n'est utilisée qu'une fois, pour juger.
+Ce document détaille chaque mesure résumée dans le [README](../README.md) : comment elle a été obtenue, ce qu'elle vaut, et ce qu'elle ne dit pas. Les chiffres portent sur deux matchs du dataset PadelTracker100 : la finale féminine sert à régler, la finale masculine n'est utilisée qu'une fois, pour juger.
 
 ## Résultats
 
@@ -109,7 +109,7 @@ distance à la position prédite par un modèle à vitesse constante, la signatu
 couleur de la tenue et la confiance des chevilles.
 
 Cette contrainte structurelle n'est pas décorative : **le détecteur trouve plus de
-quatre personnes dans 63 % des frames** — spectateurs, ramasseurs de balle, arbitre —
+quatre personnes dans 63 % des frames** (spectateurs, ramasseurs de balle, arbitre),
 et le suivi contraint retient systématiquement les quatre bonnes.
 
 La signature de couleur a été validée par la mesure avant d'être conservée : la
@@ -117,7 +117,7 @@ dérive d'un même joueur d'une frame à l'autre vaut 0,031, contre 0,199 entre 
 partenaires. Le rapport de 6,3 confirme qu'elle distingue bien des coéquipiers
 portant la même tenue, et pas seulement les deux équipes.
 
-### Analyse tactique — contrôle du filet
+### Analyse tactique : contrôle du filet
 
 Mesuré sur le match complet, 45 934 frames, dont 44 911 portent les quatre joueurs.
 
@@ -128,7 +128,7 @@ seuil.
 
 La ligne de service, à 6,95 m, n'est délibérément pas utilisée : c'est une règle de
 service et non un marqueur de position tactique, et elle tombe du mauvais côté du
-creux — elle classerait toute la bande défensive comme offensive.
+creux : elle classerait toute la bande défensive comme offensive.
 
 | Mesure | Valeur |
 |---|---|
@@ -151,9 +151,9 @@ de la convention, et les pourcentages la suivent :
 Les valeurs absolues dépendent donc du seuil, mais **le rapport entre les deux paires
 ne bouge pratiquement pas** au-delà de 5,5 m. La conclusion robuste de ce match est
 que la paire du côté proche a tenu le filet environ **1,85 fois plus souvent** que
-l'autre — indépendamment de la convention retenue.
+l'autre, indépendamment de la convention retenue.
 
-### Analyse tactique — distance et vitesse
+### Analyse tactique : distance et vitesse
 
 La distance est donnée brute et lissée. L'écart entre les deux chiffre la part qu'y a
 prise le bruit de position, au lieu de la masquer.
@@ -205,7 +205,7 @@ l'ablation 2.
 Le rappel est donc la mesure qui compte ici : **95,4 % des joueurs annotés sont
 retrouvés**.
 
-### Ablation 1 — d'où vient le point au sol
+### Ablation 1 : d'où vient le point au sol
 
 Deux façons de décider où un joueur touche le sol : le milieu de ses chevilles, ou le
 centre du bord inférieur de sa boîte englobante. Les deux implémentations coexistent
@@ -213,15 +213,15 @@ dans le code pour que le choix soit tranché par la mesure.
 
 | Stratégie | Global | Moitié proche | Moitié éloignée |
 |---|---|---|---|
-| **Milieu des chevilles** | **1,89 px** | 2,01 px — 3,0 cm | 1,77 px — **11,5 cm** |
-| Bas de la boîte | 19,61 px | 24,19 px — 36,5 cm | 16,64 px — **107,7 cm** |
+| **Milieu des chevilles** | **1,89 px** | 2,01 px (3,0 cm) | 1,77 px (**11,5 cm**) |
+| Bas de la boîte | 19,61 px | 24,19 px (36,5 cm) | 16,64 px (**107,7 cm**) |
 
 Sur 34 338 échantillons appariés, **les chevilles font dix fois mieux**. Le bas de la
 boîte englobante n'est pas l'endroit où le joueur touche le sol : c'est le point le
 plus bas de l'englobant, qui inclut la raquette baissée et un pied levé.
 
 L'écart est plus grand en pixels près de la caméra, et plus grand en mètres au fond du
-court — les deux lectures sont vraies, et c'est l'asymétrie de 4,3× qui les sépare. Un
+court : les deux lectures sont vraies, et c'est l'asymétrie de 4,3× qui les sépare. Un
 mètre d'erreur au fond avec le bas de la boîte, c'est la moitié d'une zone de service.
 
 ### Vérité terrain d'identité
@@ -236,8 +236,8 @@ Mais cette association suppose une image continue, et elle ne l'est pas. **La vi
 dataset est une concaténation des séquences de jeu**, temps morts retirés. Le tableau
 d'affichage le prouve : entre deux frames consécutives, le score passe de 30 à 40.
 
-À chaque raccord, les joueurs réapparaissent ailleurs. Ce n'est pas un rapprochement —
-ils ne se frôlent pas, ils se téléportent — donc rien ne paraît ambigu, et l'identité
+À chaque raccord, les joueurs réapparaissent ailleurs. Ce n'est pas un rapprochement
+(ils ne se frôlent pas, ils se téléportent), donc rien ne paraît ambigu, et l'identité
 peut changer en silence.
 
 | | rapprochements | raccords | changements de côté |
@@ -260,11 +260,11 @@ court.
 Un changement de côté, lui, n'est pas une erreur à corriger. Les emplacements
 désignent une moitié de court : quand les équipes changent de côté, `near_1` est
 quelqu'un d'autre, et aucun échange d'étiquettes ne peut l'exprimer. **L'identité
-s'arrête là et repart** — les métriques d'identité coupent des deux côtés de la
+s'arrête là et repart** : les métriques d'identité coupent des deux côtés de la
 comparaison à cet endroit, et ne créditent ni ne pénalisent personne pour une
 frontière qu'aucune information de l'image ne permet de franchir.
 
-### Ablation 2 — la contrainte de court
+### Ablation 2 : la contrainte de court
 
 Le suivi contraint tient exactement quatre emplacements, deux de chaque côté du filet,
 et refuse toute position hors de l'enceinte. La ligne de base est ByteTrack, sans
@@ -275,7 +275,7 @@ aucune de ces contraintes.
 | **Suivi contraint** | **3,98** | **0** | **0,912** | **0,819** | **4** |
 | ByteTrack seul | 4,78 | 5 152 | 0,704 | 0,281 | 67 |
 
-**ByteTrack dépasse quatre pistes sur 5 152 frames des 8 990 évaluées** — plus d'une
+**ByteTrack dépasse quatre pistes sur 5 152 frames des 8 990 évaluées**, plus d'une
 sur deux. Rien ne le borne, et le détecteur lui fournit huit mille personnes de trop.
 L'IDF1 de 0,281 signifie que la plupart des identités de référence ne sont couvertes
 par aucune piste stable : des statistiques par joueur calculées là-dessus seraient du
@@ -309,13 +309,13 @@ le suivi contraint décroche 4 fois sur 21 occasions, ByteTrack 67 fois.
 ### Phases aériennes
 
 Un point à hauteur `h` projeté par une homographie de sol atterrit à `d × H / (H − h)`
-de l'aplomb caméra au lieu de `d`. Le padel se joue en sautant — smash, bandeja,
-vibora — donc la question n'est pas de savoir si le biais existe mais ce qu'il pèse.
+de l'aplomb caméra au lieu de `d`. Le padel se joue en sautant (smash, bandeja,
+vibora), donc la question n'est pas de savoir si le biais existe mais ce qu'il pèse.
 
 | | Frames en phase aérienne |
 |---|---|
-| Final féminine | 1 640 / 183 456 — **0,89 %** |
-| Final masculine | 2 293 / 211 252 — **1,09 %** |
+| Final féminine | 1 640 / 183 456, soit **0,89 %** |
+| Final masculine | 2 293 / 211 252, soit **1,09 %** |
 
 | Hauteur du saut | Biais au filet | Biais au fond |
 |---|---|---|
@@ -351,8 +351,8 @@ par transfert, annotée en identité, puis évaluée une fois.
 
 **La détection et la localisation transfèrent. Le suivi d'identité, non.**
 
-La détection est même meilleure sur le match tenu à l'écart — F1 de 0,882 contre
-0,857 — parce que sa précision monte de cinq points : le détecteur y trouve moins de
+La détection est même meilleure sur le match tenu à l'écart (F1 de 0,882 contre
+0,857) parce que sa précision monte de cinq points : le détecteur y trouve moins de
 personnes qui ne jouent pas. La localisation est à onze centièmes de pixel près
 identique, ce qui était attendu puisque la géométrie ne dépend pas des joueurs.
 
@@ -362,11 +362,11 @@ décrocher sur la même durée. Normalisé, l'écart reste :
 
 | | Occasions | Permutations | Taux |
 |---|---|---|---|
-| Finale féminine | 21 — 18 raccords, 3 rapprochements | 4 | **19 %** |
-| Finale masculine | 38 — 24 raccords, 14 rapprochements | 28 | **74 %** |
+| Finale féminine | 21 (18 raccords, 3 rapprochements) | 4 | **19 %** |
+| Finale masculine | 38 (24 raccords, 14 rapprochements) | 28 | **74 %** |
 
 La cause tient dans la deuxième colonne : **14 rapprochements contre 3**, sur le même
-nombre de frames. Les hommes se croisent bien plus souvent et bien plus serré — le
+nombre de frames. Les hommes se croisent bien plus souvent et bien plus serré : le
 minimum de séparation entre partenaires descend à 0,41 m sur leur match contre 0,56 m
 sur celui des femmes. Le point faible du suivi contraint est là, et un match qui le
 sollicite cinq fois plus le met cinq fois plus en défaut.
@@ -402,7 +402,7 @@ d'écart elle a bougé assez pour ne plus se chevaucher, et le rappel passe de 0
 0,912.
 
 Les écarts 2, 3 et 4 se valent sur le rappel. **L'écart 2 est retenu parce qu'il place
-la balle plus haut dans la liste** — rang 6 contre 7 et 8, et 70 % de présence dans
+la balle plus haut dans la liste** : rang 6 contre 7 et 8, et 70 % de présence dans
 les dix premiers contre 64 % et 60 %. À rappel égal, c'est celui qui facilite le plus
 l'étage suivant.
 
@@ -422,7 +422,7 @@ les deux dernières colonnes : la balle est le sixième candidat parmi **78**, e
 fois sur trois elle n'est même pas dans les dix premiers. La départager est le travail
 de l'étage de trajectoire, et il n'est pas entamé ici.
 
-La chute du rappel à 5 px — 0,662 contre 0,912 à 10 px — ne vient pas d'un biais
+La chute du rappel à 5 px (0,662 contre 0,912 à 10 px) ne vient pas d'un biais
 corrigeable. Sur 512 balles, le décalage entre le centre de la tache de mouvement et
 le centre annoté vaut (−0,67, +0,88) px en moyenne, et −0,37 px une fois projeté sur
 la direction de déplacement. C'est de la dispersion, de norme médiane 3,3 px, pas un
@@ -463,19 +463,19 @@ toutes les frames. Pour la gloutonne elle vaut 0,317 et 0,214 à 10 px.
 l'écart.** Les quatre paramètres du chemin ont été balayés sur 800 frames du seul match
 féminin et n'ont pas été retouchés ensuite ; le match masculin, cinq fois plus long,
 donne un résultat légèrement meilleur. La fraction du plafond capturée y est la même à
-un demi-point près — 79,0 % contre 78,5 %.
+un demi-point près : 79,0 % contre 78,5 %.
 
 **Pourquoi la ligne de base plafonne.** Trois mesures enchaînées le disent sans
 ambiguïté : la balle est dans la liste de candidats **93,9 %** du temps, un segment
 glouton la couvre **52,5 %** du temps, et il en reste **16,8 %** après arbitrage entre
-segments. La première chute est le prix de la décision locale — une extrapolation
+segments. La première chute est le prix de la décision locale : une extrapolation
 partie sur un mauvais candidat ne revient jamais. La seconde est le prix de
 l'arbitrage : il faut choisir entre des segments concurrents sans rien savoir de ce
 qui se passe ailleurs dans la séquence.
 
 **Départager les segments par leur longueur était à l'envers.** Les segments qui
 suivent réellement la balle font **27 frames** en médiane ; les autres en font **31**.
-Un arc de balle est court par nature — il se termine à chaque contact — tandis qu'une
+Un arc de balle est court par nature (il se termine à chaque contact), tandis qu'une
 fausse piste accrochée à un élément lent peut courir indéfiniment. Le critère correct
 est la **vitesse** : 13,2 px/frame pour les bons segments contre 8,8 pour les autres.
 Ce seul changement fait passer la précision de 0,168 à 0,405.
@@ -487,12 +487,12 @@ Il ne mord quasiment jamais, et il est conservé comme garde-fou contre une fram
 pathologique, pas comme le ressort de la méthode.
 
 **Ce qui reste à gagner.** 0,912 et 0,928 étaient disponibles dans la liste de
-candidats, 0,716 et 0,733 sont capturés. L'écart — un cinquième du plafond — est ce
+candidats, 0,716 et 0,733 sont capturés. L'écart, un cinquième du plafond, est ce
 qui justifiera, ou non, de remplacer la détection par mouvement par un réseau.
 
 **Réserve de méthode : la métrique récompense le fait de toujours répondre.** Une frame
 sans prédiction compte comme un échec de rappel, alors qu'une position produite là où
-aucune balle n'est annotée n'est pas comptabilisable — 2 212 frames dans ce cas sur le
+aucune balle n'est annotée n'est pas comptabilisable : 2 212 frames dans ce cas sur le
 match tenu à l'écart. Le balayage a donc trouvé optimal un coût d'absence si élevé que
 le chemin ne renonce jamais, ce qui est en partie un artefact de la mesure et non une
 qualité propre de la méthode. Le comparatif ci-dessus reste valide, les deux méthodes
@@ -567,7 +567,7 @@ frame 20 100, et combinées au prorata des balles annotées de chaque passe.
 
 **Le réseau gagne sur le match qu'il n'a jamais vu**, avec les deux modèles et aux
 trois tolérances : +6,5 points à 10 px, +15 à 5 px. La tranche d'évaluation du match
-de réglage n'avait jamais servi à l'entraînement, mais elle venait du même match —
+de réglage n'avait jamais servi à l'entraînement, mais elle venait du même match :
 mêmes joueuses, même éclairage. Le match masculin répond à la question que celle-là
 ne pouvait pas trancher : le réseau a appris la balle, pas ce match-là.
 
@@ -577,7 +577,7 @@ d'une tache de mouvement, dont la dispersion médiane valait 3,3 px.
 
 **Tripler les données améliore la localisation, pas le rappel.** Le modèle entraîné
 sur toutes les frames gagne 4 points à 5 px sur le match tenu à l'écart, mais aucun à
-10 px — il y fait même 0,7 point de moins que le modèle à une frame sur trois. Son
+10 px : il y fait même 0,7 point de moins que le modèle à une frame sur trois. Son
 avance de 2 points à 10 px sur le match de réglage ne se transfère donc pas. Il n'a
 fait que six époques sur dix : c'est la seule réserve, et elle ne peut aller que dans
 son sens.
@@ -600,22 +600,22 @@ produit** : un écart de 40 px est un coude à 5 px/frame et une broutille à 30
 contacts retenus sont les maxima locaux de ce rapport, un seul par fenêtre de 5 frames.
 
 Mesuré sur les deux matchs, avec le même détecteur appliqué au chemin reconstruit et à
-la balle annotée — l'écart entre les deux lignes est donc imputable à la trajectoire et
-à rien d'autre :
+la balle annotée (l'écart entre les deux lignes est donc imputable à la trajectoire et
+à rien d'autre) :
 
 | | Contacts | Rappel des frappes | Rebonds par échange |
 |---|---|---|---|
-| **Réglage** (92 frappes) — balle annotée | 192 | 0,891 | 0,89 |
-| — chemin reconstruit | 244 | 0,902 | 1,23 |
-| **Tenu à l'écart** (475 frappes) — balle annotée | 874 | 0,806 | 0,86 |
-| — **chemin reconstruit** | **1 257** | **0,895** | **1,38** |
+| **Réglage** (92 frappes), balle annotée | 192 | 0,891 | 0,89 |
+| Réglage, chemin reconstruit | 244 | 0,902 | 1,23 |
+| **Tenu à l'écart** (475 frappes), balle annotée | 874 | 0,806 | 0,86 |
+| Tenu à l'écart, **chemin reconstruit** | **1 257** | **0,895** | **1,38** |
 
 **Le chemin reconstruit obtient un meilleur rappel que la balle annotée. Ce n'est pas
 une qualité, c'est un symptôme :** il produit 44 % de contacts en plus, et détecter
 davantage fait mécaniquement monter le rappel. La colonne qui compte est la troisième.
 
 **Une trajectoire juste à 73 % ne coûte que quelques points.** Le nombre de rebonds par
-échange passe de 0,86 à 1,38 — l'excédent est l'erreur de trajectoire, et il est
+échange passe de 0,86 à 1,38 : l'excédent est l'erreur de trajectoire, et il est
 mesurable comme tel plutôt que caché dans un rappel flatteur.
 
 #### La précision ne peut pas être rapportée comme une performance
@@ -623,12 +623,12 @@ mesurable comme tel plutôt que caché dans un rappel flatteur.
 L'annotation ne marque que les contacts avec une **raquette**, sous forme
 d'intervalles. Ces intervalles couvrent **48,2 %** des frames annotées du match de
 réglage. Un détecteur tirant ses instants **au hasard** y obtient donc une précision de
-0,485 — et le détecteur de virages appliqué à la balle parfaitement annotée en obtient
+0,485, et le détecteur de virages appliqué à la balle parfaitement annotée en obtient
 0,573. L'écart est trop mince pour démontrer quoi que ce soit.
 
 Deux corrections ont été essayées et n'ont rien changé : un appariement un pour un
 entre contacts et frappes donne le même gain, et resserrer la cible autour du centre de
-l'intervalle échoue parce que l'impact ne s'y concentre pas — il se disperse sur
+l'intervalle échoue parce que l'impact ne s'y concentre pas : il se disperse sur
 presque toute la largeur, écart-type 0,48 en demi-largeur.
 
 **Le match tenu à l'écart est le meilleur instrument**, ses intervalles ne couvrant que
@@ -641,7 +641,7 @@ presque toute la largeur, écart-type 0,48 en demi-largeur.
 | Tenu à l'écart, balle annotée | 0,501 | 0,308 | 1,63× |
 
 Sur l'instrument le moins complaisant, le détecteur bat le hasard d'un facteur 1,5.
-C'est une mesure, mais faible — et elle l'est restée jusqu'à ce qu'une vérité terrain
+C'est une mesure, mais faible, et elle l'est restée jusqu'à ce qu'une vérité terrain
 produite à la main la remplace, plus bas.
 Le témoin aléatoire est calculé par le code et affiché à côté de chaque précision, pour
 qu'aucun de ces chiffres ne puisse être lu isolément.
@@ -651,7 +651,7 @@ qu'aucun de ces chiffres ne puisse être lu isolément.
 La physique du padel. Entre deux frappes, la balle rebondit **0 fois** (volée), **1**
 (sol) ou **2** (sol puis vitre, ou l'inverse). C'est un critère que l'annotation ne
 fournit pas et qu'elle ne peut pas fausser. Sur le match tenu à l'écart, la
-distribution obtenue est 0 : 170, 1 : 138, 2 : 78, 3 : 40, au-delà 42 — soit **82 % des
+distribution obtenue est 0 : 170, 1 : 138, 2 : 78, 3 : 40, au-delà 42, soit **82 % des
 échanges dans ce que le jeu prédit**.
 
 C'est aussi ce critère qui a fixé le réglage, et non la métrique d'événements.
@@ -668,7 +668,7 @@ fabrique un virage. Le virage absolu est donc encadré entre 25 et 300 px.
 | Seuil relatif seul | 317 | 0,957 | 1,85 |
 | **Virage encadré** | **246** | **0,902** | **1,24** |
 
-La longue traîne — jusqu'à dix contacts entre deux frappes — disparaît avec le plafond.
+La longue traîne (jusqu'à dix contacts entre deux frappes) disparaît avec le plafond.
 C'étaient des erreurs de chemin, pas des rebonds.
 
 #### La précision, mesurée après coup
@@ -700,14 +700,14 @@ mesurée.
 
 Savoir *quand* la balle a été touchée ne dit pas *contre quoi*. Un court de padel est
 fermé : la balle rebondit sur le sol, sur du verre, sur du grillage et sur des
-raquettes. C'est ce que cet étage doit trancher — et c'est ce qu'un pipeline de tennis
+raquettes. C'est ce que cet étage doit trancher, et c'est ce qu'un pipeline de tennis
 n'a pas à faire, un court ouvert n'ayant ni vitre ni grillage.
 
 **Pourquoi l'homographie ne suffit pas.** Elle projette sur le plan du sol. Elle est
 donc exacte pour un rebond au sol et fausse pour tout contact en hauteur. Mesuré sur
 194 contacts réels : **un tiers se projette hors du rectangle du court**, certains à
 23 m pour un court qui en fait 20. Et la distribution est presque identique entre
-frappes annotées et non-frappes — 67,3 % contre 64,3 % dans le rectangle. **La position
+frappes annotées et non-frappes : 67,3 % contre 64,3 % dans le rectangle. **La position
 projetée seule ne sépare rien.**
 
 **Ce qui la remplace.** Une caméra ne donne qu'un rayon : la balle est quelque part
@@ -723,7 +723,7 @@ ensemble coplanaire laissant la direction verticale libre. Les repères manquant
 viennent d'une annotation manuelle des panneaux de mur : haut du verre à 3 m, haut du
 grillage à 4 m, haut du filet à 0,92 m.
 
-Résultat : caméra à **x = −0,06 m, y = −26,18 m, z = +7,86 m** — centrée sur l'axe du
+Résultat : caméra à **x = −0,06 m, y = −26,18 m, z = +7,86 m**, centrée sur l'axe du
 court, vingt-six mètres derrière le fond proche, à près de huit mètres de haut.
 
 Le chiffre qui engage quelque chose n'est pas celui de l'ajustement mais celui des
@@ -731,8 +731,8 @@ Le chiffre qui engage quelque chose n'est pas celui de l'ajustement mais celui d
 
 | Points de contrôle | Écart médian |
 |---|---|
-| Au sol — filet, lignes de service | **4,2 px** |
-| **En hauteur — 0,92 m à 4 m, aux deux fonds** | **8,6 px** |
+| Au sol (filet, lignes de service) | **4,2 px** |
+| **En hauteur (0,92 m à 4 m, aux deux fonds)** | **8,6 px** |
 | Maximum, au fond éloigné | 14,4 px |
 
 **Ce que 8,6 px valent en mètres dépend de la profondeur** : 13 cm près de la caméra,
@@ -741,23 +741,23 @@ grillage à 3 m, c'est une incertitude d'environ 20 % au pire.
 
 #### La règle
 
-**Raquette** — un poignet à proximité. Le dataset fournit dix-sept points par joueur,
+**Raquette** : un poignet à proximité. Le dataset fournit dix-sept points par joueur,
 dont les deux poignets. Mesuré : la balle est à **50 px** du poignet le plus proche
 quand une frappe est annotée, contre **168 px** sinon.
 
-**Sol ou mur** — on coupe le rayon avec les cinq plans et on ne garde que les
+**Sol ou mur** : on coupe le rayon avec les cinq plans et on ne garde que les
 intersections physiquement admissibles : devant la caméra, et dans l'étendue réelle de
 la surface. La marge qui absorbe l'erreur de pose est exprimée **en mètres et jamais en
-pixels** — un pixel valant 1,51 cm près et 6,47 cm loin, une marge en pixels serait
+pixels** : un pixel valant 1,51 cm près et 6,47 cm loin, une marge en pixels serait
 quatre fois plus laxiste au fond.
 
-**Verre ou grillage** — une table, une fois le point d'impact connu en trois
+**Verre ou grillage** : une table, une fois le point d'impact connu en trois
 dimensions. Fonds : verre sous 3 m. Côtés : verre à moins de 4,1 m d'un fond. Aucune
 heuristique.
 
 #### La vérité terrain, qui n'existait nulle part
 
-Aucun jeu de données public de padel n'étiquette les surfaces de contact — le dataset
+Aucun jeu de données public de padel n'étiquette les surfaces de contact : le dataset
 utilisé ici déclare une catégorie `Wall` et ne l'a jamais remplie. Elle a donc été
 produite à la main, sur les deux matchs.
 
@@ -773,14 +773,14 @@ l'hypothèse qu'elle doit juger ne mesure que deux erreurs qui s'accordent : au
 sous-projet A, corriger ce défaut avait fait passer l'IDF1 de 0,956 à 0,819.
 
 Le match masculin compte 886 contacts, soit deux heures d'arbitrage. L'échantillon est
-**stratifié**, et sa taille comme sa graine sont enregistrées dans le fichier — un
+**stratifié**, et sa taille comme sa graine sont enregistrées dans le fichier : un
 tirage qu'on ne peut pas refaire ne serait pas une mesure.
 
 #### Ce que l'annotation mesure de l'étage précédent
 
 **Un quart des contacts détectés n'ont pas eu lieu** : la trajectoire passait tout
 droit. La précision de l'étage des contacts vaut donc **0,747** sur le match de réglage
-et **0,760** sur le match tenu à l'écart — sur la balle parfaitement annotée, donc hors
+et **0,760** sur le match tenu à l'écart, sur la balle parfaitement annotée, donc hors
 de toute erreur de trajectoire.
 
 C'est la mesure que la section précédente déclarait impossible. L'annotation de frappes
@@ -800,7 +800,7 @@ détecteur tirant au hasard y obtenait déjà 0,480. Celle-ci est directe.
 les seuils n'ont pas été surajustés au match qui a servi à les choisir.
 
 **Grillage et filet ne sont pas mesurables.** Un exemple et deux sur le match de
-réglage, aucun des deux dans l'échantillon tenu à l'écart. C'était prévu — le grillage
+réglage, aucun des deux dans l'échantillon tenu à l'écart. C'était prévu : le grillage
 n'occupe que le haut des fonds et le milieu des côtés. Aucun taux n'est publié pour
 eux, et leurs effectifs sont donnés plutôt que tus.
 
@@ -823,7 +823,7 @@ projection entre dans le court et plus rien ne la distingue d'un rebond au sol.
 | Rappel des murs | Avant | Après |
 |---|---|---|
 | Match de réglage | 0,412 | **0,882** |
-| Match tenu à l'écart | — | **0,833** |
+| Match tenu à l'écart | non mesuré | **0,833** |
 
 **Le plafond n'est pas celui du seuil mais celui de la géométrie** : les murs manqués
 sont les murs hauts, et une seule caméra ne peut pas les distinguer d'un rebond.
@@ -832,7 +832,7 @@ sont les murs hauts, et une seule caméra ne peut pas les distinguer d'un rebond
 
 Deux erreurs ont été mesurées, une seule est corrigible.
 
-La seconde est que **des rebonds au sol sont pris pour des frappes** — quinze sur le
+La seconde est que **des rebonds au sol sont pris pour des frappes** : quinze sur le
 match de réglage. Le seuil de proximité au poignet a été balayé de 50 à 120 px :
 
 | Seuil | 50 | 60 | 70 | **80** | 90 | 100 | 120 |
@@ -856,7 +856,7 @@ l'inverse :
 | Match tenu à l'écart | 16 | **14 (88 %)** |
 
 L'explication est géométrique. Un contact réel se produit dans le volume de jeu, où le
-fond proche est toujours admissible aussi, la caméra étant derrière lui — il est
+fond proche est toujours admissible aussi, la caméra étant derrière lui : il est
 candidat pour 140 des 194 contacts du match de réglage. Un rayon qui ne rencontre
 qu'une seule surface est donc un rayon qui pointe hors du jeu.
 
@@ -917,7 +917,7 @@ joueur est un rebond. Un seuil par indice ne peut pas l'exprimer.
 
 #### Un modèle appris
 
-`contact/learned.py` décrit chaque image par 58 indices — trajectoire, vitesses et
+`contact/learned.py` décrit chaque image par 58 indices : trajectoire, vitesses et
 virages sur une, deux et trois images, score du réseau et les autres positions qu'il
 proposait, geste du poignet le plus proche, distances de la balle aux coudes, poignets,
 hanches et chevilles du joueur le plus proche, sa taille apparente qui tient lieu de
@@ -973,7 +973,7 @@ un match, un court ou une caméra jamais vus.
 
 Le premier verdict a servi à décider que le modèle remplaçait les règles. Il ne pouvait
 donc plus mesurer ce qui a été construit ensuite. Trois minutes de plus ont été mises de
-côté — deux dans la finale féminine, une dans la masculine — pointées puis notées une
+côté (deux dans la finale féminine, une dans la masculine), pointées puis notées une
 seule fois, après que le modèle a été figé.
 
 Ce qui a été essayé entre les deux verdicts, tout en validation croisée :
@@ -988,7 +988,7 @@ Ce qui a été essayé entre les deux verdicts, tout en validation croisée :
 
 Trois graines par essai ont été nécessaires pour les départager : d'une graine à
 l'autre, le score bouge de ±0,006, soit autant que la plupart de ces écarts. Seuls les
-indices supplémentaires gagnent avec les trois graines — cinq contacts justes de plus et
+indices supplémentaires gagnent avec les trois graines : cinq contacts justes de plus et
 dix contacts inventés de moins en moyenne. Le contexte élargi, lui, gagne deux fois sur
 trois et perd la troisième : moyenne 0,843 contre 0,841, donc rien. Il n'a pas été
 retenu.
@@ -1003,8 +1003,8 @@ demi-point par minute.
 | Contacts affichés réels | 83,6 % | **91,7 %** |
 | Score | 0,608 | **0,826** |
 
-Trois mesures indépendantes — validation croisée 80,7 %, premier juge 78,7 %, second
-juge 79,0 % — donnent le même chiffre. Ces minutes-ci viennent des deux finales, donc le
+Trois mesures indépendantes (validation croisée 80,7 %, premier juge 78,7 %, second
+juge 79,0 %) donnent le même chiffre. Ces minutes-ci viennent des deux finales, donc le
 résultat ne tient pas à un seul match ; il reste établi sur un tournoi et un angle de
 caméra.
 
@@ -1055,7 +1055,7 @@ pour un contact sur le côté. La paroi retenue est désormais celle que le rayo
 premier depuis la caméra, puisque la balle, visible, ne peut pas être derrière une autre
 surface.
 
-La zone entière est éclairée — carré de service, rectangle du fond, panneau de vitre. Une
+La zone entière est éclairée : carré de service, rectangle du fond, panneau de vitre. Une
 tache centrée sur l'impact a aussi été essayée : elle absorbe l'erreur de position au
 lieu de faire basculer une zone près d'une ligne, mais la zone entière se lit mieux à
 l'écran. Elle reste disponible (`--impact-patch`). Mesuré au passage, la zone tirée de
@@ -1065,15 +1065,15 @@ c'est la position près d'une ligne, pas l'instant.
 #### Où le modèle se trompe encore
 
 Sur les onze minutes d'entraînement, chaque minute prédite par un modèle qui ne l'a pas
-vue, voici pour chaque contact pointé à la main ce que le modèle a répondu — « rien »
-pour un contact manqué, et une ligne « rien » pour les contacts inventés :
+vue, voici pour chaque contact pointé à la main ce que le modèle a répondu (« rien »
+pour un contact manqué, et une ligne « rien » pour les contacts inventés) :
 
 ![Matrice de confusion des surfaces](figures/confusion.png)
 
 Les frappes sont retrouvées à 92 % (411 sur 445) et le sol à 81 % (219 sur 272). **La
 vitre est le point faible : 64 sur 128 seulement**, 44 manquées et 12 prises pour le
-sol. C'est la confusion que la géométrie annonçait — au-dessus d'environ un mètre, un
-contact sur la vitre proche et un rebond au sol tombent sur le même pixel — et c'est là
+sol. C'est la confusion que la géométrie annonçait (au-dessus d'environ un mètre, un
+contact sur la vitre proche et un rebond au sol tombent sur le même pixel), et c'est là
 que se trouverait le prochain gain, pas dans davantage de minutes pointées :
 
 ![Courbe d'apprentissage](figures/courbe.png)
@@ -1110,8 +1110,8 @@ sur trois jeux de graines :
 
 La version agressive retrouve une dizaine de vitres de plus à chaque graine, mais en
 invente autant : c'est un échange, pas un gain, et le score baisse. **Le modèle n'a pas
-été changé.** Retrouver ces vitres demanderait une autre vue — une seconde caméra, ou
-un micro — plutôt qu'un autre réglage.
+été changé.** Retrouver ces vitres demanderait une autre vue (une seconde caméra, ou
+un micro) plutôt qu'un autre réglage.
 
 #### Ce que l'affichage perdait
 
@@ -1155,8 +1155,8 @@ successives, sur les 1 579 contacts pointés :
 | Autres enchaînements | 10 % |
 
 La même suite visible cache donc plusieurs suites réelles. Les règles ont été croisées
-avec ce que la table ne voit pas — le côté du frappeur, sa distance au filet, le côté
-et la profondeur d'un rebond — et mesurées sur les onze minutes d'entraînement,
+avec ce que la table ne voit pas (le côté du frappeur, sa distance au filet, le côté
+et la profondeur d'un rebond) et mesurées sur les onze minutes d'entraînement,
 chacune prédite par un modèle qui ne l'a pas vue, affichage corrigé. Un contact déduit
 compte comme retrouvé si un contact réellement manqué de même nature se trouve entre
 les deux contacts qui l'encadrent, sans exiger l'instant exact ; il fallait neuf
@@ -1171,14 +1171,14 @@ réussites sur dix pour garder une règle.
 
 **Aucune n'a été gardée.** Les rebonds déduits à tort se répartissent en deux causes.
 La première tient au jeu : 25 sur 50 étaient de vraies volées, prises entre 7 et 9 m
-du filet — la bandeja et la víbora se jouent en l'air, loin du filet. La seconde tient
+du filet : la bandeja et la víbora se jouent en l'air, loin du filet. La seconde tient
 aux entrées de la règle : 22 fois, une frappe manquée par le modèle s'intercalait
 entre les deux, et l'enchaînement sur lequel la règle raisonne était faux dès le départ.
 Les 3 derniers doublaient un rebond déjà affiché.
 
 La règle inverse, retirer l'une de deux frappes consécutives du même côté, ferait pire :
 sur 55 paires de ce genre, 38 sont deux frappes réelles. Entre elles, la frappe adverse
-a été manquée 9 fois — et 26 fois il n'y en avait aucune : l'une des deux frappes est
+a été manquée 9 fois, et 26 fois il n'y en avait aucune : l'une des deux frappes est
 attribuée au mauvais côté. Une frappe mal attribuée fait deux paires fautives, avec
 celle d'avant et celle d'après : ces 26 paires sont 12 frappes, mesurées plus bas.
 
@@ -1199,7 +1199,7 @@ trouve entre le rebond et la frappe **13 fois sur 14**.
 
 Savoir qu'une vitre a eu lieu ne dit pas quand. L'instant tiré de la physique tombe
 rarement à trois images près ; celui où le réseau voyait un mur le plus probable, même
-sous son seuil, y tombe bien plus souvent — et quand ce pic est sur le rebond, c'est
+sous son seuil, y tombe bien plus souvent, et quand ce pic est sur le rebond, c'est
 que le rebond était la vitre. `contact/glass_inference.py` fait les deux.
 
 Trois autres changements ont suivi, chacun mesuré sur les onze minutes d'entraînement,
@@ -1336,7 +1336,7 @@ nouveau juge pour le prouver ; ce n'a pas été fait.
 #### Découper un match en échanges
 
 La vidéo du dataset garde les échanges et coupe les temps morts : un nouveau point
-s'ouvre au raccord. Un raccord se lit dans l'image elle-même — deux images successives
+s'ouvre au raccord. Un raccord se lit dans l'image elle-même : deux images successives
 de plans différents diffèrent partout, alors qu'en jeu seuls les joueurs et la balle
 bougent : l'écart moyen de niveaux de gris entre deux miniatures vaut 0,5 en médiane
 pendant le jeu, et de 5,6 à 11,5 aux raccords (`io/splices.py`).
@@ -1354,17 +1354,17 @@ règle, les six autres de la zone annotée l'ont jugée une fois.
 La règle la plus simple était la meilleure : un raccord ouvre un échange. Exiger une
 frappe après le raccord ne changeait rien ; ouvrir un point après un long silence sans
 contact ajoutait plus de faux débuts qu'il ne rattrapait de services filmés sans
-coupure — ce sont eux, les services manqués. Le seuil de raccord est stable entre 3
+coupure : ce sont eux, les services manqués. Le seuil de raccord est stable entre 3
 et 4, et perd la moitié des points à 5.
 
 #### Lire le score au tableau d'affichage
 
 Le tableau de la retransmission est à une place fixe, une ligne par paire : les noms,
 une colonne par set, puis une case claire pour les points. Cette case est le repère :
-c'est la seule claire — blanche, ou dorée au point en or — et elle se décale d'une
+c'est la seule claire (blanche, ou dorée au point en or) et elle se décale d'une
 colonne à chaque set, ce qui donne le set en cours ; les jeux sont dans la case sombre
 à sa gauche, et la paire au service porte un point jaune (`io/scoreboard.py`). Onze
-valeurs suffisent — 0, 15, 30, 40 et les jeux de 0 à 6 — et la police ne change
+valeurs suffisent (0, 15, 30, 40 et les jeux de 0 à 6) et la police ne change
 jamais : chaque case est comparée à des modèles, sans moteur de reconnaissance de
 texte. Les modèles sont tirés d'images listées avec leur valeur
 (`ground_truth/scoreboard/templates.json`) et recalculés depuis la vidéo, que le dépôt
@@ -1381,7 +1381,7 @@ les points remis à zéro (`analytics/points.py`).
 
 Deux contrôles. **À l'œil, 48 tableaux tirés au hasard, 24 par finale : les 48
 lectures sont justes**, jeux, points et service. **Par la grammaire** : les douze
-changements rejetés ont tous plusieurs points d'écart entre deux lectures — un point
+changements rejetés ont tous plusieurs points d'écart entre deux lectures : un point
 absent de la vidéo, ou joué pendant une séquence où le tableau était caché. Aucun n'est
 une lecture fausse : la règle refuse de deviner. Deux faits en ressortent au passage :
 aucune séquence féminine ne répète le même score, ce qui confirme qu'un raccord ouvre
@@ -1390,7 +1390,7 @@ et gros plans compris.
 
 **Du point de la paire au point du joueur.** La vidéo de statistiques crédite chaque
 point à un joueur : la paire gagnante vient du tableau, son côté du court de la paire
-au service — le point jaune — et de la première frappe de l'échange, qui est le
+au service (le point jaune) et de la première frappe de l'échange, qui est le
 service ; le dernier frappeur de l'échange reçoit un **point gagnant** s'il est de la
 paire gagnante, une **faute** sinon. Ce partage n'a pas de vérité terrain : les
 pointages de contacts ne disent pas qui frappe. Il hérite des frappes manquées par le
@@ -1411,8 +1411,8 @@ ses contacts pointés à la main.
 **La calibration** d'un nouveau court prend dix minutes : 3,4 px d'erreur au sol (5,5 cm),
 3,7 px en médiane pour la pose de la caméra, mieux que les 5,8 px de la finale féminine.
 
-**La chaîne, sans rien réentraîner**, notée contre les 88 contacts de l'échange (46 frappes
-— les 46 fenêtres des auteurs —, 25 rebonds, 15 vitres, 2 grillages) :
+**La chaîne, sans rien réentraîner**, notée contre les 88 contacts de l'échange (46 frappes,
+soit les 46 fenêtres des auteurs, puis 25 rebonds, 15 vitres, 2 grillages) :
 
 | VIGO_11, 88 contacts | Modèle entraîné sur 11 minutes | Sur 23 minutes |
 |---|---|---|
@@ -1435,7 +1435,7 @@ autant :
 | | **48** | 6 | 4 |
 | Entendus au-dessus de 8 | 43 / 46 | 6 / 15 | 4 / 25 |
 
-À ce niveau de 8, l'échange compte 46 autres pics sans aucun contact — chaussures, voix,
+À ce niveau de 8, l'échange compte 46 autres pics sans aucun contact : chaussures, voix,
 échos des frappes. Le timbre sépare la frappe du reste (41 sur 46), pas le rebond de la
 vitre. Sur les douze erreurs restantes de la chaîne, le son aurait rattrapé deux ou
 trois frappes ; **les trois vitres manquées sont silencieuses** dans l'enregistrement.
@@ -1520,7 +1520,7 @@ tolérait quatre mètres de débordement dans les deux sens, pour laisser passer
 joueuse qui sort par une ouverture latérale. Mais ces ouvertures sont sur les côtés :
 derrière une vitre du fond, dans la largeur du court, il n'y a que le public et le
 personnel. Sur les vingt minutes analysées, **3 783 images sur 36 000** avaient un
-« joueur » placé là — sur l'une, un emplacement a suivi vingt secondes une personne
+« joueur » placé là : sur l'une, un emplacement a suivi vingt secondes une personne
 assise derrière le fond pendant que la vraie joueuse n'était pas suivie. Ces positions
 sont désormais refusées, et toute position hors du court est pénalisée, pour qu'une
 personne sur le court soit toujours préférée à une personne à côté. La vidéo de
@@ -1532,27 +1532,27 @@ match entier.
 refait la détection des joueurs sur tout le match, des heures par essai. Un banc plus
 léger rejoue le suivi sur les minutes déjà analysées (`scripts/identity_bench.py`) :
 vingt minutes pour régler, et huit minutes neuves, quatre par finale, pour juger une
-seule fois — la vérité d'identité couvrant les deux matchs, elles n'ont demandé aucun
+seule fois : la vérité d'identité couvrant les deux matchs, elles n'ont demandé aucun
 pointage.
 
 | Juge, 8 minutes neuves | IDF1 | Changements d'identité |
 |---|---|---|
 | Suivi d'origine | 0,811 | 26 |
 | Refus derrière la vitre du fond | **0,841** | **22** |
-| — dont finale féminine | 0,812 → **0,872** | 10 → 6 |
-| — dont finale masculine | 0,809 → 0,809 | 16 → 16 |
+| dont finale féminine | 0,812 → **0,872** | 10 → 6 |
+| dont finale masculine | 0,809 → 0,809 | 16 → 16 |
 
 Presque tous les changements restants se produisent **aux raccords** de la vidéo, où
 les joueurs réapparaissent ailleurs, avec des partenaires éloignés de trois à six
 mètres ; les croisements serrés n'en expliquent qu'une poignée. Trois idées ont été
 essayées sur les minutes de réglage :
 
-- **effacer la vitesse qu'un raccord laisse derrière lui** — mesurée à travers un
+- **effacer la vitesse qu'un raccord laisse derrière lui**. Mesurée à travers un
   raccord, c'est celle d'une téléportation : +5,6 points d'IDF1 sur les minutes
   masculines de réglage, **rien sur le juge**. Gardée, parce qu'elle est juste et ne
   coûte rien, mais sans gain démontré ;
-- **le côté habituel de chaque partenaire** — le joueur de drive à droite, celui de
-  revers à gauche : tenu dans 94,8 % des raccords chez les femmes mais 83,7 % chez les
+- **le côté habituel de chaque partenaire** (le joueur de drive à droite, celui de
+  revers à gauche) : tenu dans 94,8 % des raccords chez les femmes mais 83,7 % chez les
   hommes. Ajouté au mouvement, il ne gagnait que 0,005 d'IDF1 sur les vingt minutes :
   du bruit, **non retenu** ;
 - **la couleur de la tête et du bas du corps**, puisque les partenaires portent le même
@@ -1564,7 +1564,7 @@ Le suivi d'identité masculin reste donc le point faible des statistiques par jo
 
 **Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
 emplacements désignent des moitiés de court, et le suivi refuse par construction une
-observation du mauvais côté du filet — c'est ce qui lui donne son « 0 frame au-dessus
+observation du mauvais côté du filet : c'est ce qui lui donne son « 0 frame au-dessus
 de quatre ». Le prix de cette contrainte est qu'un joueur qui change de côté change
 d'emplacement. Rien dans l'image ne permettrait de le rattacher : le pipeline ne lit
 ni les visages ni les numéros. Les statistiques par emplacement restent valides sur le
@@ -1572,8 +1572,8 @@ match entier ; les statistiques **par joueur** ne le sont qu'à l'intérieur d'u
 segment entre deux changements de côté.
 
 **Le suivi d'identité ne généralise pas aussi bien que la détection.** Sur le match
-de réglage il décroche 4 fois pour 21 occasions — 19 %. Sur le match tenu à l'écart,
-28 fois pour 38 occasions — **74 %**. La détection, elle, transfère sans perte, et la
+de réglage il décroche 4 fois pour 21 occasions, soit 19 %. Sur le match tenu à l'écart,
+28 fois pour 38 occasions, soit **74 %**. La détection, elle, transfère sans perte, et la
 localisation aussi. Un pipeline jugé sur son seul F1 de détection paraîtrait
 généraliser ; il ne généralise que sur la moitié de ce qu'il fait.
 
@@ -1589,7 +1589,7 @@ d'un raccord sur quatre fait décrocher l'identité**.
 **La vérité terrain d'identité dépend d'un jugement humain non reproductible.** Les
 266 arbitrages ont été rendus par une seule personne, sans second annotateur, donc
 sans accord inter-annotateurs à rapporter. Les sept changements de côté de la finale
-féminine ont en revanche été confirmés par deux voies indépendantes — la tenue des
+féminine ont en revanche été confirmés par deux voies indépendantes : la tenue des
 équipes échantillonnée sur tout le match, et le tableau d'affichage sur le passage
 douteux.
 
@@ -1602,7 +1602,7 @@ la géométrie en paliers des côtés demande une vérification dans le règleme
 
 **Le lissage ne retire pas tout le bruit.** L'écart entre distance brute et distance
 lissée dit ce que le lissage a enlevé, pas ce qu'il reste. Les distances lissées
-correspondent à environ 88 mètres par minute de **jeu effectif** — la vidéo étant
+correspondent à environ 88 mètres par minute de **jeu effectif** : la vidéo étant
 montée sur les échanges, elle ne contient aucun temps mort. Ce chiffre n'est donc pas
 directement comparable aux distances par match que rapporte la littérature, qui
 incluent les interruptions.
@@ -1610,7 +1610,7 @@ incluent les interruptions.
 **Le seuil du filet est une convention, quoique mesurée.** Le creux entre les deux
 modes est réel mais large : les pourcentages absolus de contrôle bougent de quinze
 points selon l'endroit où on le place dans ce creux. Le rapport entre les deux paires,
-lui, est stable — c'est cette forme-là qu'il faut citer.
+lui, est stable : c'est cette forme-là qu'il faut citer.
 
 ## Reproduire l'évaluation
 
@@ -1646,9 +1646,9 @@ la même couleur avant et après »**.
 | Touche | Sur un rapprochement | Sur un raccord |
 |---|---|---|
 | `n` | pas de permutation | aucune permutation |
-| `s` | permutation | — |
-| `p` / `e` / `b` | — | la paire proche, éloignée, ou les deux ont permuté |
-| `c` | — | les équipes ont changé de côté |
+| `s` | permutation | sans objet |
+| `p` / `e` / `b` | sans objet | la paire proche, éloignée, ou les deux ont permuté |
+| `c` | sans objet | les équipes ont changé de côté |
 | `r` | revenir au clip précédent et annuler sa réponse | idem |
 | `q` | quitter en conservant les réponses rendues | idem |
 
@@ -1721,15 +1721,15 @@ python scripts/check_camera_pose.py --calibration ground_truth/calibrations/<nom
 
 ## Ce que ce dépôt versionne
 
-Aucune image, aucune vidéo, aucun poids de modèle. `data/` — où atterrit le dataset
-téléchargé — est exclu en bloc et sans exception.
+Aucune image, aucune vidéo, aucun poids de modèle. `data/`, où atterrit le dataset
+téléchargé, est exclu en bloc et sans exception.
 
 `ground_truth/` en revanche est versionné, parce que sans lui les chiffres de la
 section [Évaluation](#évaluation) ne seraient pas reproductibles :
 
 | Fichier | Contenu |
 |---|---|
-| `calibrations/*.json` | 23 points cliqués par vidéo — 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
+| `calibrations/*.json` | 23 points cliqués par vidéo : 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
 | `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
 | `surfaces/*.json` | les 194 contacts à juger et les 194 jugements rendus |
 | `contact_marks/*.json` | tous les contacts de vingt minutes pointés à la main, avec leur surface |
@@ -1737,13 +1737,13 @@ section [Évaluation](#évaluation) ne seraient pas reproductibles :
 **`surfaces/` et `contact_marks/` sont les seuls de ces fichiers qui ne dérivent de rien.** Les surfaces de
 contact ne sont étiquetées dans aucun jeu de données public de padel : ces fichiers sont
 la mesure elle-même, et sans lui la section sur les surfaces ne serait qu'une règle
-sans juge. Les points en hauteur de `calibrations/` sont dans le même cas — ils sont
+sans juge. Les points en hauteur de `calibrations/` sont dans le même cas : ils sont
 relevés à la main sur les panneaux de mur, et sans eux la pose de caméra ne se
 résoudrait pas.
 
 Ces fichiers dérivent des annotations du dataset, en CC-BY-4.0, et n'en contiennent
 aucune donnée d'image. Avec eux, reproduire l'évaluation demande de télécharger le
-dataset public et de lancer la campagne — pas de refaire l'arbitrage.
+dataset public et de lancer la campagne, pas de refaire l'arbitrage.
 
 **Les trois calibrations sont identiques**, et c'est intentionnel. Les deux matchs
 sont filmés depuis la même position au même tournoi, et l'extrait d'essai est tiré de

@@ -117,7 +117,7 @@ class StatsPanel:
         pen.text((cx, y), "balle, dernier coup", font=self.fonts["label"], fill=muted)
         speed = stats.last_shot_speed
         pen.text((cx, y + round(22 * s)),
-                 "—" if speed is None else f"{self.about} {speed:.0f} km/h",
+                 "-" if speed is None else f"{self.about} {speed:.0f} km/h",
                  font=self.fonts["name"], fill=text)
         best = stats.top_shot_speed
         pen.text((cx, y + round(50 * s)),
@@ -198,7 +198,7 @@ class StatsPanel:
                 pen.text((vx, vy + round(26 * s)), label, font=self.fonts["small"], fill=muted)
 
     def _values(self, line: PlayerLine, stats: LiveStats) -> list[tuple[str, str]]:
-        net = "—" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
+        net = "-" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
         values = [(f"{line.distance:.0f} m", "parcourus"),
                   (f"{self.about} {line.top_speed:.0f}", "km/h max"),
                   (net, "au filet")]

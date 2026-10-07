@@ -7,7 +7,7 @@
 > 🇫🇷 [Version française](README.md)
 
 Analysis of padel matches filmed by **a single camera**: the players, the ball, every
-contact and **what the ball touched** — racket, floor, glass, mesh or net — then **the
+contact and **what the ball touched** (racket, floor, glass, mesh or net), then **the
 statistics of the game**: distance covered, speed, time at the net, strokes and
 volleys, per player over a rally and per pair over a match.
 
@@ -36,7 +36,7 @@ A video of the rally with, beside it, a panel that moves with the play: the play
 minimap, the rally number and length, each pair's strokes in the rally, the points read
 off the scoreboard and credited to the last striker, and for each player their strokes,
 volleys, distance covered, top speed and time at the net. At each contact, the area
-touched — service box, back court, glass panel — lights up in perspective.
+touched (service box, back court, glass panel) lights up in perspective.
 
 <p align="center">
   <img src="docs/figures/panneau.png" alt="Statistics panel of a rally" width="300">
@@ -63,8 +63,8 @@ flowchart LR
 - **Contacts** are decided by a small temporal network, trained on hand-marked minutes,
   which combines the trajectory, the players' gestures and the court geometry.
 - **Glass contacts the picture does not show are inferred from physics**: a ball too
-  slow to have reached the player straight after its bounce went by the glass — right
-  13 times out of 14.
+  slow to have reached the player straight after its bounce went by the glass (right
+  13 times out of 14).
 - **A camera does not see depth**, but at a contact the ball lies on a known surface of
   the court: the camera ray places it in three dimensions.
 
@@ -76,7 +76,7 @@ flowchart LR
 | Players | Tracked identity (IDF1) | 0.84 |
 | Ball | Found within 10 px | 80 % |
 | **Contacts, end to end** | **Right surface** | **82-83 %** |
-| — strokes · bounces · glass | Right surface | 93 % · 78 % · 64 % |
+| of which strokes · bounces · glass | Right surface | 93 % · 78 % · 64 % |
 | Another tournament, another venue | Right surface | 86 % |
 
 The path, over 716 marked contacts: hand-tuned rules give **62 %**, a learned model
@@ -84,7 +84,7 @@ The path, over 716 marked contacts: hand-tuned rules give **62 %**, a learned mo
 measured on minutes **never looked at while tuning**; when cross-validation promised
 87 % and a fresh judge answered 82 %, 82 % is the figure kept.
 
-The details — measurements, ablations, abandoned attempts and why — are in the
+The details (measurements, ablations, abandoned attempts and why) are in the
 **[evaluation report](docs/evaluation.md)** (in French).
 
 ## A match report
@@ -138,8 +138,8 @@ python scripts/stats_video.py --match FinalF --minute 8000 --start 9084 --stop 9
     --contact-model weights/contact_net.pt --out outputs/stats.mp4 --replay
 ```
 
-Every other command — calibrating a court, marking contacts, training and judging the
-model, rebuilding the figures — is in **[docs/utilisation.md](docs/utilisation.md)**
+Every other command (calibrating a court, marking contacts, training and judging the
+model, rebuilding the figures) is in **[docs/utilisation.md](docs/utilisation.md)**
 (in French).
 
 ## Data and credits

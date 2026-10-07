@@ -7,8 +7,8 @@
 > 🇬🇧 [English version](README.en.md)
 
 Analyse de matchs de padel filmés par **une seule caméra** : les joueurs, la balle,
-chaque contact et **ce que la balle a touché** — raquette, sol, vitre, grillage ou
-filet — puis **les statistiques du jeu** : distance parcourue, vitesse, temps au filet,
+chaque contact et **ce que la balle a touché** (raquette, sol, vitre, grillage ou
+filet), puis **les statistiques du jeu** : distance parcourue, vitesse, temps au filet,
 frappes et volées, par joueur sur un échange et par paire sur un match.
 
 **82 à 83 %** des contacts reconnus avec la bonne surface sur des minutes jamais vues ·
@@ -36,8 +36,8 @@ Une vidéo de l'échange avec, à côté, un panneau qui avance avec le jeu : la
 des joueurs, le numéro et la longueur de l'échange, les frappes de chaque paire dans
 l'échange, les points lus au tableau d'affichage et crédités au dernier frappeur, et
 pour chaque joueur ses frappes, ses volées, la distance parcourue, sa vitesse maximale
-et son temps au filet. À chaque contact, la zone touchée — carré de service, fond,
-panneau de vitre — s'éclaire en perspective.
+et son temps au filet. À chaque contact, la zone touchée (carré de service, fond,
+panneau de vitre) s'éclaire en perspective.
 
 <p align="center">
   <img src="docs/figures/panneau.png" alt="Panneau de statistiques d'un échange" width="300">
@@ -66,7 +66,7 @@ flowchart LR
   du court.
 - **Les vitres que l'image ne montre pas se déduisent de la physique** : une balle trop
   lente pour avoir rejoint le joueur directement après son rebond est passée par la
-  vitre — juste 13 fois sur 14.
+  vitre (juste 13 fois sur 14).
 - **Une caméra ne voit pas la profondeur**, mais au moment d'un contact la balle est sur
   une surface connue du court : le rayon de la caméra la place en trois dimensions.
 
@@ -78,7 +78,7 @@ flowchart LR
 | Joueurs | Identité suivie (IDF1) | 0,84 |
 | Balle | Retrouvée à 10 px près | 80 % |
 | **Contacts, de bout en bout** | **Bonne surface** | **82-83 %** |
-| — frappes · rebonds · vitres | Bonne surface | 93 % · 78 % · 64 % |
+| dont frappes · rebonds · vitres | Bonne surface | 93 % · 78 % · 64 % |
 | Autre tournoi, autre salle | Bonne surface | 86 % |
 
 La démarche, sur 716 contacts pointés : des règles réglées à la main donnent **62 %**,
@@ -87,7 +87,7 @@ Chaque chiffre est mesuré sur des minutes **jamais regardées pendant les régl
 quand la validation croisée a promis 87 % et qu'un juge neuf a répondu 82 %, c'est 82 %
 qui est retenu.
 
-Le détail — mesures, ablations, essais abandonnés et pourquoi — est dans le
+Le détail (mesures, ablations, essais abandonnés et pourquoi) est dans le
 **[rapport d'évaluation](docs/evaluation.md)**.
 
 ## Le bilan d'un match
@@ -142,8 +142,8 @@ python scripts/stats_video.py --match FinalF --minute 8000 --start 9084 --stop 9
     --contact-model weights/contact_net.pt --out outputs/stats.mp4 --replay
 ```
 
-Toutes les autres commandes — calibrer un court, pointer des contacts, entraîner et
-juger le modèle, refaire les figures — sont dans **[docs/utilisation.md](docs/utilisation.md)**.
+Toutes les autres commandes (calibrer un court, pointer des contacts, entraîner et
+juger le modèle, refaire les figures) sont dans **[docs/utilisation.md](docs/utilisation.md)**.
 
 ## Données et crédits
 
