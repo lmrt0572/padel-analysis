@@ -4,7 +4,7 @@
 
 # Padel Analysis
 
-> 🇫🇷 [Version française](docs/README.fr.md)
+> 🇫🇷 [Version française](docs/fr/README.md)
 
 Analysis of padel matches filmed by **a single camera**: the players, the ball, every
 contact and **what the ball touched** (racket, floor, glass, mesh or net), then **the
@@ -85,7 +85,7 @@ measured on minutes **never looked at while tuning**; when cross-validation prom
 87 % and a fresh judge answered 82 %, 82 % is the figure kept.
 
 The details (measurements, ablations, abandoned attempts and why) are in the
-**[evaluation report](docs/evaluation.md)**.
+**[evaluation report](docs/en/evaluation.md)**.
 
 ## A match report
 
@@ -139,7 +139,7 @@ python scripts/stats_video.py --match FinalF --minute 8000 --start 9084 --stop 9
 ```
 
 Every other command (calibrating a court, marking contacts, training and judging the
-model, rebuilding the figures) is in **[docs/usage.md](docs/usage.md)**.
+model, rebuilding the figures) is in **[docs/en/usage.md](docs/en/usage.md)**.
 
 ## Data and credits
 
