@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="figures/banniere.gif" alt="Un échange joué sur le court de padel reconstruit en 3D" width="100%">
+  <img src="../figures/banniere.gif" alt="Un échange joué sur le court de padel reconstruit en 3D" width="100%">
 </p>
 
 # Padel Analysis
 
-> 🇬🇧 [English version](../README.md)
+> 🇬🇧 [English version](../../README.md)
 
 Analyse de matchs de padel filmés par **une seule caméra** : les joueurs, la balle,
 chaque contact et **ce que la balle a touché** (raquette, sol, vitre, grillage ou
@@ -40,7 +40,7 @@ et son temps au filet. À chaque contact, la zone touchée (carré de service, f
 panneau de vitre) s'éclaire en perspective.
 
 <p align="center">
-  <img src="figures/panneau_fr.png" alt="Panneau de statistiques d'un échange" width="300">
+  <img src="../figures/panneau_fr.png" alt="Panneau de statistiques d'un échange" width="300">
 </p>
 
 ## Comment ça marche
@@ -88,7 +88,7 @@ quand la validation croisée a promis 87 % et qu'un juge neuf a répondu 82 %, c
 qui est retenu.
 
 Le détail (mesures, ablations, essais abandonnés et pourquoi) est dans le
-**[rapport d'évaluation](evaluation.md)** (en anglais).
+**[rapport d'évaluation](evaluation.md)**.
 
 ## Le bilan d'un match
 
@@ -98,11 +98,11 @@ parcourue et le temps au filet. Chaque chiffre est vérifié : les déplacements
 les positions annotées du dataset (à 1 % près), les frappes contre les minutes pointées
 à la main (à 1 % près ; les volées à 7 %), les points contre le tableau.
 
-![Bilan par paire des deux finales](figures/bilan_paires.png)
+![Bilan par paire des deux finales](../figures/bilan_paires.png)
 
 <p align="center">
-  <img src="figures/points_longueur.png" alt="Points gagnés selon la longueur de l'échange" width="62%">
-  <img src="figures/occupation_paires.png" alt="Occupation du terrain par paire" width="34%">
+  <img src="../figures/points_longueur.png" alt="Points gagnés selon la longueur de l'échange" width="62%">
+  <img src="../figures/occupation_paires.png" alt="Occupation du terrain par paire" width="34%">
 </p>
 
 Le bilan est donné **par paire, pas par joueur** : quand le suivi confond deux

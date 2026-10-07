@@ -1,10 +1,10 @@
 # Usage
 
-> 🇫🇷 [Version française](utilisation.md)
+> 🇫🇷 [Version française](../fr/utilisation.md)
 
 Every command of the project, from calibrating a court to the measurements of the
 report. They are run from the root of the repository, in the `padel` environment
-(see the installation in the [README](../README.md#quick-start)).
+(see the installation in the [README](../../README.md#quick-start)).
 
 ## Data
 

@@ -1,6 +1,8 @@
 # Padel Analysis: evaluation report
 
-This document details every measurement summarised in the [README](../README.md): how it was obtained, what it is worth, and what it does not say. The figures cover two matches of the PadelTracker100 dataset: the women's final is used for tuning, the men's final is used only once, for judging.
+> 🇫🇷 [Version française](../fr/evaluation.md)
+
+This document details every measurement summarised in the [README](../../README.md): how it was obtained, what it is worth, and what it does not say. The figures cover two matches of the PadelTracker100 dataset: the women's final is used for tuning, the men's final is used only once, for judging.
 
 ## Results
 
@@ -1052,7 +1054,7 @@ Over the eleven training minutes, each minute predicted by a model that has not 
 it, here is for each hand-marked contact what the model answered ("nothing" for a
 missed contact, and a "nothing" row for the invented contacts):
 
-![Confusion matrix of the surfaces](figures/confusion.png)
+![Confusion matrix of the surfaces](../figures/confusion.png)
 
 Strokes are found at 92 % (411 out of 445) and the floor at 81 % (219 out of 272).
 **The glass is the weak point: only 64 out of 128**, 44 missed and 12 taken for the
@@ -1060,7 +1062,7 @@ floor. It is the confusion the geometry announced (above about one metre, a cont
 the near glass and a floor bounce fall on the same pixel), and that is where the next
 gain would be, not in more marked minutes:
 
-![Learning curve](figures/courbe.png)
+![Learning curve](../figures/courbe.png)
 
 The curve, redone over eleven minutes, rises from 73.2 % at two training minutes to
 81.6 % at eight, then 81.9 % at ten.
@@ -1490,11 +1492,11 @@ a few per cent towards the volleys, always in the same direction. The winners an
 errors per player, credited to the last striker, have no ground truth and stay in the
 statistics video, outside the report.
 
-![Report by pair for both finals](figures/bilan_paires.png)
+![Report by pair for both finals](../figures/bilan_paires.png)
 
-![Points won by rally length](figures/points_longueur.png)
+![Points won by rally length](../figures/points_longueur.png)
 
-![Court occupancy by pair](figures/occupation_paires.png)
+![Court occupancy by pair](../figures/occupation_paires.png)
 
 ## Parameter notes
 
