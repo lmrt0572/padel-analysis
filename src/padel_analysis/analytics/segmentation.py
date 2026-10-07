@@ -1,11 +1,7 @@
 """Cutting a stretch of match into rallies.
 
-The video keeps the rallies and cuts out the dead time between them, so a new point
-opens where the broadcast splices: measured against the serves annotated in the
-dataset, a serve follows a splice within a second in nearly every case. Two things
-were tried on top and dropped: requiring a strike after the splice changed nothing,
-and opening a point after a long silence without contact added more false starts than
-it caught serves filmed without a cut.
+The video cuts out the dead time between rallies, so a new point opens at each
+broadcast splice.
 """
 
 from collections.abc import Sequence
@@ -21,14 +17,14 @@ class RallySpan:
 
     start: int
     stop: int
-    contacts: tuple[tuple[int, str], ...]  # (image, surface) dans l'ordre
+    contacts: tuple[tuple[int, str], ...]  # (frame, surface) in order
 
     @property
     def strikes(self) -> int:
         return sum(1 for _, kind in self.contacts if kind == RACKET)
 
     def duration(self, fps: float) -> float:
-        """Seconds from the first contact to the last - the ball in play."""
+        """Return the seconds from the first contact to the last."""
         if len(self.contacts) < 2:
             return 0.0
         return (self.contacts[-1][0] - self.contacts[0][0]) / fps
@@ -37,11 +33,9 @@ class RallySpan:
 def rallies(
     splices: Sequence[int], contacts: Sequence[tuple[int, str]], start: int, stop: int
 ) -> list[RallySpan]:
-    """The rallies between `start` and `stop`: one per splice, if the ball was struck.
+    """Return the rallies between `start` and `stop`: one per splice with a strike.
 
-    A stretch with no strike is not a rally - a replay, a crowd shot, a player walking
-    back - and is left out. The first stretch starts with the clip, and may be the end
-    of a point whose serve came before it.
+    A stretch with no strike (a replay, a crowd shot) is left out.
     """
     bounds = [start] + sorted(f for f in splices if start < f <= stop) + [stop + 1]
     ordered = sorted(contacts)

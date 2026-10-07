@@ -44,7 +44,7 @@ def test_a_missing_prediction_lowers_recall_but_not_precision():
 
 
 def test_a_prediction_on_an_unannotated_frame_is_not_counted_as_wrong():
-    """Rien ne dit si la balle y est invisible ou seulement non annotee."""
+    """Nothing says whether the ball is invisible there or only not annotated."""
     score = ball_score(
         predicted={1: (100.0, 100.0), 2: (500.0, 500.0)},
         annotated={1: (100.0, 100.0)},

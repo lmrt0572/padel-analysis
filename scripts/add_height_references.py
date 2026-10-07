@@ -1,15 +1,7 @@
-"""Ajoute au fichier de calibration les reperes en hauteur releves sur les murs.
+"""Add to the calibration file the references above the ground taken on the walls.
 
-Une homographie se contente de points au sol ; une pose de camera ne le peut pas, un
-ensemble coplanaire laissant la direction verticale libre. Ces dix points viennent du
-zonage manuel des murs, frame 200 de la finale feminine.
-
-Les deux premiers servent a l'ajustement, les huit autres restent des controles et
-doivent le rester : les verser dans l'ajustement ferait disparaitre la seule mesure
-honnete de la pose.
-
-Les trois calibrations partagent les memes pixels, la camera etant fixe et identique
-d'une video a l'autre - verifie par recouvrement au sous-projet A.
+A camera pose needs points off the ground: a coplanar set leaves the vertical direction
+free. The first two points are used for the fit, the other eight stay controls.
 
 Usage:
     python scripts/add_height_references.py ground_truth/calibrations/*.json
@@ -19,7 +11,7 @@ import argparse
 import json
 from pathlib import Path
 
-# nom, (x, y) en metres, hauteur en metres, pixel, est un point de controle
+# name, (x, y) in metres, height in metres, pixel, is a control point
 REFERENCES = [
     ("glass_top_near_left", [-5.0, -10.0], 3.00, [168.0, 531.0], False),
     ("glass_top_near_right", [5.0, -10.0], 3.00, [1764.0, 528.0], False),
@@ -59,7 +51,7 @@ def main() -> None:
         for point in payload["points"]:
             point.setdefault("height", 0.0)
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        print(f"{path.name} : {added} points ajoutes, {len(payload['points'])} au total")
+        print(f"{path.name}: {added} points added, {len(payload['points'])} in total")
 
 
 if __name__ == "__main__":

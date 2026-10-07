@@ -1,17 +1,7 @@
 """A heatmap network that answers the same protocol as the motion detector.
 
-The point of this module is an ablation, not a model. `MotionCandidates` and
-`NetCandidates` both satisfy `BallCandidates`, so stage two never learns which
-produced its input and the measured gap belongs to the detector alone.
-
-The shape is a narrow U-Net over three stacked colour frames, nine channels in and one
-heatmap out at the input resolution. Its size is not a taste: a GTX 1650 leaves 3.45 GB
-free, and the configuration measured on 2026-09-12 puts width 16 at a batch of four in
-1.82 GB and 15.1 frames per second. Width 32 reaches 3.61 GB and a third of the speed.
-
-Mixed precision is deliberately absent. Measured on this card it runs three times
-slower - the TU117 has no tensor cores, so half precision buys nothing and the casts
-cost everything.
+A narrow U-Net over three stacked frames, sized for a 4 GB card. Mixed precision is
+left out on purpose: it runs slower on a card without tensor cores.
 """
 
 import json
@@ -72,17 +62,14 @@ def peaks_of(
     scale: tuple[float, float] = (1.0, 1.0),
     limit: int = 20,
 ) -> list[Candidate]:
-    """The heatmap's local maxima, strongest first, in the original frame's pixels.
-
-    Suppression exists because one ball makes one blob, not thirty neighbouring
-    candidates - the same reason the contact stage keeps one peak per burst.
+    """Return the heatmap's local maxima, strongest first, in original frame pixels.
 
     Args:
         heatmap: the network's answer, already through a sigmoid.
         threshold: least value worth reporting.
         suppression: least distance in map pixels between two kept peaks.
         scale: (x, y) factors back to the original frame.
-        limit: most candidates to return, strongest first.
+        limit: most candidates to return.
     """
     ys, xs = np.nonzero(heatmap >= threshold)
     if not len(ys):
@@ -104,21 +91,16 @@ def peaks_of(
 
 
 def meta_path(weights: Path) -> Path:
-    """Where the training settings of these weights are written.
+    """Return where the training settings of these weights are written.
 
-    The best-validation weights share the file of their training run, so `_best` is
-    dropped from the name before looking.
+    The best-validation weights share the file of their training run.
     """
     stem = Path(weights).stem.removesuffix("_best")
     return Path(weights).with_name(stem + "_meta.json")
 
 
 class NetCandidates:
-    """The candidate protocol of `candidates.py`, backed by a trained network.
-
-    Interchangeable with `MotionCandidates` by construction, which is what makes the
-    ablation exact rather than merely suggestive.
-    """
+    """The candidate protocol of `candidates.py`, backed by a trained network."""
 
     def __init__(
         self,
@@ -137,13 +119,12 @@ class NetCandidates:
             raise ValueError(
                 f"these weights were trained with spacing {meta['spacing']}, not {spacing}"
             )
-        # Sans fichier d'accompagnement : les poids anterieurs, entraines en 640x360.
+        # no companion file: earlier weights, trained at 640x360
         size = size or tuple(meta.get("size", (640, 360)))
         width = width or meta.get("width", 16)
         if size[0] % 8 or size[1] % 8:
             raise ValueError("the network needs a size whose sides are multiples of 8")
-        # La suppression est en pixels de carte : a 1280 de large, une balle y est deux
-        # fois plus grosse qu'a 640, et la meme distance reelle vaut deux fois plus.
+        # suppression is in map pixels, so it scales with the map width
         if suppression is None:
             suppression = round(6 * size[0] / 640)
         self.spacing = spacing
@@ -191,6 +172,6 @@ class NetCandidates:
 
 
 def load_stack(images: Sequence[np.ndarray]) -> torch.Tensor:
-    """Stack cached frames into the tensor the network reads, values in [0, 1]."""
+    """Return cached frames stacked into the tensor the network reads, values in [0, 1]."""
     stacked = np.concatenate(images, axis=2)
     return torch.from_numpy(stacked).permute(2, 0, 1).float().div_(255.0)

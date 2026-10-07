@@ -74,7 +74,7 @@ def test_a_strike_is_placed_at_its_player_and_the_speed_is_marked_estimated():
 
 
 def test_no_speed_is_given_when_an_end_cannot_be_placed():
-    rally = _rally([_hit(0, "near_1"), _bounce(15)])  # position du joueur inconnue
+    rally = _rally([_hit(0, "near_1"), _bounce(15)])  # position of the player unknown
     assert ball_speeds(rally) == []
 
 
@@ -87,7 +87,7 @@ def test_a_still_player_travels_nothing():
 def test_a_player_walking_one_metre_per_second_travels_that_far():
     positions = {"near_1": {f: (f / FPS, -5.0) for f in range(61)}}
     move = movements(_rally([], positions, stop=60))["near_1"]
-    # Le lissage sur 9 images rogne environ quatre images de trajet a chaque bout.
+    # smoothing over 9 frames trims about four frames of travel at each end
     assert move.distance == pytest.approx(2.0, abs=0.15)
 
 

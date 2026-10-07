@@ -36,7 +36,7 @@ def test_the_net_lights_the_net():
 
 
 def test_a_racket_lights_no_zone():
-    """Une raquette n'est pas une surface du court."""
+    """A racket is not a surface of the court."""
     assert zone_of(Verdict(RACKET, None, None, candidates=0), Court()) is None
 
 
@@ -82,7 +82,7 @@ def test_a_faded_zone_lights_less(synthetic_pose):
 
 
 def test_the_near_back_wall_lights_whole_but_faintly():
-    """La camera est derriere : la paroi couvre la moitie de l'image, sans la masquer."""
+    """The camera is behind: the wall covers half the picture, without hiding it."""
     near = zone_of(_v("back_wall_negative_y", (0.0, -10.0, 1.5), "verre"), Court())
     far = zone_of(_v("back_wall_positive_y", (0.0, 10.0, 1.5), "verre"), Court())
     assert max(corner[2] for corner in near.corners) == Court().back_wall_glass_height

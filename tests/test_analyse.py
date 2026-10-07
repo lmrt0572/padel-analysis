@@ -34,7 +34,7 @@ def test_a_cache_becomes_a_report_and_its_figures(tmp_path, monkeypatch, capsys)
     for name in ("heatmaps.png", "net_control.png"):
         assert (figures / name).read_bytes()[:4] == b"\x89PNG"
     printed = capsys.readouterr().out
-    assert "controle du filet" in printed and "near_1" in printed
+    assert "net control" in printed and "near_1" in printed
 
 
 def test_no_figure_is_drawn_unless_asked(tmp_path, monkeypatch):

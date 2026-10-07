@@ -1,21 +1,8 @@
-"""Which pair holds the net, the decisive positional question in padel.
+"""Which pair holds the net.
 
-Threshold
----------
-Players occupy two distinct depths. Measured over a full match - 182 713 positions -
-the attacking mode peaks at 3.95 metres from the net and the defending one at 7.85,
-against the back glass. The gap between them bottoms out at 5.85 metres, and the
-threshold is placed there.
-
-The service line, at 6.95 metres, is deliberately not used: it is a rule about
-serving, not a marker of tactical position, and it falls on the wrong side of the
-gap - it would count the whole defending band as attacking.
-
-The gap is broad and shallow, so the exact value carries a degree of convention, and
-the resulting percentages move with it: raising the threshold from 5.0 to 6.5 metres
-takes the near pair's share from 28 % to 44 %. What does hold steady is the ratio
-between the two pairs, which stays near 1.85 across that range. The README publishes
-the sensitivity alongside the figures.
+The threshold sits at 5.85 m from the net, in the trough between the attacking and
+the defending depths measured over a full match. The trough is wide, so the
+percentages move with the threshold; the ratio between the two pairs does not.
 """
 
 from dataclasses import dataclass
@@ -48,11 +35,10 @@ def at_net_states(
     threshold: float = NET_THRESHOLD,
     hysteresis: float = HYSTERESIS,
 ) -> np.ndarray:
-    """Whether the player is in the attacking band, frame by frame.
+    """Return whether the player is in the attacking band, frame by frame.
 
-    A player hovering on the line would otherwise switch state every frame, so a
-    move towards the net must cross `threshold - hysteresis` and a retreat must
-    cross `threshold + hysteresis`. An absent depth holds the previous state.
+    A move towards the net must cross `threshold - hysteresis` and a retreat
+    `threshold + hysteresis`. An absent depth holds the previous state.
     """
     depths = np.asarray(depths, dtype=np.float64)
     states = np.zeros(depths.size, dtype=bool)
@@ -72,7 +58,8 @@ def net_control(
     threshold: float = NET_THRESHOLD,
     hysteresis: float = HYSTERESIS,
 ) -> NetControl:
-    """A pair holds the net when both its players are up and both opponents are back."""
+    """Return how the net was shared: a pair holds it when both its players are up
+    and both opponents are back."""
     states = {
         slot: at_net_states(trajectories.depth(slot), threshold, hysteresis)
         for slot in SLOTS

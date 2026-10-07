@@ -36,14 +36,14 @@ def test_a_disc_present_only_in_the_middle_frame_is_found():
 
 
 def test_a_static_object_is_not_a_candidate():
-    """Une ligne peinte ou un logo est identique sur les trois frames."""
+    """A painted line or a logo is identical on the three frames."""
     finder = MotionCandidates(spacing=1)
     painted = _with_disc(_blank(), 150, 100)
     assert finder({9: painted, 10: painted, 11: painted}, 10) == []
 
 
 def test_a_blob_larger_than_a_ball_is_refused():
-    """Un joueur bouge aussi : sa surface le disqualifie."""
+    """A player moves too: their area disqualifies them."""
     finder = MotionCandidates(spacing=1, max_area=400)
     frames = {
         9: _blank(),
@@ -89,7 +89,7 @@ def test_a_faint_change_is_ignored():
 
 
 def test_an_object_that_only_darkens_is_ignored():
-    """Le critere retenu est 'plus clair que les deux voisines', et il est assume."""
+    """The criterion kept is 'brighter than both neighbours', and it is owned."""
     finder = MotionCandidates(spacing=1)
     frames = {
         9: _blank(value=200),
@@ -105,11 +105,10 @@ def test_a_missing_neighbour_frame_yields_nothing():
 
 
 def test_an_object_that_arrives_and_stays_is_not_a_candidate():
-    """Un joueur qui entre dans le champ, ou un bandeau LED qui change de visuel.
+    """A player entering the frame, or an LED banner changing its visual.
 
-    Il est nouveau par rapport a la frame precedente, mais toujours la ensuite : ce
-    n'est pas une balle qui traverse. Seule la comparaison aux DEUX voisines le
-    refuse.
+    It is new compared with the previous frame, but still there afterwards: it is not
+    a ball passing through. Only the comparison with BOTH neighbours rejects it.
     """
     finder = MotionCandidates(spacing=1)
     arrived = _with_disc(_blank(), 150, 100)
@@ -117,12 +116,12 @@ def test_an_object_that_arrives_and_stays_is_not_a_candidate():
 
 
 def test_the_default_spacing_is_not_one():
-    """Un ecart d'une frame perdait un tiers des balles : la valeur par defaut compte."""
+    """A gap of one frame lost a third of the balls: the default value counts."""
     assert MotionCandidates().frames_needed(100) != [99, 100, 101]
 
 
 def test_a_candidate_inside_a_box_is_demoted_but_kept():
-    """Une balle passant devant un joueur doit rester atteignable."""
+    """A ball passing in front of a player must stay reachable."""
     inside = Candidate(x=100.0, y=100.0, score=200.0)
     outside = Candidate(x=500.0, y=500.0, score=100.0)
     ranked = demote_inside_boxes(

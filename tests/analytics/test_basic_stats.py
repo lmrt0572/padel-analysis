@@ -11,7 +11,7 @@ from padel_analysis.analytics.basic_stats import (
 
 
 def _line(n: int, step: float) -> np.ndarray:
-    """Un joueur qui avance en ligne droite de `step` metres par frame."""
+    """A player moving in a straight line by `step` metres per frame."""
     xs = np.arange(n, dtype=np.float64) * step
     return np.stack([xs, np.zeros(n)], axis=1)
 
@@ -23,7 +23,7 @@ def test_step_distances_measure_each_consecutive_move():
 
 
 def test_a_gap_in_the_frames_is_never_bridged():
-    """Le piege principal : relier deux positions separees par un trou."""
+    """The main trap: linking two positions separated by a gap."""
     frames = np.array([0, 1, 50, 51])
     positions = np.array([[0.0, 0.0], [0.5, 0.0], [30.0, 0.0], [30.5, 0.0]])
     np.testing.assert_allclose(step_distances(frames, positions), [0.5, 0.5])
@@ -45,7 +45,7 @@ def test_distance_of_a_motionless_player_is_zero():
 
 
 def test_smoothing_reduces_the_distance_of_a_noisy_still_player():
-    """Le bruit gonfle la distance : c'est l'effet qu'on veut pouvoir chiffrer."""
+    """Noise inflates the distance: that is the effect we want to be able to quantify."""
     rng = np.random.default_rng(0)
     frames = np.arange(300)
     positions = rng.normal(0.0, 0.05, size=(300, 2))
@@ -76,7 +76,7 @@ def test_speed_percentile_converts_metres_per_frame_to_per_second():
 
 
 def test_speed_percentile_is_robust_to_a_single_spike():
-    """Le maximum brut serait pilote par une seule aberration ; le p95 non."""
+    """The raw maximum would be driven by a single outlier; the p95 is not."""
     frames = np.arange(100)
     positions = _line(100, 0.05)
     positions[50] += 5.0

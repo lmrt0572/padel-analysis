@@ -42,7 +42,7 @@ def test_the_back_walls_are_vertical_and_at_the_baselines():
     assert len(walls) == 2
     for wall in walls:
         assert isinstance(wall, Surface)
-        # Normale horizontale : une paroi verticale a une normale sans composante z.
+        # horizontal normal: a vertical wall has a normal with no z component
         assert wall.normal[2] == pytest.approx(0.0)
         assert abs(wall.offset) == pytest.approx(court.half_length)
 
@@ -108,7 +108,7 @@ def test_the_net_stops_at_the_post_height():
 
 
 def test_a_ball_passing_over_the_net_does_not_touch_it():
-    """Le filet est borne en hauteur : une balle qui passe au-dessus n'est pas dessus."""
+    """The net is bounded in height: a ball passing over it is not on it."""
     net = court_surfaces(Court())[-1]
     assert not net.contains(np.array([0.0, 0.0, 2.0]), margin=0.30)
 
@@ -147,7 +147,7 @@ def test_the_floor_has_no_material():
 
 
 def test_the_swept_focal_recovers_a_synthetic_one(synthetic_pose):
-    """La focale n'est pas donnee : on la balaie, et le balayage doit la retrouver."""
+    """The focal length is not given: it is swept, and the sweep must find it."""
     pose, object_points, image_points = synthetic_pose
     found = estimate_intrinsics(object_points, image_points, (1920, 1080))
     assert found[0, 0] == pytest.approx(pose.intrinsics[0, 0], rel=0.05)
@@ -160,10 +160,10 @@ def test_the_principal_point_sits_at_the_image_centre(synthetic_pose):
 
 
 def test_a_point_on_a_wall_is_contained_without_any_margin(synthetic_pose):
-    """L'axe plat vient d'un calcul flottant : l'exiger exact le ferait echouer.
+    """The flat axis comes from a floating-point computation: requiring it exact would fail.
 
-    Le point est produit par une intersection reelle, pas ecrit a la main - c'est la
-    derive d'arrondi qui est en cause, et un litteral exact ne la reproduirait pas.
+    The point is produced by a real intersection, not written by hand: it is the
+    rounding drift that is at stake, and an exact literal would not reproduce it.
     """
     pose, _, _ = synthetic_pose
     wall = court_surfaces(Court())[2]
@@ -174,7 +174,7 @@ def test_a_point_on_a_wall_is_contained_without_any_margin(synthetic_pose):
 
 
 def test_a_pose_comes_straight_from_calibration_points(synthetic_pose):
-    """La demo et les scripts de mesure doivent retrouver la meme camera."""
+    """The demo and the measurement scripts must recover the same camera."""
     from padel_analysis.geometry.calibration import CalibrationPoint
     from padel_analysis.geometry.camera import pose_from_calibration
 

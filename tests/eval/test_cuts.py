@@ -4,7 +4,7 @@ from padel_analysis.eval.cuts import CameraCut, find_camera_cuts
 
 
 def _positions(rows: dict[int, list[tuple[float, float]]]) -> dict[int, dict]:
-    """near_1, near_2, far_1, far_2 - dans cet ordre."""
+    """near_1, near_2, far_1, far_2, in that order."""
     names = ("near_1", "near_2", "far_1", "far_2")
     return {
         frame: {
@@ -25,7 +25,7 @@ def test_a_still_scene_holds_no_cut():
 
 
 def test_ordinary_play_holds_no_cut():
-    """Un joueur rapide parcourt quelques centimetres entre deux frames."""
+    """A fast player covers a few centimetres between two frames."""
     rows = {
         f: [
             (-2.0 + 0.05 * f, -5.0),
@@ -53,21 +53,21 @@ def test_a_cut_can_put_both_sides_at_risk():
 
 
 def test_one_player_moving_alone_is_enough():
-    """L'association efface le deplacement d'une paire qui permute : un seul suffit."""
+    """The association erases the displacement of a pair that switches: one is enough."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             1: [(4.0, -8.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
     assert find_camera_cuts(_positions(rows))[0].sides == ("near",)
 
 
 def test_a_hole_in_the_annotations_is_not_a_cut():
-    """Entre deux frames eloignees, les joueurs ont eu le temps de se deplacer."""
+    """Between two distant frames, the players have had time to move."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             60: [(3.0, -8.0), (-3.0, -2.0), (3.0, 8.0), (-3.0, 2.0)]}
     assert find_camera_cuts(_positions(rows)) == []
 
 
 def test_the_reported_displacement_is_the_largest_seen():
-    """C'est le plus grand saut qui atteste du raccord, pas le plus petit."""
+    """It is the largest jump that attests the cut, not the smallest."""
     rows = {0: [(0.0, -5.0), (0.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             1: [(0.0, -8.0), (0.0, -7.0), (-2.0, 5.0), (2.0, 5.0)]}
     assert find_camera_cuts(_positions(rows))[0].displacement_m == 3.0
@@ -81,7 +81,7 @@ def test_the_threshold_can_be_raised():
 
 
 def test_an_absent_player_does_not_prevent_reading_the_others():
-    """Le joueur qui reste suffit a attester le raccord de son cote."""
+    """The player who stays is enough to attest the cut on their side."""
     rows = _positions({0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
                        1: [(3.0, -8.0), (-3.0, -2.0), (3.0, 8.0), (-3.0, 2.0)]})
     del rows[1]["far_2"]
@@ -97,14 +97,14 @@ def test_a_side_with_no_annotated_player_is_left_out():
 
 
 def test_a_teleport_across_a_short_hole_is_a_cut():
-    """Huit metres en trois frames absentes : personne ne court aussi vite."""
+    """Eight metres over three missing frames: nobody runs that fast."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             3: [(-2.0, 3.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
     assert find_camera_cuts(_positions(rows))[0].frame == 3
 
 
 def test_running_across_a_long_hole_is_not_a_cut():
-    """Sept metres en trente-six frames absentes : un joueur qui court."""
+    """Seven metres in thirty-six absent frames: a player running."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             36: [(-2.0, 2.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
     assert find_camera_cuts(_positions(rows)) == []
@@ -117,14 +117,14 @@ def test_a_very_long_hole_excuses_any_displacement():
 
 
 def test_a_burst_of_splices_is_reported_once():
-    """Trois clips du meme instant font repondre trois fois a une seule question."""
+    """Three clips of the same instant make one question be answered three times."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             1: [(3.0, -8.0), (-3.0, -2.0), (-2.0, 5.0), (2.0, 5.0)],
             2: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             3: [(4.0, 9.0), (-4.0, 9.0), (4.0, -9.0), (-4.0, -9.0)]}
     cuts = find_camera_cuts(_positions(rows))
     assert len(cuts) == 1
-    assert cuts[0].frame == 3  # le plus grand deplacement du groupe
+    assert cuts[0].frame == 3  # the largest displacement of the group
 
 
 def test_a_burst_keeps_every_side_it_touched():

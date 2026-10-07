@@ -8,7 +8,7 @@ def test_minimap_has_the_requested_width_and_a_court_aspect_ratio():
     minimap = Minimap(Court(), width=300)
     image = minimap.draw({})
     assert image.shape[1] == 300
-    # 20 m de long pour 10 m de large : l'image doit etre environ deux fois plus haute.
+    # 20 m long for 10 m wide: the image must be about twice as tall
     assert 1.7 < image.shape[0] / image.shape[1] < 2.5
 
 
@@ -21,7 +21,7 @@ def test_the_net_centre_lands_in_the_middle_of_the_image():
 
 
 def test_positive_y_is_drawn_towards_the_top():
-    """Meme piege d'orientation qu'au jalon 1 : un aller-retour ne le detecte pas."""
+    """Same orientation trap as in milestone 1: a round trip does not detect it."""
     minimap = Minimap(Court(), width=300)
     _, near = minimap.to_pixels(np.array([0.0, -10.0]))
     _, far = minimap.to_pixels(np.array([0.0, 10.0]))
@@ -43,7 +43,7 @@ def test_drawing_players_changes_the_image():
 
 
 def test_a_player_outside_the_court_does_not_crash():
-    """Les joueurs de padel sortent parfois du court par les ouvertures laterales."""
+    """Padel players sometimes leave the court through the side openings."""
     minimap = Minimap(Court(), width=300)
     image = minimap.draw({"near_1": (-8.0, -13.0)})
     assert image.shape[1] == 300

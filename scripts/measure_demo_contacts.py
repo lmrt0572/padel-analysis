@@ -1,9 +1,8 @@
-"""Note les contacts de la chaine de demonstration contre le pointage complet d'une plage.
+"""Score the contacts of the demonstration chain against the full marking of a range.
 
-Precision, rappel et justesse de surface, pour plusieurs variantes de la chaine, sur les
-memes marques. Pour les contacts rates, dit aussi a quel etage ils se sont perdus : le
-chemin n'etait pas sur la balle, le chemin y etait mais sans virage detecte, ou le
-contact a ete trouve puis masque par un filtre d'affichage.
+Precision, recall and surface accuracy for several variants of the chain, on the same
+marks. For missed contacts, also says where they were lost: the path was not on the
+ball, the path had no detected turn, or a display filter hid the contact.
 
 Usage:
     python scripts/measure_demo_contacts.py --analysis outputs/demo_FinalF_analysis.pkl \
@@ -35,7 +34,7 @@ ANSWER_OF_LABEL = {"SOL": "sol", "VITRE": "verre", "GRILLAGE": "grillage", "FILE
 
 
 def labelled(contacts, positions, frames, pose, surfaces, isolated_filter):
-    """Contact frame -> answer shown, for the contacts a variant would display."""
+    """Return contact frame -> answer shown, for the contacts a variant would display."""
     shown: dict[int, str] = {}
     for contact in contacts:
         ball = positions.get(contact.frame)
@@ -76,7 +75,7 @@ def main() -> None:
             find_contacts(relative), relative, frames, pose, surfaces, False),
         "chemin absolu, sans filtre": labelled(
             find_contacts(absolute), absolute, frames, pose, surfaces, False),
-        "demo sans le geste": labelled(
+        "demo without the gesture": labelled(
             find_contacts(smooth_path(shown, cuts=[], process_noise=100.0)), shown, frames,
             pose, surfaces, True),
         "demo actuelle": {
@@ -85,12 +84,12 @@ def main() -> None:
         },
     }
 
-    print(f"{len(marks)} contacts pointes : {dict(Counter(marks.values()))}\n")
-    print(f"{'variante':30} {'affiches':>8} {'precision':>9} {'rappel':>7} {'surface juste':>14}")
+    print(f"{len(marks)} marked contacts: {dict(Counter(marks.values()))}\n")
+    print(f"{'variant':30} {'shown':>8} {'precision':>9} {'recall':>7} {'right surface':>14}")
     for name, detected in variants.items():
         m = match_contacts(detected, marks, args.tolerance)
         print(f"{name:30} {len(detected):8} {m.precision:9.0%} {m.recall:7.0%} "
-              f"{m.right_surface:>5} sur {m.found:<4}")
+              f"{m.right_surface:>5} of {m.found:<4}")
 
     demo = variants["demo actuelle"]
     raw_contacts = {c.frame for c in find_contacts(absolute)}
@@ -104,14 +103,14 @@ def main() -> None:
             and math.dist(absolute[f], truth_ball[f]) <= 15 for f in near
         )
         if not on_ball:
-            cause = "chemin pas sur la balle"
+            cause = "path not on the ball"
         elif not any(abs(frame - f) <= args.tolerance for f in raw_contacts):
-            cause = "chemin sur la balle, virage non detecte"
+            cause = "path on the ball, turn not detected"
         else:
-            cause = "trouve puis masque ou mal place"
+            cause = "found then hidden or misplaced"
         causes[(answer, cause)] += 1
 
-    print("\ncontacts pointes absents de la demo, par surface et par cause :")
+    print("\nmarked contacts missing from the demo, by surface and by cause:")
     for (answer, cause), count in sorted(causes.items(), key=lambda kv: -kv[1]):
         print(f"  {answer:9} {cause:42} {count:3}")
 

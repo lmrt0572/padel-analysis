@@ -1,7 +1,6 @@
 """Draws detections and identities onto a video frame.
 
-This module performs no inference: it consumes what the pipeline already computed,
-which is what allows rendering to be re-run without paying for detection again.
+No inference here: rendering can be re-run without paying for detection again.
 """
 
 import cv2
@@ -31,8 +30,7 @@ def draw_people(
     Args:
         labels: text written above each slot's box; the slot name by default.
         colours: BGR colour per slot; the team colours by default.
-        tracked_only: leave out the people the tracker holds in no slot - spectators,
-            referee, ball boys.
+        tracked_only: leave out the people the tracker holds in no slot.
     """
     canvas = frame.copy()
     name_of_index = {index: name for name, index in assignment.items()}

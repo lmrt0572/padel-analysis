@@ -18,7 +18,7 @@ def test_a_perfect_frame_scores_one():
 
 
 def test_extra_predictions_lower_precision_not_recall():
-    """Le detecteur trouve des spectateurs : la precision chute, le rappel non."""
+    """The detector finds spectators: precision drops, recall does not."""
     score = detection_score(matched=4, predicted=6, annotated=4)
     assert score.precision == pytest.approx(4 / 6)
     assert score.recall == pytest.approx(1.0)
@@ -52,10 +52,10 @@ def test_localisation_error_measures_pixel_distance():
 
 
 def test_errors_are_split_by_half_of_the_court():
-    """Un pixel vaut 4,3 fois plus au fond : un chiffre global serait trompeur."""
+    """A pixel is worth 4.3 times more at the far end: an overall figure would mislead."""
     predicted = np.array([[102.0, 200.0], [110.0, 200.0]])
     annotated = np.array([[100.0, 200.0], [100.0, 200.0]])
-    depths = np.array([-3.0, 5.0])  # un proche, un eloigne
+    depths = np.array([-3.0, 5.0])  # one near, one far
     error = localisation_error(predicted, annotated, depths)
     assert error.median_px_near == pytest.approx(2.0)
     assert error.median_px_far == pytest.approx(10.0)

@@ -5,7 +5,7 @@ from padel_analysis.analytics.segmentation import RallySpan, rallies
 CONTACTS = [
     (5, "raquette"), (20, "sol"), (35, "raquette"),     # premier echange
     (110, "raquette"), (130, "verre"), (150, "raquette"), (170, "raquette"),
-    (260, "sol"),                                      # un plan sans frappe
+    (260, "sol"),                                      # a shot without a stroke
 ]
 
 

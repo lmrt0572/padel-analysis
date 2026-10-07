@@ -1,4 +1,4 @@
-# Données et médias — jamais versionnés.
+# Données et médias : jamais versionnés.
 # ground_truth/ fait exception et EST versionné : calibrations et vérité terrain
 # d'identité, sans lesquelles l'évaluation ne serait pas reproductible. Aucune image.
 data/

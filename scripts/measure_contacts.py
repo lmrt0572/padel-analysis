@@ -1,17 +1,13 @@
-"""Mesure les contacts sur une plage, chemin reconstruit et balle annotee.
+"""Measure the contacts on a range, on the reconstructed path and on the annotated ball.
 
-Les deux sources passent par le meme detecteur : l'ecart entre elles est donc
-imputable a la trajectoire, et a rien d'autre.
-
-La precision est affichee avec ce qu'un tirage aleatoire obtiendrait. Les deux se
-valant sur ce dataset, c'est la distribution des rebonds par echange qui porte la
-mesure - le padel en prevoit zero, un ou deux entre deux frappes.
+Both sources go through the same detector. Precision is printed beside what a random
+draw would get; the distribution of bounces per exchange carries the measurement.
 
 Usage:
     python scripts/measure_contacts.py --video <video.mp4> \
         --annotations <ball.json> --shots <shots.csv> \
-        --identity ground_truth/identity/<nom>.json \
-        --start 0 --stop 20099 --out outputs/<nom>_contacts.json
+        --identity ground_truth/identity/<name>.json \
+        --start 0 --stop 20099 --out outputs/<name>_contacts.json
 """
 
 import argparse
@@ -45,9 +41,9 @@ def report(name, positions, events, cuts):
 
     print(f"\n{name}")
     print(f"  contacts            : {len(frames)}")
-    print(f"  rappel des frappes  : {score.recall:.3f}")
-    print(f"  precision           : {score.precision:.3f}  (hasard {chance:.3f})")
-    print(f"  rebonds par echange : {mean:.2f}  {dict(sorted(tally.items()))}")
+    print(f"  recall of strokes   : {score.recall:.3f}")
+    print(f"  precision           : {score.precision:.3f}  (chance {chance:.3f})")
+    print(f"  bounces per exchange: {mean:.2f}  {dict(sorted(tally.items()))}")
     return {
         "contacts": len(frames),
         "recall": score.recall,
@@ -79,8 +75,8 @@ def main() -> None:
 
     coverage = interval_coverage(sorted(annotated), events)
     print(
-        f"{len(events)} frappes, {len(cuts)} raccords, "
-        f"intervalles sur {coverage:.1%} des frames annotees"
+        f"{len(events)} strokes, {len(cuts)} cuts, "
+        f"intervals over {coverage:.1%} of the annotated frames"
     )
 
     candidates = collect(args.video, args.start, args.stop, 2, 0.25)
@@ -92,11 +88,11 @@ def main() -> None:
         "events": len(events),
         "cuts": len(cuts),
         "interval_coverage": coverage,
-        "annotated": report("BALLE ANNOTEE (plafond)", annotated, events, cuts),
+        "annotated": report("ANNOTATED BALL (ceiling)", annotated, events, cuts),
         "path": report("CHEMIN RECONSTRUIT", path, events, cuts),
     }
     args.out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"\nresultats : {args.out}")
+    print(f"\nresults: {args.out}")
 
 
 if __name__ == "__main__":

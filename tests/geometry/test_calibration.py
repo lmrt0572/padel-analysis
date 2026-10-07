@@ -10,7 +10,7 @@ from padel_analysis.geometry.calibration import (
 )
 from padel_analysis.geometry.court import Court
 
-# Memes correspondances que dans test_projector, pour rester coherent.
+# same correspondences as in test_projector, to stay consistent
 IMAGE_CORNERS = [(240.0, 940.0), (1680.0, 940.0), (1180.0, 330.0), (740.0, 330.0)]
 
 
@@ -36,7 +36,7 @@ def test_calibration_requires_at_least_four_points():
 def test_control_points_are_excluded_from_the_fit_and_used_for_the_error():
     points = _corner_points()
     court = Court()
-    # Un cinquieme point, marque comme point de controle.
+    # a fifth point, marked as a control point
     extra_court = (0.0, court.service_line_distance)
     fitted = calibration_from_points(points)
     extra_image = tuple(fitted.projector.court_to_image(np.array([extra_court]))[0])
@@ -90,7 +90,7 @@ def test_a_point_can_carry_a_height():
 
 
 def test_the_homography_ignores_points_above_the_ground():
-    """Une homographie ne connait que le plan du sol : un point en hauteur la fausse."""
+    """A homography only knows the ground plane: a point above the ground skews it."""
     ground = _corner_points()
     elevated = CalibrationPoint(
         name="glass_top", court_xy=(-5.0, -10.0), image_xy=(168.0, 531.0), height=3.0

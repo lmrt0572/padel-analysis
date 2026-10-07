@@ -1,16 +1,8 @@
-"""Le bilan d'un match entier, par paire : points, frappes, deplacements.
+"""Report a whole match, by pair: points, strokes, movement.
 
-Demande l'analyse du match (scripts/analyse_match.py) et la lecture de son tableau
-d'affichage (scripts/read_scores.py). Chaque etape couteuse est mise en cache :
-
-1. les observations des joueurs - position au sol, couleur du torse - lues une fois
-   dans la video, puis un seul suivi des joueurs sur tout le match ;
-2. les contacts du modele, tranche par tranche, et le frappeur de chaque frappe ;
-3. les raccords de la retransmission, qui ouvrent les echanges.
-
-Les moities du court sont rattachees aux lignes du tableau par les changements de cote
-que le score impose, et par le service, premiere frappe de chaque echange. Tout part de
-la premiere lecture du tableau.
+Needs the analysis of the match (scripts/analyse_match.py) and the reading of its
+scoreboard (scripts/read_scores.py). Player observations, contacts and broadcast cuts
+are each cached.
 
 Usage:
     python scripts/match_stats.py --match FinalF --contact-model weights/contact_net.pt
@@ -50,7 +42,7 @@ from padel_analysis.tracking.court_constraint import CourtSlotTracker
 CHUNKS = Path("outputs/match")
 CACHE = Path("outputs/match_obs")
 OUT = Path("outputs/match_stats")
-# Les paires telles que le tableau d'affichage les ecrit, ligne du haut puis du bas.
+# the pairs as the scoreboard writes them, top row then bottom row
 PAIRS = {"FinalF": {1: "JOS / SAN", 2: "SAL / TRI"}, "FinalM": {1: "LEB / GAL", 2: "DIN / CHI"}}
 FPS = 30.0
 
@@ -60,7 +52,7 @@ def chunk_paths(match: str) -> list[Path]:
 
 
 def observations(match: str, path: Path) -> dict:
-    """Every detection of a chunk on the court, with its torso colour; cached."""
+    """Return every detection of a chunk on the court, with its torso colour; cached."""
     cached = CACHE / path.name
     if cached.exists():
         return pickle.loads(cached.read_bytes())
@@ -83,7 +75,7 @@ def observations(match: str, path: Path) -> dict:
 
 
 def tracked(match: str) -> tuple[dict, dict]:
-    """The players followed by one tracker over the whole match: frames, and assignments."""
+    """Return the players followed by one tracker over the match: frames and assignments."""
     frames = {}
     for path in chunk_paths(match):
         frames.update(observations(match, path))
@@ -105,7 +97,7 @@ def broadcast_cuts(match: str) -> list[int]:
 
 
 def contacts(match: str, frames: dict, whole: dict, model_path: Path) -> list:
-    """The model's contacts over the match, chunk by chunk, with the match-long tracking."""
+    """Return the model's contacts over the match, chunk by chunk, tracked match-long."""
     cached = OUT / f"{match}_contacts.pkl"
     if cached.exists():
         return pickle.loads(cached.read_bytes())
@@ -122,7 +114,7 @@ def contacts(match: str, frames: dict, whole: dict, model_path: Path) -> list:
                                  for slot, i in assignment.items() if i < len(obs)}
         analysis["stop"] = max(analysis["frames"])
         events += learned_events(analysis, points, model)[2]
-        print(f"  contacts {path.name} : {len(events)}", flush=True)
+        print(f"  contacts {path.name}: {len(events)}", flush=True)
     OUT.mkdir(parents=True, exist_ok=True)
     cached.write_bytes(pickle.dumps(events))
     return events
@@ -159,7 +151,7 @@ def main() -> None:
             serves[span.start] = side_of(who[min(strikes)])
     orientation = orient(readings, serves)
     if orientation is None:
-        raise SystemExit("aucun service lu : les paires ne peuvent pas etre placees")
+        raise SystemExit("no serve read: the pairs cannot be placed")
 
     pairs = {row: PairStats(row) for row in (1, 2)}
     winners = stretch_points(readings)

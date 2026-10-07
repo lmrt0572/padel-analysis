@@ -100,7 +100,7 @@ def test_a_player_of_the_asked_half_is_the_striker_even_when_another_is_nearer()
 def test_the_middle_of_three_strikes_from_one_half_goes_to_the_other_half():
     analysis, _ = _analysis()
     far_box = analysis["frames"][120]["people"][1].bbox
-    ball = (915.0, 90.0)  # un lob du joueur proche, haut dans l'image, pres du fond
+    ball = (915.0, 90.0)  # a lob by the near player, high in the picture, near the far end
     strikes = [(110, far_box, ball), (130, far_box, ball), (150, far_box, ball)]
     assert strikers(analysis["frames"], strikes) == {110: "far_1", 130: "near_1", 150: "far_1"}
 

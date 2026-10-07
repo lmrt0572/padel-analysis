@@ -97,7 +97,7 @@ def test_retracking_keeps_the_detections_and_names_the_four_players(scene, synth
     video, calibration, detections = scene
     analysis = _analysis(synthetic_pose[0], detections)
     again = demo.retrack(analysis, video, Calibration.load(calibration))
-    assert analysis["frames"][3]["assignment"] == {}  # l'analyse d'origine n'est pas touchee
+    assert analysis["frames"][3]["assignment"] == {}  # the original analysis is not touched
     for frame in again["frames"].values():
         assert frame["people"] is detections
         assert sorted(frame["assignment"]) == ["far_1", "far_2", "near_1", "near_2"]
@@ -131,7 +131,7 @@ def test_a_replay_is_drawn_on_a_backdrop_instead_of_the_footage(tmp_path, scene,
     replay = cv2.VideoCapture(str(out))
     _, first = replay.read()
     replay.release()
-    assert first[5, 5].mean() == pytest.approx(90, abs=4)  # le fond, pas l'image noire
+    assert first[5, 5].mean() == pytest.approx(90, abs=4)  # the backdrop, not the black frame
 
 
 def test_the_demo_is_rendered_again_from_a_saved_analysis(tmp_path, monkeypatch, capsys, scene,
@@ -145,4 +145,4 @@ def test_the_demo_is_rendered_again_from_a_saved_analysis(tmp_path, monkeypatch,
                                      "--out", str(out)])
     demo.main()
     assert _frames_of(out) == (SCENE_FRAMES, (1920, 1080))
-    assert "contacts affiches" in capsys.readouterr().out
+    assert "contacts shown" in capsys.readouterr().out

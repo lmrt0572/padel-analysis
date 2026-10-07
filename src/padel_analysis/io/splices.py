@@ -1,10 +1,7 @@
 """Where the broadcast splices two stretches of play together.
 
-The video is a sequence of rallies with the dead time cut out, and at each splice the
-picture changes at once: the whole frame differs from the one before, where during
-play only the players and the ball move. The mean absolute difference between two
-small greyscale copies of consecutive frames separates the two cleanly - measured on a
-minute of the women's final, splices at 5.6 to 11.5 against a median of 0.5 in play.
+At a splice the whole frame differs from the one before, where during play only the
+players and the ball move.
 """
 
 from collections.abc import Iterable
@@ -13,12 +10,11 @@ import cv2
 import numpy as np
 
 SPLICE = 4.0
-"""Mean grey-level difference above which consecutive frames belong to two different
-stretches of play. Play itself stays under about 2.3."""
+"""Mean grey-level difference above which two frames belong to different stretches."""
 
 
 def frame_changes(frames: Iterable[tuple[int, np.ndarray]]) -> dict[int, float]:
-    """For each frame, how much it differs from the one before (0 for the first)."""
+    """Return, for each frame, how much it differs from the one before (0 for the first)."""
     changes: dict[int, float] = {}
     previous = None
     for index, frame in frames:
@@ -29,5 +25,5 @@ def frame_changes(frames: Iterable[tuple[int, np.ndarray]]) -> dict[int, float]:
 
 
 def splices(changes: dict[int, float], threshold: float = SPLICE) -> list[int]:
-    """The frames that open a new stretch of play."""
+    """Return the frames that open a new stretch of play."""
     return sorted(f for f, change in changes.items() if change > threshold)

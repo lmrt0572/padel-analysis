@@ -1,7 +1,6 @@
 """Colour signature of a player's kit, used to break positional ties in tracking.
 
-The two teams of a padel match wear clearly distinct colours, which makes a coarse
-hue histogram of the torso enough to tell partners apart when they cross.
+The two teams wear distinct colours, so a coarse hue histogram of the torso is enough.
 """
 
 import cv2
@@ -11,10 +10,9 @@ BINS = 8
 
 
 def torso_histogram(frame: np.ndarray, bbox: np.ndarray, bins: int = BINS) -> np.ndarray:
-    """Normalised hue histogram of the upper half of a bounding box.
+    """Return the normalised hue histogram of the upper half of a bounding box.
 
-    The upper half avoids the court surface showing between the legs, which would
-    otherwise dominate the signature with the blue of the floor.
+    The upper half avoids the blue of the floor showing between the legs.
     """
     height, width = frame.shape[:2]
     x1, y1, x2, y2 = (round(float(v)) for v in bbox)

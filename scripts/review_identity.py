@@ -1,40 +1,27 @@
-"""Arbitrage humain des moments ou l'identite peut avoir decroche.
+"""Human arbitration of the moments where identity may have slipped.
 
-Deux natures de doute, arbitrees l'une apres l'autre.
+CLOSE APPROACHES: two partners pass close enough for the association to hesitate.
 
-RAPPROCHEMENTS - deux partenaires passent assez pres pour que l'association
-hesite. La video est rejouee en boucle avec les deux joueurs concernes entoures
-de leur couleur de slot.
+    n  they have NOT switched
+    s  they HAVE switched: the two slots are swapped from this episode on
 
-    n  ils n'ont PAS permute, l'association automatique etait bonne
-    s  ils ONT permute : les deux slots sont echanges a partir de cet episode
+BROADCAST CUTS: the players reappear elsewhere, and each pair can switch independently.
 
-COUPURES DE PLAN - la camera change, les joueurs reapparaissent ailleurs, et
-l'association les rattache au plus proche de leur position d'avant. Si deux
-partenaires ont echange leur poste pendant la coupure, elle suit le mauvais. Les
-deux paires peuvent permuter independamment, d'ou quatre reponses.
+    n  no switch
+    p  the NEAR pair has switched
+    e  the FAR pair has switched
+    b  BOTH pairs have switched
+    c  the TEAMS HAVE CHANGED ENDS: identity stops there and starts again
 
-    n  aucune permutation
-    p  la paire PROCHE a permute
-    e  la paire ELOIGNEE a permute
-    b  les DEUX paires ont permute
-    c  les EQUIPES ONT CHANGE DE COTE
+Judge the colours, not the bodies: a stable detail (cap, shoes, sleeves) is worth more
+than a general impression.
 
-Le changement de cote est a part. Les slots designent une moitie de court, pas une
-personne : apres un changement de cote, `near_1` est quelqu'un d'autre, et aucun
-echange d'etiquettes ne peut l'exprimer. L'identite du joueur s'arrete la et repart
-a zero - c'est une frontiere, pas une correction.
-
-Ne juge pas les corps mais les couleurs : le meme joueur porte-t-il la meme
-couleur avant et apres ? Un detail stable - casquette, chaussures, manches - vaut
-mieux qu'une impression generale.
-
-    r  revenir au clip precedent et annuler sa reponse
-    q  abandonner (les arbitrages deja rendus sont conserves)
+    r  go back to the previous clip and cancel its answer
+    q  give up (the arbitrations already given are kept)
 
 Usage:
     python scripts/review_identity.py --video <video.mp4> \
-        --annotations <pose.json> --identity ground_truth/identity/<nom>.json
+        --annotations <pose.json> --identity ground_truth/identity/<name>.json
 """
 
 import argparse
@@ -96,7 +83,7 @@ def ask(
     keys: str,
     allowed: str,
 ) -> str:
-    """Rejoue la sequence en boucle jusqu'a ce qu'une touche valide soit frappee."""
+    """Replay the sequence in a loop until a valid key is pressed."""
     accepted = set(allowed) | {"q"}
     while True:
         for index, frame in source.iter_frames(start=max(0, start), stop=stop):
@@ -111,7 +98,7 @@ def ask(
 
 
 def undo_episode(truth: IdentityGroundTruth, episode) -> str | None:
-    """Defait la reponse rendue sur un rapprochement. L'echange est son inverse."""
+    """Undo the answer given on a close approach; the swap is its own inverse."""
     key = truth.decisions.pop(f"episode:{episode.start_frame}", None)
     if key == "s":
         truth.apply_swap(episode.start_frame, episode.slots)
@@ -123,7 +110,7 @@ def undo_episode(truth: IdentityGroundTruth, episode) -> str | None:
 def undo_cut(truth: IdentityGroundTruth, cut) -> str | None:
     key = truth.decisions.pop(f"cut:{cut.frame}", None)
     if key is None and cut.frame in truth.boundaries:
-        key = "c"  # repondu avant que les reponses soient tracees
+        key = "c"  # answered before the answers were traced
     if key == "c" and cut.frame in truth.boundaries:
         truth.boundaries.remove(cut.frame)
     if key in ("p", "b"):
@@ -136,9 +123,9 @@ def undo_cut(truth: IdentityGroundTruth, cut) -> str | None:
 
 
 def review_episodes(source, annotations, truth, path) -> bool:
-    """Retourne False si l'utilisateur a demande a quitter."""
+    """Return False if the user asked to quit."""
     pending = [e for e in truth.episodes if e.start_frame not in truth.resolved]
-    print(f"rapprochements a arbitrer : {len(pending)}/{len(truth.episodes)}")
+    print(f"close approaches to arbitrate: {len(pending)}/{len(truth.episodes)}")
 
     position = 0
     while position < len(pending):
@@ -166,23 +153,23 @@ def review_episodes(source, annotations, truth, path) -> bool:
                     (e for e in truth.episodes if e.start_frame == done), None
                 )
                 if previous is None:
-                    print("  rien a annuler")
+                    print("  nothing to cancel")
                     continue
                 pending.insert(0, previous)
             else:
-                print("  rien a annuler : aucun rapprochement rendu")
+                print("  nothing to cancel: no close approach answered")
                 continue
             undone = undo_episode(truth, previous)
             truth.save(path)
-            print(f"  retour sur {previous.start_frame} "
+            print(f"  back to {previous.start_frame} "
                   f"(reponse annulee : {undone or 'inconnue'})")
             continue
 
         if decision == "s":
             truth.apply_swap(episode.start_frame, episode.slots)
-            print(f"  rapprochement {episode.start_frame}: PERMUTATION appliquee")
+            print(f"  close approach {episode.start_frame}: SWITCH applied")
         else:
-            print(f"  rapprochement {episode.start_frame}: pas de permutation")
+            print(f"  close approach {episode.start_frame}: no switch")
         truth.resolved.append(episode.start_frame)
         truth.decisions[f"episode:{episode.start_frame}"] = decision
         truth.save(path)
@@ -192,15 +179,13 @@ def review_episodes(source, annotations, truth, path) -> bool:
 
 def review_cuts(source, annotations, truth, path) -> bool:
     pending = [c for c in truth.cuts if c.frame not in truth.resolved_cuts]
-    print(f"coupures a arbitrer : {len(pending)}/{len(truth.cuts)}")
+    print(f"cuts to arbitrate: {len(pending)}/{len(truth.cuts)}")
 
     position = 0
     while position < len(pending):
         cut = pending[position]
-        # Les cinq reponses sont toujours offertes. Le detecteur sert a trouver les
-        # clips a regarder ; ce qu'on y voit ne lui appartient pas. Deux partenaires
-        # proches qui echangent leurs places parcourent moins que le seuil, et la
-        # paire n'est donc pas annoncee - sans cesser d'avoir permute.
+        # all five answers are always offered: two close partners who swap places travel
+        # less than the threshold, so the detector does not announce their pair
         keys = ("n = aucune    p = proche    e = eloignee    b = les deux    "
                 "c = CHANGEMENT DE COTE    r = retour    q = quitter")
         caption = (f"[coupure {position + 1}/{len(pending)}] frame {cut.frame}  "
@@ -215,8 +200,8 @@ def review_cuts(source, annotations, truth, path) -> bool:
             return False
 
         if decision == "r":
-            # Au premier clip de la file, le precedent a ete rendu dans une session
-            # anterieure : il n'est plus en attente, il faut le reprendre au dossier.
+            # at the first clip of the queue, the previous answer comes from an earlier
+            # session: it is taken back from the record
             if position > 0:
                 position -= 1
                 previous = pending[position]
@@ -224,26 +209,26 @@ def review_cuts(source, annotations, truth, path) -> bool:
                 done = truth.resolved_cuts[-1]
                 previous = next((c for c in truth.cuts if c.frame == done), None)
                 if previous is None:
-                    print("  rien a annuler")
+                    print("  nothing to cancel")
                     continue
                 pending.insert(0, previous)
             else:
-                print("  rien a annuler : aucune coupure rendue")
+                print("  nothing to cancel: no cut answered")
                 continue
             undone = undo_cut(truth, previous)
             truth.save(path)
             if undone is None:
-                print(f"  retour sur {previous.frame} : reponse precedente NON "
-                      f"tracee, seule la marque est retiree - si c'etait une "
-                      f"permutation, la reappliquer puis annuler a nouveau")
+                print(f"  back to {previous.frame}: previous answer NOT "
+                      f"traced, only the mark is removed. If it was a "
+                      f"switch, apply it again then cancel once more")
             else:
-                print(f"  retour sur {previous.frame} (reponse annulee : {undone})")
+                print(f"  back to {previous.frame} (answer cancelled: {undone})")
             continue
 
         if decision == "c":
             truth.boundaries.append(cut.frame)
             truth.boundaries.sort()
-            print(f"  coupure {cut.frame}: CHANGEMENT DE COTE, identite relancee")
+            print(f"  cut {cut.frame}: CHANGE OF ENDS, identity restarted")
         else:
             swapped = []
             if decision in ("p", "b"):
@@ -252,8 +237,8 @@ def review_cuts(source, annotations, truth, path) -> bool:
             if decision in ("e", "b"):
                 truth.apply_swap(cut.frame, FAR_SLOTS)
                 swapped.append("eloignee")
-            print(f"  coupure {cut.frame}: "
-                  f"{'PERMUTATION ' + ' et '.join(swapped) if swapped else 'aucune'}")
+            print(f"  cut {cut.frame}: "
+                  f"{'SWITCH ' + ' and '.join(swapped) if swapped else 'none'}")
 
         truth.resolved_cuts.append(cut.frame)
         truth.decisions[f"cut:{cut.frame}"] = decision
@@ -269,7 +254,7 @@ def main() -> None:
     parser.add_argument("--identity", type=Path, required=True)
     args = parser.parse_args()
 
-    print("chargement...", flush=True)
+    print("loading...", flush=True)
     annotations = PoseAnnotations.load(args.annotations)
     truth = IdentityGroundTruth.load(args.identity)
 
@@ -279,9 +264,9 @@ def main() -> None:
             review_cuts(source, annotations, truth, args.identity)
     cv2.destroyAllWindows()
 
-    print(f"\nrapprochements : {len(truth.resolved)}/{len(truth.episodes)}")
-    print(f"coupures       : {len(truth.resolved_cuts)}/{len(truth.cuts)}")
-    print(f"enregistre dans {args.identity}")
+    print(f"\nclose approaches: {len(truth.resolved)}/{len(truth.episodes)}")
+    print(f"cuts            : {len(truth.resolved_cuts)}/{len(truth.cuts)}")
+    print(f"saved to {args.identity}")
 
 
 if __name__ == "__main__":

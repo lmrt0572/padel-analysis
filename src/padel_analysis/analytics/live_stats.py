@@ -1,8 +1,6 @@
-"""Game and player statistics as they stand at each frame, for the video's side panel.
+"""Game and player statistics as they stand at each frame, for the side panel.
 
-The video shows the match as it unfolds, so the numbers beside it must not know the
-future: every figure here is counted from the start of the clip up to the frame being
-drawn. The work is done once, frame by frame, so drawing a frame only reads a row.
+Every figure is counted from the start of the clip up to the frame being drawn.
 """
 
 import math
@@ -20,23 +18,22 @@ from .segmentation import rallies
 SLOTS = ("near_1", "near_2", "far_1", "far_2")
 PAIRS = {"proche": ("near_1", "near_2"), "fond": ("far_1", "far_2")}
 MAX_STEP = 0.5
-"""Metres in one frame, 54 km/h: a larger step is the tracker jumping, not a player
-running, and it would set every running record on its own."""
-TRAIL = 45  # images de trace derriere chaque joueur sur la minimap, 1,5 s
-SUSTAINED = 31  # images : la vitesse max est tenue pendant une seconde
+"""Metres in one frame, 54 km/h: a larger step is the tracker jumping."""
+TRAIL = 45  # frames of trail on the minimap, 1.5 s
+SUSTAINED = 31  # frames the top speed must be held, one second
 
 
 @dataclass(frozen=True)
 class PlayerLine:
     slot: str
     shots: int
-    volleys: int  # frappes sans rebond au sol depuis la frappe precedente
+    volleys: int  # strokes with no floor bounce since the previous one
     after_bounce: int
-    distance: float  # metres, lisses
-    top_speed: float  # km/h, la plus haute vitesse tenue pendant une seconde
-    net_share: float  # part du temps passe au filet, sur les images ou il est vu
-    winners: int = 0  # points finis par une frappe de ce joueur, gagnee
-    errors: int = 0  # points finis par une frappe de ce joueur, perdue
+    distance: float  # metres, smoothed
+    top_speed: float  # km/h, held for one second
+    net_share: float  # over the frames where the player is seen
+    winners: int = 0  # points ended by a winning stroke of this player
+    errors: int = 0  # points ended by a losing stroke of this player
 
 
 @dataclass(frozen=True)
@@ -44,9 +41,9 @@ class PointOutcome:
     """A point over: when it ended, the half that won it, and who it is credited to."""
 
     frame: int
-    winner_side: str  # near ou far
+    winner_side: str  # near or far
     player: str | None
-    kind: str | None  # gagnant ou faute
+    kind: str | None  # gagnant (winner) or faute (error)
 
 
 @dataclass(frozen=True)
@@ -56,26 +53,24 @@ class LiveStats:
     elapsed: float
     shots: int
     walls: int
-    last: str | None  # le dernier contact, s'il date de moins d'une seconde
+    last: str | None  # the last contact, if less than a second old
     players: tuple[PlayerLine, ...]
     pair_shots: dict[str, int]
     pair_net: dict[str, float]
-    last_shot_speed: float | None  # km/h, du dernier coup dont on connait l'arrivee
+    last_shot_speed: float | None  # km/h, of the last shot whose arrival is known
     top_shot_speed: float | None
-    positions: dict[str, list[tuple[float, float]]]  # la trace recente, la plus recente a la fin
-    rally_number: int | None = None  # l'echange en cours, compte depuis le debut de l'extrait
-    rally_shots: int = 0  # frappes de l'echange en cours jusqu'ici
-    longest_rally: int = 0  # le plus d'echanges de frappes en un echange, jusqu'ici
-    pair_points: dict[str, int] | None = None  # points gagnes par paire, si le score est lu
-    rally_pair_shots: dict[str, int] | None = None  # frappes de chaque paire dans l'echange
+    positions: dict[str, list[tuple[float, float]]]  # recent trail, most recent last
+    rally_number: int | None = None  # counted from the start of the clip
+    rally_shots: int = 0  # strokes of the rally in progress
+    longest_rally: int = 0  # most strokes in a single rally so far
+    pair_points: dict[str, int] | None = None  # None when the score is not read
+    rally_pair_shots: dict[str, int] | None = None  # strokes of each pair in the rally in progress
 
 
 def volley_flags(rally: Rally) -> dict[int, bool | None]:
-    """For each strike, whether it was a volley: no floor bounce since the previous strike.
+    """Return, for each strike, whether it was a volley; None for the first strike.
 
-    The first strike of a clip has no previous one to look back to, so it is left
-    undecided. A floor bounce the contact model missed turns a shot after the bounce
-    into a volley here: the split inherits the model's errors.
+    A floor bounce the contact model missed turns a shot after the bounce into a volley.
     """
     flags: dict[int, bool | None] = {}
     bounced, seen_strike = False, False
@@ -89,18 +84,18 @@ def volley_flags(rally: Rally) -> dict[int, bool | None]:
 
 
 def _mean_share(shares) -> float:
-    """The mean of the shares that are known, or NaN when none is."""
+    """Return the mean of the known shares, or NaN when none is."""
     known = [share for share in shares if not math.isnan(share)]
     return float(np.mean(known)) if known else math.nan
 
 
 def _until(items, frame: int) -> list:
-    """The items, in order, that have happened by `frame`."""
+    """Return the items that have happened by `frame`, in order."""
     return [item for item in items if item.frame <= frame]
 
 
 def _by_pair(value, combine) -> dict:
-    """For each pair, `combine` of `value(slot)` over its two players."""
+    """Return, for each pair, `combine` of `value(slot)` over its two players."""
     return {pair: combine(value(slot) for slot in slots) for pair, slots in PAIRS.items()}
 
 
@@ -108,10 +103,11 @@ class LiveTimeline:
     """Cumulative statistics for every frame of a rally, computed once."""
 
     def __init__(self, rally: Rally, recent: float = 1.0, splices=(), points=None) -> None:
-        """Args:
+        """Build the timeline of a rally.
+
+        Args:
             splices: where the broadcast splices, each opening a new rally.
-            points: the points already decided, from the scoreboard; None when it
-                was not read.
+            points: the points already decided, or None when the score was not read.
         """
         self.rally = rally
         self._points = None if points is None else sorted(points, key=lambda p: p.frame)
@@ -138,11 +134,7 @@ class LiveTimeline:
             steps = np.zeros(len(frames))
             steps[1:] = np.where(both & (deltas <= MAX_STEP), deltas, 0.0)
             self._distance[slot] = np.cumsum(steps)
-            # La vitesse max est une vitesse tenue une seconde. Plus court, deux artefacts
-            # passent pour des sprints : un petit saut leve les chevilles dans l'image, et
-            # le point au sol recule d'un metre au fond du court ; un echange d'identite
-            # entre partenaires deplace la position de plusieurs metres. Mesure sur deux
-            # echanges : 21 et 50 km/h avec une mediane sur 5 images, 15 et 19 sur 31.
+            # a shorter window lets a small jump or an identity swap pass for a sprint
             speed = median_filter(steps * rally.fps * 3.6, size=SUSTAINED, mode="nearest")
             self._top[slot] = np.maximum.accumulate(speed)
             at_net = at_net_states(np.where(present, np.abs(smooth[:, 1]), np.nan))
@@ -150,7 +142,7 @@ class LiveTimeline:
             self._seen[slot] = np.cumsum(present)
 
     def at(self, frame: int) -> LiveStats:
-        """The statistics counted from the start of the rally up to `frame` included."""
+        """Return the statistics counted from the start of the rally up to `frame`."""
         rally = self.rally
         frame = min(max(frame, rally.start), rally.stop)
         index = frame - rally.start
@@ -176,18 +168,18 @@ class LiveTimeline:
         )
 
     def _recent_kind(self, past: list, frame: int) -> str | None:
-        """What the last contact was, if it is recent enough to still be shown."""
+        """Return the kind of the last contact, if recent enough to still be shown."""
         if past and frame - past[-1].frame <= self.recent:
             return past[-1].kind
         return None
 
     def _shot_speeds(self, frame: int) -> tuple[float | None, float | None]:
-        """The speed of the last shot whose arrival is known by `frame`, and the fastest."""
+        """Return the speed of the last shot whose arrival is known, and the fastest."""
         known = [s.kmh for s in self._speeds if s.stop <= frame]
         return (known[-1], max(known)) if known else (None, None)
 
     def _player_line(self, slot: str, index: int, strikes: list, over: list) -> PlayerLine:
-        """One player's figures up to the frame at `index`."""
+        """Return one player's figures up to the frame at `index`."""
         mine = [c for c in strikes if c.player == slot]
         volley = Counter(self._volley.get(c.frame) for c in mine)
         ended = Counter(p.kind for p in over if p.player == slot)
@@ -205,12 +197,12 @@ class LiveTimeline:
         )
 
     def _trail(self, slot: str, index: int) -> list[tuple[float, float]]:
-        """Where the player was over the last frames, the most recent last."""
+        """Return the player's recent positions, most recent last."""
         recent = self._smooth[slot][max(0, index - TRAIL):index + 1]
         return [(float(x), float(y)) for x, y in recent if not math.isnan(x)]
 
     def _pair_points(self, over: list) -> dict[str, int] | None:
-        """The points each pair has won so far, or None when the score was not read."""
+        """Return the points each pair has won so far, or None when the score was not read."""
         if self._points is None:
             return None
         won = Counter(p.winner_side for p in over)

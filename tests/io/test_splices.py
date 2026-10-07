@@ -25,6 +25,6 @@ def test_small_movement_is_not_a_splice():
     frames = []
     for i in range(10):
         image = _frame(100)
-        image[40:50, 10 + 5 * i:20 + 5 * i] = 255  # un joueur qui se deplace
+        image[40:50, 10 + 5 * i:20 + 5 * i] = 255  # a player moving
         frames.append((i, image))
     assert splices(frame_changes(frames)) == []

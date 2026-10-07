@@ -1,4 +1,4 @@
-"""End-to-end pipeline: video in, annotated video and cached court positions out.
+"""Run the pipeline end to end: video in, annotated video and cached positions out.
 
 Usage:
     python -m padel_analysis.cli --video <video.mp4> \
@@ -31,9 +31,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out", type=Path, default=None)
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--no-video", action="store_true",
-                        help="ne produire que le cache, sans ecrire de video")
+                        help="only produce the cache, without writing a video")
     parser.add_argument("--frames", type=int, default=None,
-                        help="nombre de frames a traiter ; toutes par defaut")
+                        help="number of frames to process; all of them by default")
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--imgsz", type=int, default=1600)
     parser.add_argument("--ground-point", choices=("ankles", "bbox"), default="ankles")
@@ -105,10 +105,10 @@ def main() -> None:
     elapsed = time.perf_counter() - started
     complete = sum(1 for f in cache.frames() if len(cache.at(f).positions) == 4)
     if not args.no_video:
-        print(f"ecrit {args.out}")
+        print(f"wrote {args.out}")
     print(f"cache {args.cache}")
-    print(f"{count} frames en {elapsed:.0f} s ({count / max(elapsed, 1e-9):.1f} fps)")
-    print(f"frames a 4 joueurs identifies : {complete}/{count} "
+    print(f"{count} frames in {elapsed:.0f} s ({count / max(elapsed, 1e-9):.1f} fps)")
+    print(f"frames with 4 identified players: {complete}/{count} "
           f"({100 * complete / max(count, 1):.2f} %)")
 
 

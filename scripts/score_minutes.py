@@ -1,11 +1,8 @@
-"""Note la chaine de demonstration sur toutes les minutes pointees d'un ensemble.
+"""Score the demonstration chain on every marked minute of a set.
 
-Les comptes sont additionnes sur les minutes, pas les taux : une minute a 90 contacts
-pese plus qu'une a 70.
-
-Les minutes de juge ne sont notees qu'avec --juge, pour que le verdict final ne puisse
-pas etre regarde par megarde pendant qu'on regle encore. Les quatre premiers juges
-entrainent desormais le modele : les noter avec le modele livre ne mesure plus rien.
+Counts are added up over the minutes, not rates. The judge minutes are only scored with
+--juge; the first four judges now train the model, so scoring them with the shipped
+model no longer measures anything.
 
 Usage:
     python scripts/score_minutes.py --tag 360
@@ -40,50 +37,50 @@ def score(chosen, tag, model=None):
         detected = {e.frame: ANSWER_OF_LABEL[e.label] for e in events}
         truth = ContactMarks.load(minutes.marks(match, start)).marks
         m = match_contacts(detected, truth, 3)
-        print(f"  {match} {start:5}  affiches {len(detected):3}  reels {len(truth):3}  "
-              f"justes {m.right_surface:3}")
+        print(f"  {match} {start:5}  shown {len(detected):3}  real {len(truth):3}  "
+              f"right {m.right_surface:3}")
         found += m.found
         missed += m.missed
         invented += m.invented
         right += m.right_surface
         shown += len(detected)
         real += len(truth)
-    print(f"  total : {real} contacts reels, {shown} affiches")
-    print(f"  precision {found / max(found + invented, 1):.1%}   rappel {found / max(real, 1):.1%}   "
-          f"justes {right} ({right / max(real, 1):.1%})   score {2 * right / max(shown + real, 1):.3f}")
+    print(f"  total: {real} real contacts, {shown} shown")
+    print(f"  precision {found / max(found + invented, 1):.1%}   recall {found / max(real, 1):.1%}   "
+          f"right {right} ({right / max(real, 1):.1%})   score {2 * right / max(shown + real, 1):.3f}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", required=True)
-    parser.add_argument("--contact-model", type=Path, help="noter le modele appris")
+    parser.add_argument("--contact-model", type=Path, help="score the learned model")
     parser.add_argument("--juge-5", action="store_true",
-                        help="noter le cinquieme juge : une seule fois")
+                        help="score the fifth judge: only once")
     parser.add_argument("--juge-4", action="store_true",
-                        help="noter le quatrieme juge : une seule fois")
+                        help="score the fourth judge: only once")
     parser.add_argument("--juge-3", action="store_true",
-                        help="noter le troisieme juge : une seule fois")
-    parser.add_argument("--juge-2", action="store_true", help="noter le second juge : une seule fois")
-    parser.add_argument("--juge", action="store_true", help="noter les minutes de juge : une seule fois")
+                        help="score the third judge: only once")
+    parser.add_argument("--juge-2", action="store_true", help="score the second judge: only once")
+    parser.add_argument("--juge", action="store_true", help="score the judge minutes: only once")
     args = parser.parse_args()
     model = ContactModel.load(args.contact_model) if args.contact_model else None
     if args.juge_5:
-        print("=== CINQUIEME JUGE : minutes jamais regardees ===")
+        print("=== FIFTH JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_5, args.tag, model)
     elif args.juge_4:
-        print("=== QUATRIEME JUGE : minutes jamais regardees ===")
+        print("=== FOURTH JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_4, args.tag, model)
     elif args.juge_3:
-        print("=== TROISIEME JUGE : minutes jamais regardees ===")
+        print("=== THIRD JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_3, args.tag, model)
     elif args.juge_2:
-        print("=== SECOND JUGE : minutes jamais regardees ===")
+        print("=== SECOND JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_2, args.tag, model)
     elif args.juge:
-        print("=== JUGE : match masculin, minutes jamais regardees ===")
+        print("=== JUDGE: men's match, minutes never looked at ===")
         score(minutes.JUDGE, args.tag, model)
     else:
-        print("=== reglage : match feminin ===")
+        print("=== tuning: women's match ===")
         score(minutes.TUNING, args.tag, model)
 
 

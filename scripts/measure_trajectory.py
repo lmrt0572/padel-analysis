@@ -1,20 +1,12 @@
-"""Compare la croissance gloutonne et l'optimisation globale, sur les memes candidats.
+"""Compare greedy growth and global optimisation, on the same candidates.
 
---weights echange le detecteur par mouvement contre le reseau entraine du jalon B.4.
-C'est l'ablation : une seule piece change, l'etage de trajectoire ne sait pas d'ou
-viennent ses candidats.
-
-Un seul passage sur la video alimente les deux : aucune difference d'echantillon ne
-peut fausser l'ecart.
-
-Les boites de joueurs viennent du detecteur, pas des annotations : la penalite
-mesuree sur les boites annotees etait un plafond, celle-ci est ce que le pipeline
-produira.
+--weights swaps the motion detector for the trained network; nothing else changes. A
+single pass over the video feeds both, and the player boxes come from the detector.
 
 Usage:
     python scripts/measure_trajectory.py --video <video.mp4> \
         --annotations <ball.json> --start 16000 --stop 20099 \
-        --out outputs/<nom>_trajectory.json
+        --out outputs/<name>_trajectory.json
 """
 
 import argparse
@@ -31,20 +23,18 @@ from padel_analysis.perception.pose_detector import PoseDetector
 
 
 def collect(video, start, stop, spacing, factor, weights=None):
-    """Les candidats de chaque frame, penalises par les boites du detecteur.
+    """Return the candidates of each frame, penalised by the boxes of the detector.
 
-    `weights` echange le detecteur par mouvement contre le reseau entraine. Rien
-    d'autre ne change - meme `best_path`, memes couts, memes tolerances - donc
-    l'ecart mesure est imputable au detecteur et a rien d'autre.
+    `weights` swaps the motion detector for the trained network.
     """
     if weights is None:
         finder = MotionCandidates(spacing=spacing)
     else:
         if spacing != 3:
             raise SystemExit(
-                "le reseau a ete entraine avec un espacement de 3 : passer "
-                "--spacing 3. Sans cela la fenetre de frames serait trop courte "
-                "et le detecteur rendrait une liste vide, sans rien signaler."
+                "the network was trained with a spacing of 3: pass "
+                "--spacing 3. Without it the window of frames would be too short "
+                "and the detector would return an empty list, without saying anything."
             )
         from padel_analysis.ball.heatmap_net import NetCandidates
 
@@ -76,8 +66,8 @@ def collect(video, start, stop, spacing, factor, weights=None):
 def report(name, predicted, annotated):
     score = ball_score(predicted, annotated)
     covered = sum(1 for p in predicted.values() if p is not None)
-    print(f"\n{name}  ({covered} frames couvertes)")
-    print(f"{'tolerance':>10} {'rappel':>8} {'precision':>10}")
+    print(f"\n{name}  ({covered} frames covered)")
+    print(f"{'tolerance':>10} {'recall':>8} {'precision':>10}")
     for tolerance in (5, 10, 20):
         print(f"{tolerance:>9}px {score.recall[tolerance]:>8.3f} "
               f"{score.precision[tolerance]:>10.3f}")
@@ -104,7 +94,7 @@ def main() -> None:
     parser.add_argument(
         "--weights",
         type=Path,
-        help="poids du reseau ; sans cette option, detection par mouvement",
+        help="weights of the network; without this option, detection by motion",
     )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -113,12 +103,12 @@ def main() -> None:
     annotated = {
         f: c for f, c in balls.centres().items() if args.start <= f <= args.stop
     }
-    print(f"balles annotees dans la plage : {len(annotated)}", flush=True)
+    print(f"annotated balls in the range: {len(annotated)}", flush=True)
 
     candidates = collect(
         args.video, args.start, args.stop, args.spacing, args.factor, args.weights
     )
-    print(f"frames avec des candidats : {len(candidates)}", flush=True)
+    print(f"frames with candidates: {len(candidates)}", flush=True)
 
     segments = build_segments(candidates)
     greedy = positions_of(segments, args.start, args.stop)
@@ -147,7 +137,7 @@ def main() -> None:
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=2), encoding="utf-8")
-    print(f"\nresultats : {args.out}")
+    print(f"\nresults: {args.out}")
 
 
 if __name__ == "__main__":

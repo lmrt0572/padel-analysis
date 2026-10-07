@@ -32,7 +32,7 @@ def test_each_player_reports_distance_speed_and_mean_position():
 
 
 def test_distance_is_reported_both_raw_and_smoothed():
-    """L'ecart entre les deux chiffre la part de bruit, au lieu de la masquer."""
+    """The gap between the two quantifies the noise share, instead of hiding it."""
     player = build_report(_trajectories())["players"]["near_2"]
     assert player["distance_m"] >= player["distance_smoothed_m"]
 
@@ -44,8 +44,8 @@ def test_each_player_is_labelled_with_its_half_of_the_court():
 
 
 def test_net_control_is_included():
-    """Le rapport doit porter le seuil effectivement utilise, pas une valeur figee :
-    coder 5.5 en dur ici couplerait le test a une constante reglable."""
+    """The report must carry the threshold actually used, not a frozen value:
+    hard-coding 5.5 here would couple the test to a tunable constant."""
     from padel_analysis.analytics.net_control import NET_THRESHOLD
 
     control = build_report(_trajectories())["net_control"]
@@ -69,7 +69,7 @@ def test_report_roundtrips_through_json(tmp_path):
 
 
 def test_saved_json_contains_no_numpy_scalars(tmp_path):
-    """json.dump echoue sur les types numpy : le rapport doit etre en types Python."""
+    """json.dump fails on numpy types: the report must be in Python types."""
     path = tmp_path / "report.json"
     save_report(build_report(_trajectories()), path)
     assert path.stat().st_size > 0

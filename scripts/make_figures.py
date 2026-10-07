@@ -1,14 +1,13 @@
-"""Produit les figures du README et du rapport, dans docs/figures/.
+"""Produce the figures of the README and of the report, in docs/figures/.
 
-Les chiffres viennent de fichiers ecrits par les scripts de mesure, jamais recopies a la
-main :
-  - docs/figures/verdicts.json : les trois juges, consignes une fois rendus ;
-  - outputs/measures/cv.json : validation croisee, confusion et courbe d'apprentissage
-    (scripts/train_contact_model.py --cv --curve --results ...) ;
-  - un cache de positions d'un match entier, pour les figures des joueurs ;
-  - outputs/match_stats/<match>.json : le bilan de chaque finale, par paire
+The numbers come from files written by the measurement scripts:
+  - docs/figures/verdicts.json: the judges, recorded once given;
+  - outputs/measures/cv.json: cross-validation, confusion and learning curve
+    (scripts/train_contact_model.py --cv --curve --results ...);
+  - a position cache of a whole match, for the player figures;
+  - outputs/match_stats/<match>.json: the report of each final, by pair
     (scripts/match_stats.py).
-Une figure dont la source manque est sautee, et le script le dit.
+A figure whose source is missing is skipped, and the script says so.
 
 Usage:
     python scripts/make_figures.py --cache cache/FinalF_full.json
@@ -27,7 +26,7 @@ from padel_analysis.render import figures
 
 def read(path: Path) -> object | None:
     if not path.exists():
-        print(f"  saute : {path} introuvable")
+        print(f"  skipped: {path} not found")
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -36,10 +35,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verdicts", type=Path, default=Path("docs/figures/verdicts.json"))
     parser.add_argument("--measures", type=Path, default=Path("outputs/measures/cv.json"))
-    parser.add_argument("--cache", type=Path, help="cache de positions d'un match entier")
+    parser.add_argument("--cache", type=Path, help="position cache of a whole match")
     parser.add_argument("--fps", type=float, default=30.0)
     parser.add_argument("--bilans", type=Path, default=Path("outputs/match_stats"),
-                        help="dossier des bilans de match, par paire")
+                        help="folder of the match reports, by pair")
     parser.add_argument("--out", type=Path, default=Path("docs/figures"))
     args = parser.parse_args()
 
@@ -71,7 +70,7 @@ def main() -> None:
         figures.points_by_length_chart(reports, args.out / "points_longueur.png")
         figures.pair_occupancy_chart(reports, args.out / "occupation_paires.png")
 
-    print(f"figures ecrites dans {args.out}")
+    print(f"figures written to {args.out}")
 
 
 if __name__ == "__main__":

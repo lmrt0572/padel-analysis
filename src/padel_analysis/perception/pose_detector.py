@@ -1,9 +1,7 @@
 """Person detection and pose estimation with a single Ultralytics model.
 
-`yolov8s-pose` produces boxes and keypoints in one pass, which is far cheaper on
-4 GB of VRAM than a two-stage top-down pipeline. Nothing downstream of this module
-sees an Ultralytics object: the boundary is deliberate, so the model can be replaced
-without touching tracking, analytics or rendering.
+Nothing downstream of this module sees an Ultralytics object, so the model can be
+replaced without touching tracking, analytics or rendering.
 """
 
 from dataclasses import dataclass
@@ -21,17 +19,13 @@ class PersonDetection:
 
     bbox: np.ndarray  # (4,) x1 y1 x2 y2
     confidence: float
-    keypoints: np.ndarray  # (17, 3) x, y, confidence - in COCO order
+    keypoints: np.ndarray  # (17, 3) x, y, confidence, in COCO order
 
     def ankle_midpoint(self) -> np.ndarray:
         return (self.keypoints[LEFT_ANKLE, :2] + self.keypoints[RIGHT_ANKLE, :2]) / 2
 
     def ankle_confidence(self) -> float:
-        """The weaker of the two ankle confidences.
-
-        A midpoint is only as trustworthy as its least reliable end. This value
-        feeds the tracking cost and gates statistics.
-        """
+        """Return the weaker of the two ankle confidences."""
         return float(min(self.keypoints[LEFT_ANKLE, 2], self.keypoints[RIGHT_ANKLE, 2]))
 
     def bbox_bottom_centre(self) -> np.ndarray:
@@ -67,7 +61,7 @@ def detections_from_arrays(
 
 
 class PoseDetector:
-    """Wraps an Ultralytics pose model behind a plain-array interface."""
+    """An Ultralytics pose model behind a plain-array interface."""
 
     def __init__(
         self,
@@ -76,12 +70,10 @@ class PoseDetector:
         min_confidence: float = 0.25,
         device: str = "cuda",
     ) -> None:
-        """Args:
-            imgsz: inference resolution. 1600 was chosen by measurement, not default:
-                below it the model stops finding the far-court players altogether.
-                On 300 annotated frames it recovered 1200 of 1200 players, against
-                1170 at 1280, 745 at 960 and 572 at 640. Ankle error at the far
-                baseline follows: 6.2 cm, against 34.3 cm at 640.
+        """Load the model.
+
+        Args:
+            imgsz: inference resolution; below 1600 the far-court players are missed.
         """
         from ultralytics import YOLO
 

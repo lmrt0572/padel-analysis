@@ -1,8 +1,10 @@
 # Utilisation
 
+> 🇬🇧 [English version](usage.md)
+
 Toutes les commandes du projet, de la calibration d'un court aux mesures du rapport.
 Elles se lancent depuis la racine du dépôt, dans l'environnement `padel`
-(voir l'installation dans le [README](../README.md#démarrage-rapide)).
+(voir l'installation dans le [README](README.fr.md#démarrage-rapide)).
 
 ## Données
 
@@ -39,9 +41,9 @@ python scripts/check_camera_pose.py --calibration ground_truth/calibrations/<nom
 
 ## La vidéo de statistiques
 
-La démonstration principale : l'échange, et à côté un panneau qui avance avec le jeu —
-minicarte, échange en cours, points lus au tableau d'affichage, frappes, volées,
-distance, vitesse maximale et temps au filet de chaque joueur. Elle demande l'analyse
+La démonstration principale : l'échange, et à côté un panneau qui avance avec le jeu
+(minicarte, échange en cours, points lus au tableau d'affichage, frappes, volées,
+distance, vitesse maximale et temps au filet de chaque joueur). Elle demande l'analyse
 sauvegardée de la minute (voir plus bas), le modèle de contacts et ffmpeg :
 
 ```bash
@@ -62,9 +64,9 @@ sur une GTX 1650 ; relancer la commande reprend à la minute suivante) :
 python scripts/analyse_match.py --weights weights/ball_net.pt
 ```
 
-Lire le tableau d'affichage, puis assembler le bilan par paire — suivi des joueurs
+Lire le tableau d'affichage, puis assembler le bilan par paire (suivi des joueurs
 rejoué sur tout le match, contacts, échanges, changements de côté, points et
-déplacements — dans `outputs/match_stats/<match>.json` :
+déplacements) dans `outputs/match_stats/<match>.json` :
 
 ```bash
 python scripts/read_scores.py --match FinalF --out outputs/scores/FinalF.json
@@ -102,8 +104,8 @@ python -m padel_analysis.analyse --cache cache/<nom>.json \
 La démonstration des contacts demande les poids du réseau de détection de balle. Elle
 analyse toute la plage avant de dessiner, puisque la balle est choisie sur la séquence
 entière. Pour l'affichage seulement, la balle est masquée là où le réseau n'est pas sûr
-de lui : mesuré sur une minute annotée, les trajectoires fantômes — balle hors champ,
-balle en main avant le service — passent de 222 images à 36, pour 97,5 % des positions
+de lui : mesuré sur une minute annotée, les trajectoires fantômes (balle hors champ,
+balle en main avant le service) passent de 222 images à 36, pour 97,5 % des positions
 justes conservées. Les contacts de mur dont le rayon ne rencontre qu'une seule surface
 sont aussi masqués : sur les deux matchs annotés, ils portent 38 des 42 faux murs, pour
 2 vrais murs sur 33. Les chiffres mesurés ne sont pas filtrés.
@@ -129,8 +131,8 @@ python scripts/mark_contacts.py --video <video.mp4> --video-name FinalF --start 
 ## Le modèle de contacts et ses juges
 
 Analyser les minutes pointées (la passe coûteuse, sur carte graphique), entraîner le
-modèle en validation croisée, puis le noter sur un juge — des minutes pointées et jamais
-regardées, qui ne servent qu'une fois :
+modèle en validation croisée, puis le noter sur un juge (des minutes pointées et jamais
+regardées, qui ne servent qu'une fois) :
 
 ```bash
 python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
@@ -147,7 +149,7 @@ python scripts/make_figures.py --cache cache/<match entier>.json
 ```
 
 Les commandes qui reproduisent chaque mesure sont dans le
-[rapport d'évaluation](evaluation.md#reproduire-lévaluation).
+[rapport d'évaluation](evaluation.md#reproducing-the-evaluation) (en anglais).
 
 ## Vérifier le code
 

@@ -37,7 +37,7 @@ def test_a_stationary_person_keeps_the_same_identifier():
 
 
 def test_bytetrack_does_not_limit_the_number_of_tracks():
-    """La difference essentielle avec le tracker contraint : rien ne borne a quatre."""
+    """The essential difference from the constrained tracker: nothing bounds it to four."""
     baseline = ByteTrackBaseline()
     detections = [_detection(120 * i, 10, 120 * i + 80, 220) for i in range(8)]
     for _ in range(6):

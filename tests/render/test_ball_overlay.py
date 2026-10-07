@@ -27,7 +27,7 @@ def test_each_surface_gets_its_label():
 
 
 def test_an_undecided_contact_gets_no_label():
-    """Un contact sans surface admissible n'est pas affiche plutot qu'affiche au hasard."""
+    """A contact with no admissible surface is not shown rather than shown at random."""
     assert contact_label(_verdict(None)) is None
 
 

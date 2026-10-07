@@ -1,12 +1,6 @@
-"""Ajuste la pose de camera sur la calibration, et la juge sur ses points de controle.
+"""Fit the camera pose on the calibration, and judge it on its control points.
 
-Les points marques is_control ne servent jamais a l'ajustement. C'est la seule facon
-d'obtenir un chiffre qui veuille dire quelque chose : une pose jugee sur ce qui l'a
-produite ne mesure rien.
-
-Ce que l'ecart vaut en metres depend de la profondeur - un pixel fait 1,51 cm pres de
-la camera et 6,47 cm au fond eloigne. Les points de controle couvrent les deux, et
-c'est voulu.
+The points marked is_control are never used for the fit.
 
 Usage:
     python scripts/check_camera_pose.py --calibration ground_truth/calibrations/FinalF.json
@@ -36,8 +30,8 @@ def main() -> None:
     pixels = np.array([p.image_xy for p in fit], dtype=np.float64)
     if not (objects[:, 2] > 0).any():
         raise SystemExit(
-            "aucun point en hauteur parmi les points d'ajustement : la direction "
-            "verticale serait libre et la pose n'aurait aucun sens"
+            "no point above the ground among the fitting points: the vertical "
+            "direction would be free and the pose would mean nothing"
         )
 
     intrinsics = estimate_intrinsics(objects, pixels, (args.width, args.height))
@@ -45,14 +39,14 @@ def main() -> None:
     centre = pose.camera_centre
     fitted = float(np.sqrt(((pose.project(objects) - pixels) ** 2).sum(axis=1).mean()))
 
-    print(f"focale            : {intrinsics[0, 0]:.0f} px")
+    print(f"focal length      : {intrinsics[0, 0]:.0f} px")
     print(
-        f"camera en court   : x={centre[0]:+.2f}  y={centre[1]:+.2f}  "
+        f"camera, on court : x={centre[0]:+.2f}  y={centre[1]:+.2f}  "
         f"z={centre[2]:+.2f} m"
     )
-    print(f"erreur ajustement : {fitted:.2f} px sur {len(fit)} points\n")
+    print(f"fitting error     : {fitted:.2f} px over {len(fit)} points\n")
 
-    print(f"{'point de controle':28} {'hauteur':>9} {'ecart':>9}")
+    print(f"{'control point':28} {'height':>9} {'gap':>9}")
     errors = []
     for point in control:
         projected = pose.project(np.array([point.court_xyz], dtype=np.float64))[0]
@@ -61,9 +55,9 @@ def main() -> None:
         print(f"{point.name:28} {point.height:7.2f} m {gap:6.1f} px")
 
     elevated = [g for p, g in zip(control, errors) if p.height > 0]
-    print(f"\nmediane, tous controles  : {np.median(errors):.1f} px")
+    print(f"\nmedian, all controls    : {np.median(errors):.1f} px")
     if elevated:
-        print(f"mediane, en hauteur      : {np.median(elevated):.1f} px")
+        print(f"median, above the ground: {np.median(elevated):.1f} px")
     print(f"maximum                  : {max(errors):.1f} px")
 
 

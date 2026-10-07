@@ -1,13 +1,7 @@
 """The statistics panel drawn beside each video frame.
 
-Drawn with Pillow rather than OpenCV: OpenCV's built-in fonts have no accents and read
-poorly at small sizes, and the panel is mostly text. The panel is a fixed layout that
-only changes its numbers, so a viewer's eye learns where to look within seconds.
-
-Its look is a printed statistics table rather than an app: one condensed typeface,
-hairline rules instead of boxes, a small square of each player's colour. The four
-players sit as they stand on the court - the far pair above, the near pair below - so
-the grid reads like the minimap beside it.
+Drawn with Pillow rather than OpenCV, whose built-in fonts have no accents. The layout
+is fixed and only its numbers change; the four players sit as they stand on the court.
 """
 
 import math
@@ -30,7 +24,7 @@ GRID = {"far_1": (0, 0), "far_2": (1, 0), "near_2": (0, 1), "near_1": (1, 1)}
 
 
 def _font(size: int, weight: str = "Regular") -> ImageFont.ImageFont:
-    """Bahnschrift at the given weight, or Segoe UI, or what the system has."""
+    """Return Bahnschrift at the given weight, or Segoe UI, or what the system has."""
     try:
         font = ImageFont.truetype(str(FONTS / "bahnschrift.ttf"), size)
         font.set_variation_by_name(weight)
@@ -58,7 +52,7 @@ def _plural(count: int, word: str) -> str:
 
 
 class StatsPanel:
-    """Draws `LiveStats` as a column of the given size, returned as a BGR image.
+    """Panel drawing `LiveStats` as a column of the given size, as a BGR image.
 
     Args:
         names: each player's name, by slot.
@@ -82,7 +76,7 @@ class StatsPanel:
             "small": _font(round(14 * s), "Light"),
             "chip": _font(round(19 * s), "SemiBold"),
         }
-        # Bahnschrift n'a pas le signe environ egal.
+        # no approximately-equal sign in Bahnschrift
         self.about = "~"
 
     def draw(self, stats: LiveStats) -> np.ndarray:
@@ -98,7 +92,7 @@ class StatsPanel:
                  fill=muted, anchor="ra")
         top = pad + round(56 * s)
 
-        # En haut : la minimap a gauche, l'echange en cours a droite.
+        # top row: the minimap on the left, the rally in progress on the right
         map_height = round(360 * s)
         map_width = map_height // 2
         self._minimap(pen, stats, x0, top, map_width, map_height)
@@ -117,7 +111,7 @@ class StatsPanel:
         pen.text((cx, y), "balle, dernier coup", font=self.fonts["label"], fill=muted)
         speed = stats.last_shot_speed
         pen.text((cx, y + round(22 * s)),
-                 "—" if speed is None else f"{self.about} {speed:.0f} km/h",
+                 "-" if speed is None else f"{self.about} {speed:.0f} km/h",
                  font=self.fonts["name"], fill=text)
         best = stats.top_shot_speed
         pen.text((cx, y + round(50 * s)),
@@ -137,7 +131,7 @@ class StatsPanel:
         return np.asarray(image)[:, :, ::-1].copy()
 
     def _duel(self, pen, stats: LiveStats, x0: int, x1: int, y: int) -> int:
-        """The strikes of each pair in the rally in play, as one split bar."""
+        """Draw the strikes of each pair in the rally in play, as one split bar."""
         s = self.scale
         shots = stats.rally_pair_shots or {"proche": 0, "fond": 0}
         near, far = shots["proche"], shots["fond"]
@@ -166,7 +160,7 @@ class StatsPanel:
         return y + round(36 * s)
 
     def _players(self, pen, stats: LiveStats, x0: int, x1: int, y: int) -> None:
-        """A 2 x 2 grid of the players, with hairlines between the cells."""
+        """Draw a 2 x 2 grid of the players, with hairlines between the cells."""
         s = self.scale
         text, muted, rule = _rgb(style.TEXT), _rgb(style.MUTED), _rgb(style.LINE)
         pen.text((x0, y), "JOUEURS", font=self.fonts["label"], fill=muted)
@@ -198,7 +192,7 @@ class StatsPanel:
                 pen.text((vx, vy + round(26 * s)), label, font=self.fonts["small"], fill=muted)
 
     def _values(self, line: PlayerLine, stats: LiveStats) -> list[tuple[str, str]]:
-        net = "—" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
+        net = "-" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
         values = [(f"{line.distance:.0f} m", "parcourus"),
                   (f"{self.about} {line.top_speed:.0f}", "km/h max"),
                   (net, "au filet")]
@@ -207,12 +201,7 @@ class StatsPanel:
         return values
 
     def _minimap(self, pen, stats: LiveStats, x: int, y: int, width: int, height: int) -> None:
-        """The court from above, camera at the bottom, as it is built.
-
-        Walls on the outline - glass across each back wall and along the first metres of
-        each side, mesh in between - and the white lines where they are painted: the
-        service lines, the centre line from one to the other, and the net.
-        """
+        """Draw the court from above, camera at the bottom, with its walls and lines."""
         court = self.court
         half_w, half_l = court.half_width, court.half_length
         service, glass = court.service_line_distance, court.side_wall_glass_length

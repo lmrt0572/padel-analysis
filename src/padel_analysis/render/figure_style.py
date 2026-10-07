@@ -1,7 +1,6 @@
-"""One look for every figure: the dark palette of the rally page, and a court to draw on.
+"""One look for every figure: a dark palette, and a court to draw on.
 
-The colours are the page's, so a figure in the README and a panel on the page say the
-same thing the same way: green is the floor, cyan the glass, each player keeps a colour.
+Green is the floor, cyan the glass, and each player keeps a colour.
 """
 
 BACKGROUND = "#0e1117"
@@ -10,7 +9,7 @@ LINE = "#2a313c"
 TEXT = "#e8eaed"
 MUTED = "#8b95a5"
 COURT = "#123a2a"
-COURT_BLUE = "#1d4f8f"  # le bleu d'un court de padel, pour la minimap
+COURT_BLUE = "#1d4f8f"  # the blue of a padel court, for the minimap
 
 KIND = {
     "sol": "#3ddc97",
@@ -56,7 +55,7 @@ def use() -> None:
 
 def draw_court(axis, half_width: float = 5.0, half_length: float = 10.0,
                service: float = 6.95) -> None:
-    """A court seen from above, camera at the bottom, in metres."""
+    """Draw a court seen from above, camera at the bottom, in metres."""
     from matplotlib.patches import Rectangle
 
     axis.add_patch(Rectangle((-half_width, -half_length), 2 * half_width, 2 * half_length,

@@ -11,7 +11,7 @@ from padel_analysis.eval.identity import (
 
 
 def _court_positions(rows: list[list[tuple[float, float]]]) -> dict[int, np.ndarray]:
-    """Positions court par frame, dans l'ordre des annotations."""
+    """Court positions per frame, in the order of the annotations."""
     return {i: np.array(row, dtype=np.float64) for i, row in enumerate(rows)}
 
 
@@ -40,7 +40,7 @@ def test_slots_follow_a_player_who_moves():
     for step in range(5):
         rows.append([(-2.0 + step, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)])
     assignments = assign_by_proximity(_court_positions(rows))
-    # L'annotation 0 bouge mais reste la meme personne : meme slot du debut a la fin.
+    # annotation 0 moves but stays the same person: same slot from start to finish
     assert assignments[0] == assignments[4]
 
 
@@ -131,7 +131,7 @@ def test_applying_a_swap_flips_two_slots_from_that_frame_onward():
 def test_a_save_interrupted_at_the_last_moment_keeps_the_previous_file(
     tmp_path, monkeypatch
 ):
-    """Une coupure pendant l'ecriture ne doit pas detruire l'arbitrage deja rendu."""
+    """A cut during the write must not destroy the arbitration already given."""
     path = tmp_path / "truth.json"
     IdentityGroundTruth(
         assignments={0: {"near_1": 0}}, episodes=[], resolved=[7]
@@ -177,7 +177,7 @@ def test_a_failed_save_leaves_no_temporary_file_behind(tmp_path, monkeypatch):
 
 
 def test_a_ground_truth_written_before_cuts_existed_still_loads(tmp_path):
-    """Les premieres verites terrain n'ont ni coupures ni arbitrage de coupures."""
+    """The first ground truths have neither cuts nor arbitration of cuts."""
     path = tmp_path / "truth.json"
     path.write_text(
         '{"assignments": {"0": {"near_1": 0}}, "episodes": [], "resolved": [0]}',
@@ -211,7 +211,7 @@ def test_without_a_boundary_every_frame_is_in_the_first_segment():
 
 
 def test_a_boundary_starts_a_new_segment_from_its_own_frame():
-    """Un changement de cote n'echange rien : il arrete l'identite et la relance."""
+    """A change of ends swaps nothing: it stops the identity and restarts it."""
     truth = IdentityGroundTruth(assignments={}, episodes=[], boundaries=[100, 500])
     assert truth.segment_of(99) == 0
     assert truth.segment_of(100) == 1
@@ -250,7 +250,7 @@ def test_a_ground_truth_written_before_decisions_existed_still_loads(tmp_path):
 
 
 def test_a_swap_applied_twice_returns_to_the_start():
-    """C'est ce qui rend l'annulation possible : l'echange est son propre inverse."""
+    """That is what makes cancelling possible: the swap is its own inverse."""
     truth = IdentityGroundTruth(
         assignments={5: {"near_1": 0, "near_2": 1}, 6: {"near_1": 0, "near_2": 1}},
         episodes=[],

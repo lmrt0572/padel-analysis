@@ -3,7 +3,7 @@ import pytest
 
 from padel_analysis.contact.glass_inference import Touch, inferred_walls, wall_ahead
 
-# Frappe du cote proche, rebond au fond a 30 m/s, reprise par le joueur du fond.
+# stroke from the near side, bounce at the far end at 30 m/s, taken by the far player
 STRIKE = Touch(0, "raquette", "near", (0.0, -8.0))
 BOUNCE = Touch(15, "sol", "far", (0.0, 7.0))
 
@@ -27,7 +27,7 @@ def test_the_wall_ahead_is_the_side_one_for_a_ball_going_across():
 
 
 def test_a_ball_too_slow_to_have_gone_straight_went_by_the_wall():
-    answer = Touch(45, "raquette", "far", (0.0, 8.0))  # un metre en une seconde
+    answer = Touch(45, "raquette", "far", (0.0, 8.0))  # one metre in one second
     walls = inferred_walls([STRIKE, BOUNCE, answer], _peak_at(25), 0)
     assert [(w.frame, w.bounce, w.replaces_bounce) for w in walls] == [(25, 15, False)]
 

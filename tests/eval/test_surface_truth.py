@@ -40,7 +40,7 @@ def test_an_absent_contact_has_no_class_either():
 
 
 def test_the_two_non_surfaces_stay_distinct():
-    """L'un est une non-mesure, l'autre est un faux positif mesure : jamais confondus."""
+    """One is a non-measurement, the other is a measured false positive: never confused."""
     assert NO_CONTACT != UNREADABLE
     assert set(NOT_A_SURFACE) == {NO_CONTACT, UNREADABLE}
 
@@ -58,7 +58,7 @@ def test_the_answer_vocabulary_is_closed():
 
 
 def test_the_net_is_its_own_class():
-    """Ni sol ni mur : le filet amortit autrement, et la balle en repart autrement."""
+    """Neither floor nor wall: the net dampens differently, and the ball leaves it differently."""
     assert class_of("filet") == "filet"
 
 
@@ -113,7 +113,7 @@ def test_it_survives_a_save_and_a_load(tmp_path):
 
 
 def test_the_file_never_names_a_predicted_surface(tmp_path):
-    """La prediction ne doit pas transiter par le fichier que l'outil lit."""
+    """The prediction must not pass through the file the tool reads."""
     path = tmp_path / "surfaces.json"
     _truth().save(path)
     assert "predicted" not in path.read_text(encoding="utf-8")
@@ -126,7 +126,7 @@ def test_a_save_leaves_no_temporary_behind(tmp_path):
 
 
 def test_a_failed_save_does_not_destroy_the_previous_file(tmp_path, monkeypatch):
-    """Une coupure pendant l'ecriture doit couter la reponse en cours, pas la campagne."""
+    """A cut during the write must cost the answer in progress, not the campaign."""
     path = tmp_path / "surfaces.json"
     _truth().save(path)
     before = path.read_text(encoding="utf-8")

@@ -1,18 +1,12 @@
-"""Banc d'essai du suivi d'identite, sur les minutes deja analysees.
+"""Test bench of the identity tracking, on the minutes already analysed.
 
-La campagne d'evaluation complete refait la detection des joueurs sur tout le match :
-des heures de carte graphique par essai. Les minutes analysees pour la demonstration
-portent deja les detections ; il suffit d'y ajouter les couleurs des torses, lues une
-fois dans la video, pour rejouer n'importe quel suivi en quelques secondes.
-
-Les vingt minutes analysees pour les contacts servent a regler. Huit minutes a part,
-quatre par finale, ne se notent qu'avec --juge, une seule fois, quand le suivi est
-fige : la verite d'identite couvre les deux matchs en entier, elles n'ont demande aucun
-pointage.
+The analysed minutes already carry the detections; with the torso colours cached, any
+tracking is replayed in a few seconds. The judge minutes are only scored with --juge,
+once, when the tracking is frozen.
 
 Usage:
-    python scripts/identity_bench.py            # construit le cache, note le reglage
-    python scripts/identity_bench.py --juge     # le verdict, une fois
+    python scripts/identity_bench.py            # builds the cache, scores the tuning
+    python scripts/identity_bench.py --juge     # the verdict, once
 """
 
 import argparse
@@ -36,7 +30,7 @@ ALL = (minutes.TUNING + minutes.USED + minutes.EXTRA + minutes.JUDGE + minutes.J
 
 
 def observations(match: str, start: int) -> dict:
-    """Every frame's detections placed on the court, with torso colours; cached."""
+    """Return every frame's detections placed on the court, with torso colours; cached."""
     path = CACHE / f"{match}_{start}.pkl"
     if path.exists():
         return pickle.loads(path.read_bytes())
@@ -58,7 +52,7 @@ def observations(match: str, start: int) -> dict:
 
 
 def score(chosen, make_tracker=CourtSlotTracker) -> dict:
-    """IDF1 and identity switches of a tracker over the chosen minutes."""
+    """Return IDF1 and identity switches of a tracker over the chosen minutes."""
     accumulator = TrackingAccumulator()
     truths, poses = {}, {}
     for match, start in chosen:
@@ -92,8 +86,8 @@ def main() -> None:
     chosen = minutes.IDENTITY_JUDGE if args.juge else ALL
     result = score(chosen)
     title = "JUGE, huit minutes neuves" if args.juge else "reglage, vingt minutes"
-    print(f"{title} : {len(chosen)} minutes, {result['frames']} images notees")
-    print(f"  IDF1 {result['idf1']:.3f}   changements d'identite {result['switches']}")
+    print(f"{title}: {len(chosen)} minutes, {result['frames']} frames scored")
+    print(f"  IDF1 {result['idf1']:.3f}   identity changes {result['switches']}")
 
 
 if __name__ == "__main__":

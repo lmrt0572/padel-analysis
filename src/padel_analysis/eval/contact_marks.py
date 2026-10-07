@@ -1,10 +1,7 @@
 """Every real contact of a stretch of match, marked by hand, and what it hit.
 
-Judging the contacts a pipeline proposes measures its precision and nothing else: a
-contact it never proposed is never judged, so a missed wall costs nothing. Marks made
-while watching the whole stretch, without seeing any detection, measure both.
-
-Written atomically after every mark, like every hand-made truth in this project.
+Marks made while watching the whole stretch, without seeing any detection, measure
+recall as well as precision.
 """
 
 import json
@@ -37,7 +34,7 @@ class ContactMarks:
         self.order.append(frame)
 
     def undo(self) -> tuple[int, str] | None:
-        """Forget the most recent mark, and return it."""
+        """Forget the most recent mark and return it."""
         if not self.order:
             return None
         frame = self.order.pop()
@@ -109,9 +106,7 @@ def pair_contacts(
 ) -> list[Pairing]:
     """Pair each detection with the nearest free mark within `tolerance` frames.
 
-    A mark is claimed at most once, so two detections of one bounce count as one
-    found contact and one invented - the second is a false contact on the screen.
-    Unclaimed marks come last, as missed contacts.
+    A mark is claimed at most once; unclaimed marks come last, as missed contacts.
     """
     free = dict(marks)
     lines = []
@@ -129,7 +124,7 @@ def pair_contacts(
 def match_contacts(
     detected: dict[int, str], marks: dict[int, str], tolerance: int = 3
 ) -> ContactMatch:
-    """The counts of `pair_contacts`: found, missed, invented, and right surface."""
+    """Return the counts of `pair_contacts`: found, missed, invented and right surface."""
     statuses = [line.status for line in pair_contacts(detected, marks, tolerance)]
     return ContactMatch(
         found=statuses.count(RIGHT) + statuses.count(WRONG_SURFACE),

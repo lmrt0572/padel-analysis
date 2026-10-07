@@ -1,8 +1,6 @@
 """The figures of the README and of the evaluation report, in a dark style.
 
-Each function takes plain data - measured counts, player trajectories, a match
-report - and writes one PNG. None of them draws a video frame: the
-footage belongs to the broadcaster, the numbers drawn from it do not.
+Each function takes plain data and writes one PNG. None of them draws a video frame.
 """
 
 from collections.abc import Sequence
@@ -30,7 +28,7 @@ def _share(counts: dict) -> float:
 
 
 def judges_chart(verdicts: dict, cv: dict | None, path: Path) -> None:
-    """Rules against the learned model: cross-validation, each judge, all judges."""
+    """Draw rules against the learned model: cross-validation, each judge, all judges."""
     style.use()
     import matplotlib.pyplot as plt
 
@@ -68,7 +66,7 @@ def judges_chart(verdicts: dict, cv: dict | None, path: Path) -> None:
 
 
 def learning_curve_chart(curve: Sequence[dict], path: Path) -> None:
-    """How the model improves with the number of hand-marked minutes it learns from."""
+    """Draw how the model improves with the number of hand-marked minutes."""
     style.use()
     import matplotlib.pyplot as plt
 
@@ -89,7 +87,7 @@ def learning_curve_chart(curve: Sequence[dict], path: Path) -> None:
 
 
 def confusion_chart(confusion: Sequence[dict], path: Path) -> None:
-    """For each true surface, what the model answered - including nothing at all."""
+    """Draw, for each true surface, what the model answered, including nothing at all."""
     style.use()
     import matplotlib.pyplot as plt
     from matplotlib.colors import LinearSegmentedColormap
@@ -123,7 +121,7 @@ def confusion_chart(confusion: Sequence[dict], path: Path) -> None:
 
 
 def heatmaps_chart(positions: dict, court, path: Path) -> None:
-    """Where each of the four players stood, over the whole match."""
+    """Draw where each of the four players stood, over the whole match."""
     from ..analytics.heatmap import occupancy_grid
 
     style.use()
@@ -142,7 +140,7 @@ def heatmaps_chart(positions: dict, court, path: Path) -> None:
 
 
 def net_control_chart(depths: np.ndarray, threshold: float, control: dict, path: Path) -> None:
-    """The two depths players hold, the threshold between them, and who held the net."""
+    """Draw the two depths players hold, the threshold between them, and who held the net."""
     style.use()
     import matplotlib.pyplot as plt
 
@@ -171,8 +169,7 @@ def net_control_chart(depths: np.ndarray, threshold: float, control: dict, path:
 
 
 PAIR_COLOURS = ("#3987e5", "#d95926")
-"""The two pairs, top row of the scoreboard then bottom: the first two categorical slots of
-the reference palette, checked for colour-blind separation on the dark panel."""
+"""The two pairs, top row of the scoreboard then bottom."""
 DUEL_ROWS = (
     ("points_won", "Points gagnés", "exact : lus au tableau"),
     ("strikes", "Frappes", "± 1 %"),
@@ -193,7 +190,7 @@ def _pair_legend(axis, names) -> None:
 
 
 def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
-    """Each pair's share of the points, strikes, volleys, glass shots and distance."""
+    """Draw each pair's share of the points, strikes, volleys, glass shots and distance."""
     style.use()
     import matplotlib.pyplot as plt
 
@@ -225,7 +222,7 @@ def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
         for spine in axis.spines.values():
             spine.set_visible(False)
         net = " · ".join(f"{n} {report['pairs'][n]['net_share']:.0%}" for n in names)
-        axis.set_title(f"{MATCH_NAMES.get(report['match'], report['match'])} — "
+        axis.set_title(f"{MATCH_NAMES.get(report['match'], report['match'])}, "
                        f"{report['minutes']:.0f} min de jeu, temps au filet {net} (± 0,3 pt)",
                        loc="left", pad=28, fontsize=11)
         _pair_legend(axis, names)
@@ -233,7 +230,7 @@ def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
 
 
 def points_by_length_chart(reports: Sequence[dict], path: Path) -> None:
-    """The points each pair won, by the number of strikes in the rally."""
+    """Draw the points each pair won, by the number of strikes in the rally."""
     from ..analytics.match_stats import LENGTHS
 
     style.use()
@@ -262,7 +259,7 @@ def points_by_length_chart(reports: Sequence[dict], path: Path) -> None:
 
 
 def pair_occupancy_chart(reports: Sequence[dict], path: Path) -> None:
-    """Where each pair stood, folded onto one half: the net on top, its back wall below."""
+    """Draw where each pair stood, folded onto one half: the net on top, the wall below."""
     from matplotlib.colors import LinearSegmentedColormap
 
     style.use()

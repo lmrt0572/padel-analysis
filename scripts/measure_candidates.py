@@ -1,11 +1,9 @@
-"""Mesure le plafond de rappel des candidats de balle, pour plusieurs ecarts.
-
-L'ecart temporel n'est pas choisi : il est balaye et le tableau tranche.
+"""Measure the recall ceiling of the ball candidates, for several frame spacings.
 
 Usage:
     python scripts/measure_candidates.py --video <video.mp4> \
         --annotations <ball.json> --start 16000 --stop 20099 \
-        --spacings 1 2 3 4 --out outputs/<nom>_candidates.json
+        --spacings 1 2 3 4 --out outputs/<name>_candidates.json
 """
 
 import argparse
@@ -32,7 +30,7 @@ def main() -> None:
     annotated = {
         f: c for f, c in balls.centres().items() if args.start <= f <= args.stop
     }
-    print(f"balles annotees dans la plage : {len(annotated)}", flush=True)
+    print(f"annotated balls in the range: {len(annotated)}", flush=True)
 
     widest = max(args.spacings)
     finders = {s: MotionCandidates(spacing=s) for s in args.spacings}
@@ -69,14 +67,14 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
-    print(f"\n{'ecart':>6} {'rappel 5px':>11} {'10px':>7} {'20px':>7} "
-          f"{'rang med.':>10} {'top 10':>8} {'candidats':>10}")
+    print(f"\n{'gap':>6} {'recall 5px':>11} {'10px':>7} {'20px':>7} "
+          f"{'med. rank':>10} {'top 10':>8} {'candidates':>10}")
     for spacing in args.spacings:
         r = results[spacing]
         print(f"{spacing:>6} {r['recall'][5]:>11.3f} {r['recall'][10]:>7.3f} "
               f"{r['recall'][20]:>7.3f} {r['median_rank']:>10.1f} "
               f"{r['within_top_10']:>8.3f} {r['median_candidates']:>10.0f}")
-    print(f"\nresultats : {args.out}")
+    print(f"\nresults: {args.out}")
 
 
 if __name__ == "__main__":

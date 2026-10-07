@@ -1,27 +1,19 @@
-"""Pointage a la main de TOUS les contacts d'une plage de match.
+"""Mark by hand every contact of a stretch of match.
 
-Juger les contacts qu'une chaine propose ne mesure que sa precision : un contact
-qu'elle n'a jamais propose n'est jamais juge, et un mur rate ne coute rien. Ici on
-regarde la plage entiere et on pointe chaque contact reel, sans rien voir de ce que le
-systeme a detecte. Toute variante se note ensuite en precision ET en rappel.
+The whole stretch is watched without seeing what the system detected, so any variant
+can then be scored in precision and in recall.
 
-    espace  lecture / pause
-    j  l    reculer / avancer d'une image
-    h  ;    reculer / avancer d'une seconde
-    +  -    lecture plus rapide / plus lente
+    space   play / pause
+    j  l    step back / forward one frame
+    h  ;    step back / forward one second
+    +  -    faster / slower playback
 
-    s  le SOL      v  une VITRE      g  le GRILLAGE      t  le FILET      f  une FRAPPE
-       marquent un contact sur l'image affichee : mettre en pause et se placer sur
-       l'image du contact avant de taper. Deux contacts peuvent se suivre d'une image
-       a l'autre - une balle dans un coin touche deux vitres - et l'ecran le signale ;
-       retaper sur la meme image en change seulement la nature.
+    s  the FLOOR      v  a GLASS panel      g  the MESH      t  the NET      f  a STROKE
+       mark a contact on the frame shown; typing again on that frame changes its kind
 
-    r  annuler la derniere marque
-    n  p    avec --revoir, aller au moment a revoir suivant / precedent
-    q  quitter (tout est deja sauvegarde)
-
-Le fichier est reecrit de facon atomique a chaque marque, et la position de lecture
-aussi : on reprend la ou l'on s'etait arrete.
+    r  cancel the last mark
+    n  p    with --revoir, go to the next / previous moment to review
+    q  quit (everything is already saved)
 
 Usage:
     python scripts/mark_contacts.py --video <video.mp4> --start 16000 --frames 1800 \
@@ -45,11 +37,11 @@ REVIEW_HELP = "n p moment a revoir suivant / precedent"
 DISPLAY = (1280, 720)
 BUFFER = 150
 CLOSE = 2
-LEAD = 20  # images montrees avant un moment a revoir
+LEAD = 20  # frames shown before a moment to review
 
 
 class Frames:
-    """Lecture sequentielle rapide, avec un tampon pour revenir en arriere sans rechercher."""
+    """Fast sequential reader, with a buffer to go back without seeking."""
 
     def __init__(self, source: VideoSource) -> None:
         self.source = source
@@ -93,7 +85,7 @@ def draw(frame, marks: ContactMarks, index: int, playing: bool, delay: int, flas
         cv2.putText(canvas, text, (16, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 5)
         cv2.putText(canvas, text, (16, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 2)
 
-    # Frise de la plage : ses propres marques seulement, jamais les detections du systeme.
+    # timeline of the range: its own marks only, never the detections of the system
     width, height = DISPLAY
     top = height - 26
     cv2.rectangle(canvas, (16, top), (width - 16, top + 12), (40, 40, 40), -1)
@@ -110,7 +102,7 @@ def draw(frame, marks: ContactMarks, index: int, playing: bool, delay: int, flas
 
 
 def mark_message(marks: ContactMarks, index: int, answer: str) -> str:
-    """What the screen says after a mark, including any contact a frame or two away."""
+    """Return what the screen says after a mark, including any contact a frame or two away."""
     close = sorted(f for f in marks.marks if f != index and abs(f - index) <= CLOSE)
     message = f"MARQUE : {answer} a l'image {index}"
     if close:
@@ -126,7 +118,7 @@ def run(video: Path, video_name: str, start: int, frames: int, out: Path,
     if out.exists():
         marks = ContactMarks.load(out)
         if marks.frame_range != (start, stop):
-            raise SystemExit(f"{out} porte sur la plage {marks.frame_range}, pas {(start, stop)}")
+            raise SystemExit(f"{out} covers the range {marks.frame_range}, not {(start, stop)}")
     else:
         marks = ContactMarks(video=video_name, frame_range=(start, stop), position=start)
         marks.save(out)
@@ -184,7 +176,7 @@ def run(video: Path, video_name: str, start: int, frames: int, out: Path,
     marks.position = index
     marks.save(out)
     cv2.destroyWindow(WINDOW)
-    print(f"{len(marks.marks)} contacts marques, position sauvegardee a l'image {index}")
+    print(f"{len(marks.marks)} contacts marked, position saved at frame {index}")
 
 
 def main() -> None:
@@ -195,7 +187,7 @@ def main() -> None:
     parser.add_argument("--frames", type=int, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--revoir", type=Path,
-                        help="fichier JSON d'images a revoir, parcourues avec n et p")
+                        help="JSON file of frames to review, browsed with n and p")
     args = parser.parse_args()
     review = json.loads(args.revoir.read_text(encoding="utf-8")) if args.revoir else ()
     run(args.video, args.video_name, args.start, args.frames, args.out, review)

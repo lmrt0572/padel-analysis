@@ -1,12 +1,7 @@
 """Reader for the PadelTracker100 shot annotations.
 
-The file marks an interval rather than an instant: a shot spans sixteen frames in
-the women's final, eleven in the men's. It says "a shot happens in this half
-second", never "the impact is on this frame" - so the accuracy of a detected
-contact in time cannot be scored against it, only its membership of the interval.
-
-The six categories name strokes, not surfaces: Serve, Forehand, Backhand, Smash,
-Dropshot, Other.
+The file marks an interval rather than an instant, and its six categories name
+strokes, not surfaces.
 """
 
 import csv
@@ -19,7 +14,7 @@ _FRAME_NUMBER = re.compile(r"(\d+)")
 
 @dataclass(frozen=True)
 class ShotEvent:
-    """One annotated shot, as the interval the annotation actually gives."""
+    """One annotated shot, as an interval."""
 
     start_frame: int
     end_frame: int
@@ -69,10 +64,10 @@ class ShotEvents:
         return cls(events, min(frames), max(frames))
 
     def covered_range(self) -> tuple[int, int]:
-        """First and last frame the file says anything about."""
+        """Return the first and last frame the file says anything about."""
         return self._first, self._last
 
     def events(self, start: int = 0, stop: int | None = None) -> list[ShotEvent]:
-        """Events whose interval starts within [start, stop]."""
+        """Return the events whose interval starts within [start, stop]."""
         end = self._last if stop is None else stop
         return [e for e in self._events if start <= e.start_frame <= end]

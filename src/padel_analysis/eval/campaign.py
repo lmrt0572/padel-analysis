@@ -1,7 +1,6 @@
-"""Runs the pipeline against the annotations and assembles every figure.
+"""Run the pipeline against the annotations and assemble every figure.
 
-Both ablations are evaluated on the same frames within a single pass over the video,
-so the comparison cannot be confounded by a difference of sample.
+Both ablations are evaluated on the same frames, in a single pass over the video.
 """
 
 from dataclasses import dataclass, field
@@ -102,19 +101,11 @@ def run_campaign(
             totals.constrained_tracks.append(len(assignment))
             totals.bytetrack_tracks.append(len(tracked))
 
-            # MOTA et IDF1 : seulement sur les frames ou l'identite est connue.
+            # mota and idf1 only where identity is known
             identity_row = truth_identity.assignments.get(index)
             if identity_row:
-                # Les equipes changent de cote au cours du match, et les slots
-                # designent une moitie de court : au-dela d'une frontiere, `near_1`
-                # est quelqu'un d'autre. Le nom porte donc le segment, ce qui arrete
-                # l'identite au lieu de la prolonger a tort.
-                #
-                # Des DEUX cotes. IDF1 apparie chaque reference a une seule
-                # hypothese, globalement : couper la reference seule laisserait des
-                # references sans partenaire possible, comptees comme manquees, et
-                # punirait les deux trackers pour une frontiere qu'aucune
-                # information de l'image ne permet de franchir.
+                # the name carries the segment, on both sides: identity stops at a change of
+                # ends, and cutting the reference alone would leave it without a partner
                 segment = truth_identity.segment_of(index)
                 reference = {
                     f"{slot}#{segment}": truth[annotation_index].bbox

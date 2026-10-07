@@ -1,11 +1,7 @@
-"""Mesure le decoupage en echanges contre les services annotes dans le dataset.
+"""Measure the cutting into rallies against the serves annotated in the dataset.
 
-Le dataset marque les services sur les 20 100 premieres images de chaque finale. Un
-debut d'echange annonce est juste s'il tombe a deux secondes au plus d'un service : le
-raccord precede le service d'une seconde au plus, et le geste du service dure.
-
-Les minutes qui ont servi a entrainer le modele de contacts reglent le decoupage ; les
-minutes qu'il n'a jamais vues ne se notent qu'avec --juge, une fois.
+An announced rally start is right if it falls within two seconds of a serve. The
+minutes the contact model has never seen are only scored with --juge, once.
 
 Usage:
     python scripts/rally_bench.py --contact-model weights/contact_net.pt
@@ -32,12 +28,12 @@ TUNE = [("FinalF", 16000), ("FinalF", 17800), ("FinalM", 5000), ("FinalM", 8000)
 JUDGE = [("FinalF", 3000), ("FinalF", 8000), ("FinalF", 12000), ("FinalM", 1000),
          ("FinalM", 12000), ("FinalM", 14000)]
 CACHE = Path("outputs/segmentation")
-TOLERANCE = 60  # images
-EDGE = 30  # un service colle au bord de la minute ne peut pas etre juge
+TOLERANCE = 60  # frames
+EDGE = 30  # a serve stuck to the edge of the minute cannot be judged
 
 
 def serves(match: str) -> list[int]:
-    """The first frame of each annotated serve; a serve split in two runs counts once."""
+    """Return the first frame of each annotated serve; a serve split in two counts once."""
     path = Path(f"data/padeltracker100/extracted/labels/2022_BCN_{match}_1_shots.csv")
     starts, previous, last = [], None, -1000
     with path.open(encoding="utf-8") as handle:
@@ -52,7 +48,7 @@ def serves(match: str) -> list[int]:
 
 
 def minute(match: str, start: int, model: ContactModel) -> dict:
-    """The contacts and the frame-to-frame changes of an analysed minute; cached."""
+    """Return the contacts and the frame-to-frame changes of an analysed minute; cached."""
     path = CACHE / f"{match}_{start}.pkl"
     if path.exists():
         return pickle.loads(path.read_bytes())
@@ -70,7 +66,7 @@ def minute(match: str, start: int, model: ContactModel) -> dict:
 
 
 def score(keys, model: ContactModel) -> tuple[int, int, int]:
-    """Serves found, rally starts announced, serves annotated."""
+    """Return serves found, rally starts announced, serves annotated."""
     found = announced = real = 0
     for match, start in keys:
         data = minute(match, start, model)
@@ -97,8 +93,8 @@ def main() -> None:
     keys = JUDGE if args.juge else TUNE
     found, announced, real = score(keys, ContactModel.load(args.contact_model))
     title = "JUGE" if args.juge else "reglage"
-    print(f"{title} : {found}/{real} services retrouves, {announced} debuts annonces, "
-          f"precision {found / max(announced, 1):.0%}, rappel {found / max(real, 1):.0%}")
+    print(f"{title}: {found}/{real} serves found, {announced} starts announced, "
+          f"precision {found / max(announced, 1):.0%}, recall {found / max(real, 1):.0%}")
 
 
 if __name__ == "__main__":

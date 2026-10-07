@@ -32,7 +32,7 @@ def test_marking_the_same_instant_twice_keeps_the_latest():
 
 def test_two_contacts_a_frame_apart_are_both_kept():
     marks = _marks()
-    marks.mark(201, "verre")  # une balle dans un coin touche deux vitres
+    marks.mark(201, "verre")  # a ball in a corner touches two glass panels
     assert marks.marks[200] == "verre" and marks.marks[201] == "verre"
 
 

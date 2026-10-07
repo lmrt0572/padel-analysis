@@ -1,13 +1,8 @@
 """Airborne frames, and what they cost a ground-plane projection.
 
 A point at height `h` projected through a ground homography lands at
-`d * H / (H - h)` from the camera nadir rather than at `d`. Padel is played with
-constant jumping - smash, bandeja, vibora - so the question is not whether the bias
-exists but how much of the measured distance it accounts for.
-
-A player is taken to be airborne when the ankles rise clearly above their own recent
-baseline. Comparing against a local median rather than a fixed value keeps a player
-walking away from the camera, who also appears to rise, from counting as a jump.
+`d * H / (H - h)` from the camera nadir rather than at `d`. A player is airborne
+when the ankles rise clearly above their own recent baseline.
 """
 
 import numpy as np
@@ -16,7 +11,7 @@ import numpy as np
 def airborne_mask(
     ankle_image_y: np.ndarray, window: int = 31, tolerance: float = 10.0
 ) -> np.ndarray:
-    """Frames where the ankles sit well above their own local baseline.
+    """Return the frames where the ankles sit well above their own local baseline.
 
     Args:
         ankle_image_y: (N,) ankle height in image pixels; smaller is higher up.
@@ -46,7 +41,7 @@ def airborne_mask(
 def ground_projection_bias(
     distance_m: float, height_m: float, camera_height_m: float
 ) -> float:
-    """Extra distance, in metres, that an airborne point appears to gain.
+    """Return the extra distance, in metres, that an airborne point appears to gain.
 
     Args:
         distance_m: horizontal distance from the camera nadir.

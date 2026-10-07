@@ -1,37 +1,16 @@
-"""Entraine le reseau de carte de chaleur sur le cache de frames.
+"""Train the heat-map network on the frame cache.
 
-FP32 uniquement. La precision mixte a ete mesuree trois fois plus lente sur cette
-carte : la TU117 n'a pas de coeurs tensoriels, donc le demi-format ne gagne rien et
-les conversions coutent tout. Ne pas y revenir.
+FP32 only: mixed precision is slower on a card without tensor cores. Only the frames
+carrying an annotated ball are used, and the positive pixels are weighted. Weights are
+written atomically after each epoch, as the last state and the best validation.
 
-Lot de 4, largeur 16, 360x640 : 1,82 Go mesures sur les 3,45 libres.
-
-Seules les frames portant une balle annotee servent. Une frame sans annotation n'est
-pas une frame sans balle - 17,5 % des frames annotees n'en portent pas, et rien ne dit
-si la balle etait absente ou seulement non etiquetee.
-
-La cible etant nulle presque partout, une entropie croisee nue apprendrait a repondre
-zero. Les pixels positifs sont donc ponderes.
-
-Les poids sont ecrits apres chaque epoque, de facon atomique : deux heures de calcul ne
-doivent pas dependre de la fin du script, et on peut arreter des que la validation
-cesse de descendre sans rien perdre. Deux fichiers : le dernier etat, et celui de la
-meilleure validation - un pic passager, comme celui de l'epoque 8 du premier
-entrainement, ne doit pas pouvoir faire perdre le meilleur modele.
-
-Le debit mesure est de 10,7 frames/s, contre 15,1 en synthetique : le decodage JPEG est
-devenu le goulot, chaque frame etant lue trois fois - une par position dans la pile.
-Augmenter le nombre de processus de chargement n'a pas aide.
-
-Une session interrompue se reprend : --resume repart des poids ecrits, --first-epoch
-numerote la suite, et la meilleure validation initiale est recalculee sur les poids
-repris plutot que supposee. L'etat de l'optimiseur est ecrit a cote des poids depuis
-cette option ; un entrainement plus ancien repart donc avec des moments d'Adam nuls, et
-le script le dit.
+--resume starts again from written weights, --first-epoch numbers what follows, and the
+best validation is recomputed on the resumed weights.
 
 Usage:
     python scripts/train_ball_net.py --cache cache/FinalF --epochs 10 --out weights/ball_net
-    python scripts/train_ball_net.py --cache cache/FinalF_step1 --epochs 10         --resume weights/ball_net_full.pt --first-epoch 7 --out weights/ball_net_full
+    python scripts/train_ball_net.py --cache cache/FinalF_step1 --epochs 10 \
+        --resume weights/ball_net_full.pt --first-epoch 7 --out weights/ball_net_full
 """
 
 import argparse
@@ -52,7 +31,7 @@ from padel_analysis.ball.heatmap_net import BallHeatmapNet, load_stack, meta_pat
 
 
 class CachedBalls(Dataset):
-    """Les frames du cache qui portent une balle et dont les deux voisines existent."""
+    """The frames of the cache that carry a ball and whose two neighbours exist."""
 
     def __init__(self, cache: Path, spacing: int, sigma: float, indices: list[int]):
         self.cache = cache
@@ -79,7 +58,7 @@ class CachedBalls(Dataset):
 
 
 def usable(cache: Path, spacing: int) -> list[int]:
-    """Les frames annotees dont les deux voisines sont bien dans le cache."""
+    """Return the annotated frames whose two neighbours are in the cache."""
     meta = json.loads((cache / "balls.json").read_text(encoding="utf-8"))
     present = {int(p.stem) for p in cache.glob("*.jpg")}
     return sorted(
@@ -104,12 +83,12 @@ def save_atomically(state: dict, target: Path) -> None:
 
 
 def optimiser_path(weights: Path) -> Path:
-    """Ou vit l'etat de l'optimiseur qui accompagne ces poids."""
+    """Return where the optimiser state that goes with these weights lives."""
     return weights.with_name(weights.stem + "_optimiser.pt")
 
 
 def validate(net: nn.Module, loader: DataLoader, weight: torch.Tensor, device: str) -> float:
-    """Perte moyenne sur les frames de validation, ponderee comme a l'entrainement."""
+    """Return the mean loss over the validation frames, weighted as in training."""
     net.eval()
     checked, total = 0, 0.0
     with torch.no_grad():
@@ -135,22 +114,22 @@ def main() -> None:
     parser.add_argument("--rate", type=float, default=1e-3)
     parser.add_argument("--positive-weight", type=float, default=200.0)
     parser.add_argument("--validation", type=float, default=0.05)
-    parser.add_argument("--limit", type=int, help="sonde : ne garder que N frames")
+    parser.add_argument("--limit", type=int, help="probe: keep only N frames")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--resume",
         type=Path,
-        help="repartir de ces poids ; memes --cache, --seed et --limit, sinon la "
-        "validation ne porterait plus sur les memes frames",
+        help="start again from these weights; same --cache, --seed and --limit, otherwise the "
+        "validation would no longer cover the same frames",
     )
     parser.add_argument(
         "--first-epoch",
         type=int,
         default=1,
-        help="numero de la premiere epoque a jouer, pour reprendre ou l'on s'est arrete",
+        help="number of the first epoch to run, to resume where one stopped",
     )
-    parser.add_argument("--device", choices=("cuda", "cpu"), help="par defaut : cuda si present")
+    parser.add_argument("--device", choices=("cuda", "cpu"), help="by default: cuda if present")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -162,7 +141,7 @@ def main() -> None:
 
     cut = max(1, int(len(frames) * args.validation))
     held, trained = frames[:cut], frames[cut:]
-    print(f"{len(trained)} frames d'entrainement, {len(held)} de validation")
+    print(f"{len(trained)} training frames, {len(held)} for validation")
 
     size = json.loads((args.cache / "balls.json").read_text(encoding="utf-8"))["size"]
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -183,11 +162,11 @@ def main() -> None:
             optimiser.load_state_dict(
                 torch.load(moments, map_location=device, weights_only=True)
             )
-            print(f"reprise : poids et etat de l'optimiseur depuis {args.resume}")
+            print(f"resuming: weights and optimiser state from {args.resume}")
         else:
             print(
-                f"reprise : poids depuis {args.resume}, mais aucun etat d'optimiseur - "
-                "Adam repart de moments nuls, ce qui secoue les premieres iterations"
+                f"resuming: weights from {args.resume}, but no optimiser state: "
+                "Adam starts again from zero moments, which shakes the first iterations"
             )
 
     loaders = {
@@ -203,11 +182,11 @@ def main() -> None:
     }
 
     if args.first_epoch > args.epochs:
-        raise SystemExit("--first-epoch depasse --epochs : rien a jouer")
+        raise SystemExit("--first-epoch is beyond --epochs: nothing to run")
     best = float("inf")
     if args.resume is not None:
         best = validate(net, loaders["held"], weight, device)
-        print(f"validation des poids repris : {best:.4f}")
+        print(f"validation of the resumed weights: {best:.4f}")
 
     for epoch in range(args.first_epoch, args.epochs + 1):
         net.train()
@@ -226,7 +205,7 @@ def main() -> None:
         held_loss = validate(net, loaders["held"], weight, device)
         elapsed = time.time() - started
         print(
-            f"epoque {epoch:2}  perte {total / seen:.4f}  "
+            f"epoch {epoch:2}  loss {total / seen:.4f}  "
             f"validation {held_loss:.4f}  "
             f"{elapsed / 60:.1f} min  {seen / elapsed:.1f} frames/s",
             flush=True,
@@ -238,11 +217,11 @@ def main() -> None:
             save_atomically(
                 net.state_dict(), args.out.with_name(args.out.name + "_best.pt")
             )
-            print(f"          meilleure validation jusqu'ici, epoque {epoch} conservee",
+            print(f"          best validation so far, epoch {epoch} kept",
                   flush=True)
 
-    print(f"poids ecrits : {args.out.with_suffix('.pt')} (dernier), "
-          f"{args.out.name}_best.pt (meilleure validation {best:.4f})")
+    print(f"weights written: {args.out.with_suffix('.pt')} (last), "
+          f"{args.out.name}_best.pt (best validation {best:.4f})")
 
 
 if __name__ == "__main__":

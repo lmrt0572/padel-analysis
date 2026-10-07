@@ -1,18 +1,13 @@
-"""Mesure la regle de surface contre les jugements humains.
+"""Measure the surface rule against the human judgements.
 
-Rapporte par classe, par strate, et avec l'effectif a cote de chaque taux : un taux sur
-deux exemples n'est pas un taux.
-
-Les deux reponses qui ne nomment aucune surface sont comptees a part et jamais
-additionnees. "x" est une non-mesure ; "aucun" est un faux positif de l'etage des
-contacts, et son complement est la precision de cet etage - la seule que ce projet
-puisse produire, l'annotation de frappes couvrant la moitie des frames.
+Reported by class and by stratum, with the count next to each rate. "x" (unreadable)
+and "aucun" (no contact) are counted separately and never added together.
 
 Usage:
-    python scripts/measure_surfaces.py --truth ground_truth/surfaces/<nom>.json \
+    python scripts/measure_surfaces.py --truth ground_truth/surfaces/<name>.json \
         --annotations <ball.json> --poses <pose.json> \
-        --calibration ground_truth/calibrations/<nom>.json \
-        --out outputs/<nom>_surfaces.json
+        --calibration ground_truth/calibrations/<name>.json \
+        --out outputs/<name>_surfaces.json
 """
 
 import argparse
@@ -45,7 +40,7 @@ CLASS_OF_SURFACE = {RACKET: "raquette", "floor": "sol", "net": "filet"}
 
 
 def predicted_class(name: str | None) -> str:
-    """La classe que la regle annonce, 'rien' si elle n'a trouve aucune surface."""
+    """Return the class the rule announces, 'rien' if it found no surface."""
     if name is None:
         return "rien"
     return CLASS_OF_SURFACE.get(name, "mur")
@@ -92,40 +87,39 @@ def main() -> None:
 
     truths = [class_of(a) or a for a in actual]
     scores = per_class(predicted, truths)
-    # Le filtre porte sur la REPONSE, pas sur la classe : class_of traduit une
-    # reponse et ne connait donc pas "mur", qui en est deja une. Filtrer sur la
-    # classe ecarterait silencieusement les dix-sept murs.
+    # filter on the answer, not on the class: `class_of` translates an answer and
+    # does not know "mur", which is already a class
     real = [
         (p, t)
         for p, t, a in zip(predicted, truths, actual)
         if class_of(a) is not None
     ]
 
-    print(f"{len(judged)} contacts juges\n")
-    print(f"{'classe':10} {'effectif':>9} {'precision':>10} {'rappel':>8} {'F1':>7}")
+    print(f"{len(judged)} contacts judged\n")
+    print(f"{'class':10} {'count':>9} {'precision':>10} {'recall':>8} {'F1':>7}")
     for label, score in scores.items():
         print(
             f"{label:10} {score.support:9} {score.precision:10.3f} "
             f"{score.recall:8.3f} {score.f1:7.3f}"
         )
     accuracy = sum(1 for p, t in real if p == t) / len(real)
-    print(f"\nexactitude globale : {accuracy:.3f} sur {len(real)} contacts reels")
+    print(f"\noverall accuracy: {accuracy:.3f} over {len(real)} real contacts")
 
     absent = share_of(actual, NO_CONTACT)
     unreadable = share_of(actual, UNREADABLE)
-    print(f"\nfaux positifs de detection        : {absent:.3f}")
-    print(f"precision de l'etage des contacts : {1 - absent:.3f}")
-    print(f"illisibles                        : {unreadable:.3f}")
+    print(f"\ndetection false positives        : {absent:.3f}")
+    print(f"precision of the contact stage    : {1 - absent:.3f}")
+    print(f"unreadable                        : {unreadable:.3f}")
 
     total_isolated = sum(isolated.values())
     if total_isolated:
         spurious = isolated.get(NO_CONTACT, 0)
         print(
-            f"\nrayon isole : {total_isolated} cas, dont {spurious} sans contact "
+            f"\nisolated ray: {total_isolated} cases, {spurious} of them without a contact "
             f"({spurious / total_isolated:.0%})"
         )
 
-    print("\npar strate :")
+    print("\nby stratum:")
     for stratum in ("raquette", "isole", "ambigu"):
         rows = [
             (p, t, a)
@@ -134,12 +128,12 @@ def main() -> None:
         ]
         kept = [(p, t) for p, t, a in rows if class_of(a) is not None]
         if not kept:
-            print(f"  {stratum:9} n={len(rows):3}  aucun contact reel")
+            print(f"  {stratum:9} n={len(rows):3}  no real contact")
             continue
         good = sum(1 for p, t in kept if p == t)
         print(
-            f"  {stratum:9} n={len(rows):3}  reels {len(kept):3}  "
-            f"exactitude {good / len(kept):.3f}"
+            f"  {stratum:9} n={len(rows):3}  real {len(kept):3}  "
+            f"accuracy {good / len(kept):.3f}"
         )
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -168,7 +162,7 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    print(f"\nresultats : {args.out}")
+    print(f"\nresults: {args.out}")
 
 
 if __name__ == "__main__":

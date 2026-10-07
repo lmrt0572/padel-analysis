@@ -26,7 +26,7 @@ def test_a_class_never_predicted_has_no_precision():
 
 
 def test_the_support_is_reported_beside_every_rate():
-    """Un taux sur trois exemples n'est pas un taux : l'effectif doit suivre."""
+    """A rate on three examples is not a rate: the count must follow."""
     assert per_class(["sol"] * 3, ["sol"] * 3)["sol"].support == 3
 
 
@@ -43,7 +43,7 @@ def test_lengths_must_match():
 
 
 def test_weighted_accuracy_follows_the_real_population():
-    """Annoter surtout les cas difficiles ne doit pas deformer le chiffre global."""
+    """Annotating mostly the hard cases must not distort the overall figure."""
     value = weighted_accuracy(
         {
             "settled": (["sol"] * 10, ["sol"] * 9 + ["mur"]),
@@ -75,7 +75,7 @@ def test_every_stratum_needs_a_weight():
 
 
 def test_an_absent_contact_is_excluded_from_the_surface_rates():
-    """Un faux positif de detection n'est pas une erreur de classification."""
+    """A detection false positive is not a classification error."""
     score = per_class(["sol", "mur"], ["sol", NO_CONTACT])
     assert score["sol"].support == 1
     assert NO_CONTACT not in score

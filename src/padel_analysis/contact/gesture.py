@@ -1,10 +1,7 @@
 """Racket contacts read from the striker's gesture rather than from the ball alone.
 
-A shot along the camera axis barely bends the ball in the image, so the turn criterion
-misses it; a ball bouncing next to a still player looks like a shot to a pure distance
-rule. The wrist settles both. Measured against a complete hand marking: the wrist near
-the ball moves at 26 px per frame in median at a marked shot, and at 5 px at instants
-with no contact - and the shots the turn criterion missed move just as fast, at 29.
+A shot along the camera axis barely bends the ball in the image, and a ball bouncing
+next to a still player looks like a shot to a distance rule. The wrist speed settles both.
 """
 
 import math
@@ -18,10 +15,10 @@ WRISTS = (9, 10)
 
 
 def gesture_near(players: Players, frame: int, ball: Point | None, reach: float = 80.0) -> float:
-    """The fastest speed, in px per frame, of a wrist within `reach` of the ball.
+    """Return the fastest speed, in px per frame, of a wrist within `reach` of the ball.
 
-    Speed is measured over two frames each side, following the player through the
-    tracker's slot so that a wrist is never compared with somebody else's.
+    The player is followed through the tracker's slot, so a wrist is never compared
+    with somebody else's.
     """
     here = players.get(frame)
     if here is None or ball is None:
@@ -53,17 +50,15 @@ def strikes(
     suppression: int = 10,
     taken: Sequence[int] = (),
 ) -> list[int]:
-    """Frames where a wrist near the ball moves fast enough to be striking it.
+    """Return the frames where a wrist near the ball moves fast enough to be striking it.
 
-    One swing lasts several frames, so the fastest frame of each is kept and its
-    neighbours within `suppression` are dropped.
+    The fastest frame of each swing is kept.
 
     Args:
-        min_speed: least wrist speed, px per frame. 10 was swept on the tuning match.
+        min_speed: least wrist speed, px per frame.
         reach: how far from the ball, in pixels, a wrist may be.
-        taken: contacts already found another way. A swing near one of them is that
-            contact, not a new one - and it must not suppress a genuine swing next to
-            it, which is why they are excluded before the swings are merged.
+        suppression: frames around a kept swing that are dropped.
+        taken: contacts already found another way; a swing near one is not a new contact.
     """
     speeds = {f: gesture_near(players, f, ball.get(f), reach) for f in range(start, stop + 1)}
     kept: list[int] = list(taken)

@@ -1,16 +1,13 @@
-"""Relecture des vitres pointees pres d'un coin, dans les minutes pointees avant le 29/09.
+"""Review the glass contacts marked near a corner, in the minutes marked before 29/09.
 
-L'outil de pointage remplacait alors toute marque posee a deux images ou moins d'une
-autre : une balle qui touche deux vitres dans un coin, d'une image a l'autre, n'en
-gardait qu'une. Ce script retrouve les vitres pointees a moins de 1,5 m d'un coin -
-le rayon qui passe par la balle y touche la vitre du fond pres d'une paroi laterale,
-ou la vitre laterale pres du fond - et ouvre l'outil sur chaque minute, `n` et `p`
-sautant d'un moment a l'autre. Ajouter la seconde vitre la ou il y en avait deux ; ne
-rien toucher sinon. Une minute refermee avec `q` est notee comme relue.
+The marking tool then kept a single mark where a ball touched two glass panels from one
+frame to the next. This opens the tool on each minute, `n` and `p` jumping between the
+glass contacts marked within 1.5 m of a corner. Add the second contact where there were
+two. A minute closed with `q` is recorded as reviewed.
 
 Usage:
-    python scripts/review_corners.py            # relire, minute apres minute
-    python scripts/review_corners.py --liste    # seulement compter les moments
+    python scripts/review_corners.py            # review, minute after minute
+    python scripts/review_corners.py --liste    # only count the moments
 """
 
 import argparse
@@ -35,7 +32,7 @@ PROGRESS = Path("outputs/coins/relues.json")
 
 
 def corner_moments(match: str, start: int) -> list[int]:
-    """The wall marks of one minute that sit near a corner and have no other wall beside."""
+    """Return the wall marks of one minute near a corner, with no other wall beside."""
     court = Court()
     surfaces = court_surfaces(court)
     analysis = pickle.loads(Path(minutes.analysis(match, start, "360")).read_bytes())
@@ -67,14 +64,14 @@ def corner_moments(match: str, start: int) -> list[int]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--liste", action="store_true", help="compter sans ouvrir l'outil")
+    parser.add_argument("--liste", action="store_true", help="count without opening the tool")
     args = parser.parse_args()
     done = json.loads(PROGRESS.read_text(encoding="utf-8")) if PROGRESS.exists() else []
     plan = [(match, start, corner_moments(match, start)) for match, start in BEFORE_FIX]
     total = sum(len(m) for *_, m in plan)
     left = [(match, start, m) for match, start, m in plan if m and f"{match}_{start}" not in done]
-    print(f"{total} vitres pres d'un coin dans {len(BEFORE_FIX)} minutes ; "
-          f"{sum(len(m) for *_, m in left)} a revoir dans {len(left)} minutes")
+    print(f"{total} glass contacts near a corner in {len(BEFORE_FIX)} minutes; "
+          f"{sum(len(m) for *_, m in left)} to review in {len(left)} minutes")
     if args.liste:
         for match, start, moments in plan:
             print(f"  {match} {start:5} : {len(moments)}")

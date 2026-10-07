@@ -1,11 +1,8 @@
-"""Mesure l'erreur de localisation des chevilles selon la resolution d'inference.
-
-Downscaler 1920 vers 640 signifie qu'un pixel du modele vaut trois pixels d'image.
-Au fond du court, ou un pixel vaut 6,47 cm, l'effet est brutal. On le chiffre.
+"""Measure the ankle localisation error against the inference resolution.
 
 Usage:
     python scripts/experiment_imgsz.py --video <video.mp4> --annotations <pose.json> \
-        --calibration ground_truth/calibrations/<nom>.json --start 5000 --frames 200
+        --calibration ground_truth/calibrations/<name>.json --start 5000 --frames 200
 """
 
 import argparse
@@ -25,7 +22,7 @@ MAX_MATCH_DISTANCE = 100.0
 
 
 def match_by_position(predicted: list, annotated: list) -> list[tuple[int, int]]:
-    """Apparie predictions et annotations par distance minimale entre chevilles."""
+    """Match predictions and annotations by the smallest distance between ankles."""
     if not predicted or not annotated:
         return []
     cost = np.zeros((len(predicted), len(annotated)))
@@ -49,13 +46,13 @@ def main() -> None:
     parser.add_argument("--frames", type=int, default=200)
     args = parser.parse_args()
 
-    print("chargement des annotations...", flush=True)
+    print("loading the annotations...", flush=True)
     annotations = PoseAnnotations.load(args.annotations)
     projector = Calibration.load(args.calibration).projector
 
     print()
-    print(f"{'imgsz':>7} {'ms/frame':>9} {'err px':>8} {'cm proche':>11} "
-          f"{'cm fond':>9} {'appariees':>10}")
+    print(f"{'imgsz':>7} {'ms/frame':>9} {'err px':>8} {'cm near':>11} "
+          f"{'cm far':>9} {'matched':>10}")
     print("-" * 60)
 
     for size in SIZES:

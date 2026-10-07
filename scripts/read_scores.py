@@ -1,11 +1,9 @@
-"""Lit le score au tableau d'affichage a chaque echange d'un match, et en deduit les points.
+"""Read the score off the scoreboard at each rally of a match, and deduce the points.
 
-Le match est parcouru une fois : les raccords decoupent les echanges, et le tableau est
-lu sur quelques images au debut de chacun ; la lecture la plus frequente est gardee.
-Entre deux echanges successifs, la grammaire du score dit qui a gagne le point, ou
-qu'une lecture est douteuse. Le fichier ecrit garde aussi chaque lecture, paire au
-service comprise, et le debut de chaque sequence. Avec --mosaique, des tableaux tires au hasard sont ecrits
-avec leur lecture, pour la verifier a l'oeil.
+The scoreboard is read on a few frames at the start of each rally and the most frequent
+reading is kept. Between two successive rallies, the grammar of the score says who won
+the point, or that a reading is doubtful. With --mosaique, scoreboards drawn at random
+are written with their reading, to check it by eye.
 
 Usage:
     python scripts/read_scores.py --match FinalF --out outputs/scores/FinalF.json
@@ -28,21 +26,21 @@ from padel_analysis.io.splices import SPLICE
 from padel_analysis.io.video_source import VideoSource
 
 EXAMPLES = Path("ground_truth/scoreboard/templates.json")
-READS = (15, 30, 45, 60, 75)  # images apres le raccord ou lire le tableau
+READS = (15, 30, 45, 60, 75)  # frames after the cut on which to read the scoreboard
 
 
 def frame_of(match: str, index: int) -> np.ndarray:
     with VideoSource(minutes.video(match)) as source:
         for _, image in source.iter_frames(start=index, stop=index + 1):
             return image
-    raise ValueError(f"{match} n'a pas d'image {index}")
+    raise ValueError(f"{match} has no frame {index}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--match", required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--mosaique", type=Path, help="image de controle a ecrire")
+    parser.add_argument("--mosaique", type=Path, help="check image to write")
     args = parser.parse_args()
 
     board = Scoreboard.from_examples(EXAMPLES, frame_of)
@@ -82,14 +80,13 @@ def main() -> None:
                        "before": [before.set_number, *before.games, *before.points],
                        "after": [after.set_number, *after.games, *after.points]})
     decided = sum(1 for p in points if p["winner"] is not None)
-    print(f"{args.match} : {len(stretches)} sequences, {len(readings)} lues ; {len(points)} "
-          f"changements de score, {decided} points attribues, {undecided} douteux, "
-          f"{same} sequences sans changement (meme point)")
+    print(f"{args.match}: {len(stretches)} sequences, {len(readings)} read; {len(points)} "
+          f"score changes, {decided} points attributed, {undecided} doubtful, "
+          f"{same} sequences without a change (same point)")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "points": points,
-        # Toutes les lectures, une par sequence lue : le debut de la sequence, le score et
-        # la ligne de la paire au service, que le bilan du match croise avec le service.
+        # one reading per sequence: its start, the score and the row of the serving pair
         "readings": [{"start": start, "set": state.set_number, "games": list(state.games),
                       "points": list(state.points), "server": state.server}
                      for start, state in readings],

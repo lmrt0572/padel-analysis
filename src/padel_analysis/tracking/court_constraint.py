@@ -1,19 +1,8 @@
 """Assign observations to four fixed player slots, two per side of the net.
 
-Padel is always played as two pairs, and players never cross the net during a game.
-That turns identity into an assignment problem with a hard structural constraint,
-which a generic tracker cannot exploit: partners cross constantly, and a purely
-appearance- or motion-based tracker swaps their identifiers when they do.
-
-The side of the net comes from the sign of the projected `y` coordinate, so the
-calibration of the previous milestone feeds the tracker directly.
-
-The video is a sequence of rallies spliced together, and at each splice the players
-reappear elsewhere. Measured on both finals, nearly every identity switch left happened
-there. A slot's velocity is the difference of its last two positions, so across a
-splice it becomes the speed of a teleportation, and the next predictions aim metres
-off. A splice is recognised by several players jumping further than anyone runs in one
-frame, and the velocity it produced is dropped.
+Players never cross the net during a game, so identity is an assignment problem under
+a hard constraint; the side comes from the sign of the projected `y`. At a broadcast
+splice the players reappear elsewhere, and the velocity it produces is dropped.
 """
 
 from dataclasses import dataclass, field
@@ -71,7 +60,7 @@ class Slot:
 
 
 class CourtSlotTracker:
-    """Keeps exactly four identities, two on each side of the net."""
+    """Tracker keeping exactly four identities, two on each side of the net."""
 
     def __init__(
         self,
@@ -86,29 +75,17 @@ class CourtSlotTracker:
         off_court_penalty: float = 20.0,
         cut_jump: float = 1.0,
     ) -> None:
-        """Args:
+        """Set the tracker up.
+
+        Args:
             max_x, max_y: half-extents beyond which an observation is refused, in
-                metres. The court is 10 by 20, so these allow four metres of overrun
-                on each side - padel players do leave through the side openings to
-                return a lob - while refusing spectators in the stands. Without this
-                bound, roughly one position in a hundred landed several metres past
-                the glass.
-            court_half_width, court_half_length, margin: the court, and the slack given
-                to the ground point's projection error - 56 cm at the far baseline.
-                Behind a back wall and within the court's width, nobody can be playing:
-                the glass is in the way, and the only way out is the side openings.
-                Seen on the women's final: a slot held for twenty seconds a person
-                sitting 1.7 m behind the far glass, while the real player went untracked.
+                metres; players do leave through the side openings.
+            court_half_width, court_half_length, margin: the court, and the slack
+                given to the ground point's projection error.
             off_court_penalty: metres-equivalent added to any observation off the
-                court. A player may still leave through a side opening, but someone on
-                the court is always preferred to someone beside it - an umpire or a
-                ball boy sits there and never moves, so a slot that took them would
-                keep them. Larger than the court is long, so that no distance to a
-                player on the court can outweigh it.
-            cut_jump: metres a player would have to cover in one frame, 30 m/s. When
-                two players jump that far at once, the broadcast has cut to another
-                rally. Between 0.6 and 1 m the result does not move; at 1.5 m some
-                splices go unseen.
+                court, larger than the court is long.
+            cut_jump: metres a player would have to cover in one frame for it to
+                count as a broadcast cut.
         """
         self.slots = [
             Slot(name="near_1", side=-1),
@@ -128,7 +105,7 @@ class CourtSlotTracker:
         self._cut_jump = cut_jump
 
     def cost(self, slot: Slot, observation: CourtObservation) -> float:
-        """Cost of assigning `observation` to `slot`, in metres-equivalent."""
+        """Return the cost of assigning `observation` to `slot`, in metres-equivalent."""
         x, y = float(observation.court_xy[0]), float(observation.court_xy[1])
         if abs(x) > self._max_x or abs(y) > self._max_y:
             return IMPOSSIBLE
@@ -158,7 +135,7 @@ class CourtSlotTracker:
         return distance + self._appearance_weight * appearance + doubt + penalty
 
     def update(self, observations: list[CourtObservation]) -> dict[str, int]:
-        """Assign observations to slots. Returns {slot name: observation index}."""
+        """Assign observations to slots and return {slot name: observation index}."""
         if not observations:
             for slot in self.slots:
                 slot.coast()
@@ -187,13 +164,13 @@ class CourtSlotTracker:
                     slot.position = None
                     slot.velocity = np.zeros(2)
         if cut:
-            # La vitesse mesuree a travers un raccord est celle d'une teleportation.
+            # the velocity measured across a cut is that of a teleportation
             for slot in self.slots:
                 slot.velocity = np.zeros(2)
         return assignment
 
     def _is_cut(self, rows, cols, matrix, observations) -> bool:
-        """Whether several players jumped further than anyone runs in one frame."""
+        """Return whether several players jumped further than anyone runs in one frame."""
         jumps = tracked = 0
         for row, col in zip(rows, cols):
             predicted = self.slots[row].predict()

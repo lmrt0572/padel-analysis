@@ -1,16 +1,8 @@
-"""What can honestly be said about detected contacts, and what cannot.
+"""What can be said about detected contacts against the shot annotation.
 
-The shot annotation marks racket hits only, as intervals rather than instants, and
-those intervals cover 48.2 percent of the annotated frames on the women's evaluation
-slice. A detector drawing its instants at random scores 0.480 precision there; the
-real one scores 0.492. Precision against this annotation therefore carries almost no
-information, and reporting it as a performance would be a lie by omission.
-
-Two things replace it. `chance_precision` puts the random control beside every figure
-so a reader sees what the number is worth. `bounces_between` counts detected contacts
-between two annotated shots and is checked against the physics of the game: a padel
-ball bounces nought, once or twice between two racket hits, so a detector claiming
-five is over-firing whatever its recall says.
+The annotation marks racket hits as intervals covering about half the frames, so
+precision against it is reported beside what a random draw would score. The count
+of bounces between two shots is checked against the game instead.
 """
 
 import itertools
@@ -26,11 +18,7 @@ def _covered_frames(events: Sequence[ShotEvent]) -> set[int]:
 
 
 def interval_coverage(frames: Sequence[int], events: Sequence[ShotEvent]) -> float:
-    """Share of `frames` that sit inside an annotated shot.
-
-    This is the floor any precision figure must be read against: a detector firing
-    at random reaches it without knowing anything.
-    """
+    """Return the share of `frames` that sit inside an annotated shot."""
     if not frames:
         return math.nan
     covered = _covered_frames(events)
@@ -40,17 +28,15 @@ def interval_coverage(frames: Sequence[int], events: Sequence[ShotEvent]) -> flo
 def bounces_between(
     contacts: Sequence[int], events: Sequence[ShotEvent], max_gap: int = 120
 ) -> dict[int, int]:
-    """How many contacts fall between two consecutive shots, tallied.
+    """Return how many contacts fall between two consecutive shots, tallied.
 
     Args:
         contacts: detected contact frames.
         events: the annotated shots, in order.
-        max_gap: longest gap still counted as one rally. Beyond it the point ended
-            and the ball was carried back by hand, which is not play.
+        max_gap: longest gap still counted as one rally.
 
     Returns:
-        A count of pairs by number of contacts between them - `{1: 33, 2: 19}` reads
-        as thirty-three exchanges with one bounce and nineteen with two.
+        A count of pairs by number of contacts between them.
     """
     tally: dict[int, int] = {}
     for first, second in itertools.pairwise(events):
@@ -69,11 +55,7 @@ def chance_precision(
     draws: int = 200,
     seed: int = 0,
 ) -> float:
-    """Precision a detector would reach by drawing `count` frames at random.
-
-    Reported beside the real precision. Where the two agree, the detector has shown
-    nothing, however good the number looks on its own.
-    """
+    """Return the precision a detector would reach by drawing `count` frames at random."""
     if count <= 0 or count > len(frames):
         return math.nan
     covered = _covered_frames(events)

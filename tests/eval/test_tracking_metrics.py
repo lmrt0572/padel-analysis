@@ -39,7 +39,7 @@ def test_a_swap_is_counted_as_an_identity_switch():
 
 
 def test_an_extra_track_lowers_mota():
-    """Une piste attribuee a un spectateur est un faux positif."""
+    """A track attributed to a spectator is a false positive."""
     clean = TrackingAccumulator()
     noisy = TrackingAccumulator()
     for _ in range(10):
@@ -78,11 +78,11 @@ def test_boxes_too_far_apart_are_not_matched():
 
 
 def test_cutting_only_the_reference_at_a_boundary_wrecks_idf1():
-    """Piege : IDF1 apparie chaque reference a UNE seule hypothese, globalement.
+    """Trap: IDF1 matches each reference to ONE hypothesis only, globally.
 
-    Couper la reference en segments sans couper l'hypothese laisse des references
-    sans partenaire possible, comptees comme entierement manquees - alors que le
-    suivi est parfait.
+    Cutting the reference into segments without cutting the hypothesis leaves
+    references with no possible partner, counted as entirely missed, while the
+    tracking is perfect.
     """
     accumulator = TrackingAccumulator()
     for frame in range(20):
@@ -95,7 +95,7 @@ def test_cutting_only_the_reference_at_a_boundary_wrecks_idf1():
 
 
 def test_cutting_both_sides_at_a_boundary_keeps_a_perfect_score():
-    """La frontiere ne doit rien couter : elle retire une question, pas des points."""
+    """The boundary must cost nothing: it removes a question, not points."""
     accumulator = TrackingAccumulator()
     for frame in range(20):
         segment = 0 if frame < 10 else 1

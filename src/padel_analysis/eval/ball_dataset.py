@@ -1,12 +1,7 @@
 """Reader for the PadelTracker100 ball annotations.
 
-The file declares nine categories - Ball, Wall and seven event kinds - but only
-Ball is ever used. Wall was planned by the authors and left empty, which is why
-no contact surface can be scored against this dataset.
-
-Coverage is uneven and must be respected rather than assumed: the women's final
-is annotated across the whole match, the men's final stops at frame 21472. Past
-that point a missing annotation does not mean the ball is absent.
+Only the Ball category is used. The men's final is annotated up to frame 21472:
+past that point a missing annotation does not mean the ball is absent.
 """
 
 import json
@@ -50,14 +45,14 @@ class BallAnnotations:
         return cls(by_frame)
 
     def frame_indices(self) -> list[int]:
-        """Frames carrying at least one ball, in order."""
+        """Return the frames carrying at least one ball, in order."""
         return sorted(self._by_frame)
 
     def for_frame(self, index: int) -> list[tuple[float, float]]:
         return self._by_frame.get(index, [])
 
     def centres(self) -> dict[int, tuple[float, float]]:
-        """One centre per annotated frame, for the frames carrying exactly one."""
+        """Return one centre per annotated frame, for the frames carrying exactly one."""
         return {
             frame: balls[0]
             for frame, balls in self._by_frame.items()

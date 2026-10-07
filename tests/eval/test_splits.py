@@ -7,7 +7,7 @@ def test_the_two_evaluation_ranges_are_declared():
 
 
 def test_the_womens_evaluation_slice_sits_inside_the_shot_range():
-    """Hors de 0-20099 il n'y a aucune frappe, donc aucune metrique de contact."""
+    """Outside 0-20099 there is no stroke, so no contact metric."""
     slice_ = SPLITS["finalf_eval"]
     assert slice_.start >= 0
     assert slice_.stop <= 20099
@@ -20,7 +20,7 @@ def test_the_womens_training_ranges_avoid_the_evaluation_slice():
 
 
 def test_the_held_out_range_stops_where_the_annotation_stops():
-    """Au-dela de 21472 l'absence d'annotation ne veut pas dire absence de balle."""
+    """Beyond 21472 the absence of an annotation does not mean the absence of a ball."""
     assert SPLITS["finalm_heldout"].stop <= 21472
 
 
