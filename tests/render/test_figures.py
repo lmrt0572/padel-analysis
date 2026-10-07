@@ -15,8 +15,8 @@ def _counts(right, shown, real):
 
 
 VERDICTS = {"judges": [
-    {"name": "Juge 1", "rules": _counts(60, 90, 100), "model": _counts(80, 85, 100)},
-    {"name": "Juge 2", "rules": _counts(55, 80, 100), "model": _counts(78, 84, 100)},
+    {"name": "Judge 1", "rules": _counts(60, 90, 100), "model": _counts(80, 85, 100)},
+    {"name": "Judge 2", "rules": _counts(55, 80, 100), "model": _counts(78, 84, 100)},
 ]}
 
 
@@ -57,7 +57,7 @@ def test_the_player_charts_are_written(tmp_path):
 def _match_report(match):
     pair = {"points_won": 5, "strikes": 40, "volleys": 18, "after_bounce": 15,
             "after_glass": 9, "distance_m": 800.0, "net_share": 0.5,
-            "won_by_length": {"1 à 3 coups": 1, "8 coups et plus": 4}}
+            "won_by_length": {"1 to 3 shots": 1, "8 shots or more": 4}}
     grid = [[0.0] * 20 for _ in range(40)]
     grid[10][5] = 1.0
     occupancy = {"grid": grid, "extent": [-5.0, 5.0, -10.0, 10.0]}

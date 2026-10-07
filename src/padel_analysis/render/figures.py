@@ -34,7 +34,7 @@ def judges_chart(verdicts: dict, cv: dict | None, path: Path) -> None:
 
     groups, rules, model = [], [], []
     if cv is not None:
-        groups.append("Validation\ncroisée")
+        groups.append("Cross-\nvalidation")
         rules.append(_share(cv["regles"]))
         model.append(_share(cv["modele"]))
     for judge in verdicts["judges"]:
@@ -44,22 +44,22 @@ def judges_chart(verdicts: dict, cv: dict | None, path: Path) -> None:
     pooled = {kind: {"right": sum(j[kind]["right"] for j in verdicts["judges"]),
                      "real": sum(j[kind]["real"] for j in verdicts["judges"])}
               for kind in ("rules", "model")}
-    groups.append(f"Trois juges\n({pooled['model']['real']} contacts)")
+    groups.append(f"All judges\n({pooled['model']['real']} contacts)")
     rules.append(_share(pooled["rules"]))
     model.append(_share(pooled["model"]))
 
     figure, axis = plt.subplots(figsize=(9, 4.6))
     x = np.arange(len(groups))
-    for offset, values, colour, label in ((-0.2, rules, style.RULES, "Règles réglées à la main"),
-                                          (0.2, model, style.MODEL, "Modèle appris")):
+    for offset, values, colour, label in ((-0.2, rules, style.RULES, "Hand-tuned rules"),
+                                          (0.2, model, style.MODEL, "Learned model")):
         bars = axis.bar(x + offset, values, 0.38, color=colour, label=label, zorder=2)
         for bar, value in zip(bars, values, strict=True):
             axis.text(bar.get_x() + bar.get_width() / 2, value + 1, f"{value:.0f} %",
                       ha="center", color=style.TEXT, fontsize=9)
     axis.set_xticks(x, groups)
     axis.set_ylim(0, 100)
-    axis.set_ylabel("contacts réels donnés avec la bonne surface (%)")
-    axis.set_title("Contacts et surfaces, sur ce que la vidéo affiche")
+    axis.set_ylabel("real contacts given the right surface (%)")
+    axis.set_title("Contacts and surfaces, on what the video shows")
     axis.legend(loc="upper left", ncol=2)
     axis.grid(axis="x", visible=False)
     _save(figure, path)
@@ -75,14 +75,14 @@ def learning_curve_chart(curve: Sequence[dict], path: Path) -> None:
     figure, axis = plt.subplots(figsize=(7, 4))
     axis.plot(sizes, shares, color=style.MODEL, marker="o", linewidth=2.2, zorder=2)
     for size, share in zip(sizes, shares, strict=True):
-        axis.annotate(f"{share:.1f} %".replace(".", ","), (size, share),
+        axis.annotate(f"{share:.1f} %", (size, share),
                       textcoords="offset points",
                       xytext=(0, 9), ha="center", fontsize=9)
-    axis.set_xlabel("minutes de match pointées pour l'entraînement")
-    axis.set_ylabel("surface juste (%), validation croisée")
+    axis.set_xlabel("match minutes marked by hand for training")
+    axis.set_ylabel("right surface (%), cross-validation")
     axis.set_xticks(sizes)
     axis.set_ylim(min(shares) - 6, max(shares) + 5)
-    axis.set_title("Au-delà de huit minutes, pointer plus n'apporte presque rien")
+    axis.set_title("Beyond eight minutes, marking more adds almost nothing")
     _save(figure, path)
 
 
@@ -113,9 +113,9 @@ def confusion_chart(confusion: Sequence[dict], path: Path) -> None:
     names = [style.KIND_NAMES[kind] for kind in labels]
     axis.set_xticks(range(len(labels)), names)
     axis.set_yticks(range(len(labels)), names)
-    axis.set_xlabel("réponse du modèle")
-    axis.set_ylabel("vérité, pointée à la main")
-    axis.set_title("Qui est pris pour qui")
+    axis.set_xlabel("the model's answer")
+    axis.set_ylabel("truth, marked by hand")
+    axis.set_title("What is taken for what")
     axis.grid(False)
     _save(figure, path)
 
@@ -135,7 +135,7 @@ def heatmaps_chart(positions: dict, court, path: Path) -> None:
         axis.imshow(np.ma.masked_equal(grid, 0), origin="lower", extent=extent,
                     cmap="magma", alpha=0.85, zorder=2)
         axis.set_title(slot, color=style.PLAYER.get(slot, style.TEXT))
-    figure.suptitle("Occupation du terrain, match entier", color=style.TEXT)
+    figure.suptitle("Court occupancy, whole match", color=style.TEXT)
     _save(figure, path)
 
 
@@ -149,21 +149,21 @@ def net_control_chart(depths: np.ndarray, threshold: float, control: dict, path:
     left.hist(depths[~np.isnan(depths)], bins=50, range=(0, 10), color=style.KIND["verre"],
               zorder=2)
     left.axvline(threshold, color=style.KIND["filet"], linewidth=2,
-                 label=f"seuil {threshold} m, au creux des deux modes")
-    left.set_xlabel("distance au filet (m)")
+                 label=f"threshold {threshold} m, in the trough between the two modes")
+    left.set_xlabel("distance to the net (m)")
     left.set_ylabel("positions")
-    left.set_title("Deux profondeurs : au filet, ou au fond")
+    left.set_title("Two depths: at the net, or at the back")
     left.legend()
 
-    labels = ["Paire proche", "Paire du fond", "Disputé"]
+    labels = ["Near pair", "Far pair", "Contested"]
     values = [control["near_percent"], control["far_percent"], control["contested_percent"]]
     colours = [style.PLAYER["near_1"], style.PLAYER["far_1"], style.MUTED]
     bars = right.bar(labels, values, color=colours, zorder=2)
     for bar, value in zip(bars, values, strict=True):
         right.text(bar.get_x() + bar.get_width() / 2, value + 1, f"{value:.0f} %",
                    ha="center", color=style.TEXT, fontsize=9)
-    right.set_ylabel("temps de jeu (%)")
-    right.set_title("Qui tient le filet")
+    right.set_ylabel("playing time (%)")
+    right.set_title("Who holds the net")
     right.grid(axis="x", visible=False)
     _save(figure, path)
 
@@ -171,13 +171,13 @@ def net_control_chart(depths: np.ndarray, threshold: float, control: dict, path:
 PAIR_COLOURS = ("#3987e5", "#d95926")
 """The two pairs, top row of the scoreboard then bottom."""
 DUEL_ROWS = (
-    ("points_won", "Points gagnés", "exact : lus au tableau"),
-    ("strikes", "Frappes", "± 1 %"),
-    ("volleys", "Volées", "± 7 %"),
-    ("after_glass", "Frappes après une vitre", "± 6 %"),
-    ("distance_m", "Distance parcourue", "± 1 %"),
+    ("points_won", "Points won", "exact: read off the scoreboard"),
+    ("strikes", "Strokes", "± 1 %"),
+    ("volleys", "Volleys", "± 7 %"),
+    ("after_glass", "Strokes after the glass", "± 6 %"),
+    ("distance_m", "Distance covered", "± 1 %"),
 )
-MATCH_NAMES = {"FinalF": "Finale féminine", "FinalM": "Finale masculine"}
+MATCH_NAMES = {"FinalF": "Women's final", "FinalM": "Men's final"}
 
 
 def _pair_legend(axis, names) -> None:
@@ -207,9 +207,9 @@ def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
             axis.barh(y, 1 - share, left=share, color=PAIR_COLOURS[1], height=0.62,
                       edgecolor=style.PANEL, linewidth=2)
             unit = " m" if key == "distance_m" else ""
-            axis.text(0.015, y, f"{a:,.0f}{unit}".replace(",", " "), va="center",
+            axis.text(0.015, y, f"{a:,.0f}{unit}", va="center",
                       color=style.TEXT, fontsize=10, fontweight="bold")
-            axis.text(0.985, y, f"{b:,.0f}{unit}".replace(",", " "), va="center", ha="right",
+            axis.text(0.985, y, f"{b:,.0f}{unit}", va="center", ha="right",
                       color=style.TEXT, fontsize=10, fontweight="bold")
             axis.text(1.02, y, reliability, va="center", color=style.MUTED, fontsize=9,
                       transform=axis.get_yaxis_transform())
@@ -221,9 +221,9 @@ def pair_duel_chart(reports: Sequence[dict], path: Path) -> None:
         axis.grid(False)
         for spine in axis.spines.values():
             spine.set_visible(False)
-        net = " · ".join(f"{n} {report['pairs'][n]['net_share']:.0%}" for n in names)
+        net = " · ".join(f"{n} {100 * report['pairs'][n]['net_share']:.0f} %" for n in names)
         axis.set_title(f"{MATCH_NAMES.get(report['match'], report['match'])}, "
-                       f"{report['minutes']:.0f} min de jeu, temps au filet {net} (± 0,3 pt)",
+                       f"{report['minutes']:.0f} min of play, time at the net {net} (± 0.3 pt)",
                        loc="left", pad=28, fontsize=11)
         _pair_legend(axis, names)
     _save(figure, path)
@@ -254,7 +254,7 @@ def points_by_length_chart(reports: Sequence[dict], path: Path) -> None:
                        fontsize=11)
         axis.grid(axis="x", visible=False)
         _pair_legend(axis, names)
-    np.atleast_1d(axes)[0].set_ylabel("points gagnés")
+    np.atleast_1d(axes)[0].set_ylabel("points won")
     _save(figure, path)
 
 

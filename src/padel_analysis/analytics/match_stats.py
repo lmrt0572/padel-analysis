@@ -20,7 +20,7 @@ from .sides import end_changes, half_of_top_row
 
 WALLS = ("verre", "grillage")
 ROWS = (1, 2)
-LENGTHS = ((1, 3, "1 à 3 coups"), (4, 7, "4 à 7 coups"), (8, 1000, "8 coups et plus"))
+LENGTHS = ((1, 3, "1 to 3 shots"), (4, 7, "4 to 7 shots"), (8, 1000, "8 shots or more"))
 
 
 @dataclass

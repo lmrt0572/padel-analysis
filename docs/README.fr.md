@@ -17,7 +17,7 @@ entier · vérifié contre plus de **2 000 contacts pointés à la main**.
 
 ## Le projet en une minute
 
-https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
+https://github.com/user-attachments/assets/ed9d191b-2fb4-46b8-8e27-e1115da1dcba
 
 <sub>Avec le son. L'échange du film, ses contacts et ses statistiques sont ceux que le
 projet a mesurés ; entre deux contacts, la trajectoire de la balle en 3D est une
@@ -40,7 +40,7 @@ et son temps au filet. À chaque contact, la zone touchée (carré de service, f
 panneau de vitre) s'éclaire en perspective.
 
 <p align="center">
-  <img src="figures/panneau.png" alt="Panneau de statistiques d'un échange" width="300">
+  <img src="figures/panneau_fr.png" alt="Panneau de statistiques d'un échange" width="300">
 </p>
 
 ## Comment ça marche
@@ -109,7 +109,8 @@ Le bilan est donné **par paire, pas par joueur** : quand le suivi confond deux
 partenaires, la somme de la paire reste juste, mais la distance d'un joueur est fausse
 de plus de 12 % une fois sur dix. Les équipes sont suivies d'un changement de côté à
 l'autre par le score, qui dit quand elles changent ; le bilan part donc de la première
-lecture du tableau. L'occupation est repliée sur une moitié : le filet en haut.
+lecture du tableau. L'occupation est repliée sur une moitié : le filet en haut. (Les
+libellés des figures sont en anglais.)
 
 ## Limites
 

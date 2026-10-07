@@ -56,7 +56,7 @@ def test_strikes_are_split_into_volleys_and_shots_after_a_bounce_or_the_glass():
     near, far = pairs[1], pairs[2]
     assert (near.strikes, near.volleys, near.after_bounce) == (2, 1, 0)
     assert (far.strikes, far.after_bounce, far.after_glass) == (2, 2, 1)
-    assert far.won_by_length == {"4 à 7 coups": 1}
+    assert far.won_by_length == {"4 to 7 shots": 1}
 
 
 def test_distance_is_never_joined_across_a_splice_and_time_at_the_net_is_counted():

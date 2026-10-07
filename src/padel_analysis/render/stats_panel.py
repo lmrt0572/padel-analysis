@@ -15,9 +15,9 @@ from ..geometry.court import Court
 from . import figure_style as style
 
 FONTS = Path("C:/Windows/Fonts")
-LABELS = {"raquette": "FRAPPE", "sol": "SOL", "verre": "VITRE", "grillage": "GRILLAGE",
-          "filet": "FILET"}
-PAIR_NAMES = {"proche": "Paire proche", "fond": "Paire du fond"}
+LABELS = {"raquette": "STROKE", "sol": "FLOOR", "verre": "GLASS", "grillage": "MESH",
+          "filet": "NET"}
+PAIR_NAMES = {"proche": "Near pair", "fond": "Far pair"}
 PAIR_COLOUR = {"proche": style.PLAYER["near_1"], "fond": style.PLAYER["far_1"]}
 GRID = {"far_1": (0, 0), "far_2": (1, 0), "near_2": (0, 1), "near_1": (1, 1)}
 """Where each player's cell sits: the far pair on top, as on the minimap."""
@@ -87,7 +87,7 @@ class StatsPanel:
         text, muted = _rgb(style.TEXT), _rgb(style.MUTED)
 
         minutes, seconds = divmod(int(stats.elapsed), 60)
-        pen.text((x0, pad), "STATISTIQUES", font=self.fonts["title"], fill=text)
+        pen.text((x0, pad), "STATISTICS", font=self.fonts["title"], fill=text)
         pen.text((x1, pad), f"{minutes:02d}:{seconds:02d}", font=self.fonts["title"],
                  fill=muted, anchor="ra")
         top = pad + round(56 * s)
@@ -98,17 +98,17 @@ class StatsPanel:
         self._minimap(pen, stats, x0, top, map_width, map_height)
         cx, y = x0 + map_width + round(26 * s), top
         shots = stats.shots if stats.rally_number is None else stats.rally_shots
-        label = ("coups joués" if stats.rally_number is None
-                 else f"coups, échange n° {stats.rally_number}")
+        label = ("shots played" if stats.rally_number is None
+                 else f"shots, rally no. {stats.rally_number}")
         pen.text((cx, y), str(shots), font=self.fonts["big"], fill=text)
         pen.text((cx, y + round(56 * s)), label, font=self.fonts["label"], fill=muted)
         y += round(86 * s)
         if stats.rally_number is not None:
-            pen.text((cx, y), f"plus long : {stats.longest_rally} coups",
+            pen.text((cx, y), f"longest: {stats.longest_rally} shots",
                      font=self.fonts["small"], fill=muted)
         y += round(40 * s)
         y = self._duel(pen, stats, cx, x1, y)
-        pen.text((cx, y), "balle, dernier coup", font=self.fonts["label"], fill=muted)
+        pen.text((cx, y), "ball, last shot", font=self.fonts["label"], fill=muted)
         speed = stats.last_shot_speed
         pen.text((cx, y + round(22 * s)),
                  "-" if speed is None else f"{self.about} {speed:.0f} km/h",
@@ -135,7 +135,7 @@ class StatsPanel:
         s = self.scale
         shots = stats.rally_pair_shots or {"proche": 0, "fond": 0}
         near, far = shots["proche"], shots["fond"]
-        pen.text((x0, y), "frappes dans l'échange", font=self.fonts["label"],
+        pen.text((x0, y), "strokes in the rally", font=self.fonts["label"],
                  fill=_rgb(style.MUTED))
         y += round(28 * s)
         height = round(14 * s)
@@ -163,7 +163,7 @@ class StatsPanel:
         """Draw a 2 x 2 grid of the players, with hairlines between the cells."""
         s = self.scale
         text, muted, rule = _rgb(style.TEXT), _rgb(style.MUTED), _rgb(style.LINE)
-        pen.text((x0, y), "JOUEURS", font=self.fonts["label"], fill=muted)
+        pen.text((x0, y), "PLAYERS", font=self.fonts["label"], fill=muted)
         y += round(32 * s)
         pen.line((x0, y, x1, y), fill=text, width=max(1, round(2 * s)))
         gap, height = round(18 * s), round(236 * s)
@@ -183,8 +183,8 @@ class StatsPanel:
             pen.text((bx + round(20 * s), mid), self.names.get(line.slot, line.slot),
                      font=self.fonts["name"], fill=text, anchor="lm")
             pen.text((bx, by + round(36 * s)),
-                     f"{_plural(line.shots, 'frappe')} · {line.volleys} vol. · "
-                     f"{line.after_bounce} reb.", font=self.fonts["small"], fill=muted)
+                     f"{_plural(line.shots, 'stroke')} · {line.volleys} vol. · "
+                     f"{line.after_bounce} bnc.", font=self.fonts["small"], fill=muted)
             for i, (value, label) in enumerate(self._values(line, stats)):
                 vx = bx + (i % 2) * (width / 2)
                 vy = by + round(70 * s) + (i // 2) * round(70 * s)
@@ -193,11 +193,11 @@ class StatsPanel:
 
     def _values(self, line: PlayerLine, stats: LiveStats) -> list[tuple[str, str]]:
         net = "-" if math.isnan(line.net_share) else f"{100 * line.net_share:.0f} %"
-        values = [(f"{line.distance:.0f} m", "parcourus"),
+        values = [(f"{line.distance:.0f} m", "covered"),
                   (f"{self.about} {line.top_speed:.0f}", "km/h max"),
-                  (net, "au filet")]
+                  (net, "at the net")]
         if stats.pair_points is not None:
-            values.append((f"{line.winners} · {line.errors}", "gagnés · fautes"))
+            values.append((f"{line.winners} · {line.errors}", "winners · errors"))
         return values
 
     def _minimap(self, pen, stats: LiveStats, x: int, y: int, width: int, height: int) -> None:

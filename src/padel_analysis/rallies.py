@@ -11,10 +11,10 @@ import numpy as np
 from .analytics.rally import Rally, RallyContact
 
 DEFAULT_NAMES = {
-    "near_1": "Proche 1",
-    "near_2": "Proche 2",
-    "far_1": "Fond 1",
-    "far_2": "Fond 2",
+    "near_1": "Near 1",
+    "near_2": "Near 2",
+    "far_1": "Far 1",
+    "far_2": "Far 2",
 }
 ANSWER_OF_LABEL = {"RAQUETTE": "raquette", "SOL": "sol", "VITRE": "verre",
                    "GRILLAGE": "grillage", "FILET": "filet"}

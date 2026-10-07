@@ -17,16 +17,16 @@ match · checked against more than **2,000 contacts marked by hand**.
 
 ## The project in one minute
 
-https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
+https://github.com/user-attachments/assets/c34ac185-3a00-4c1f-be38-abfe4c2aa396
 
-<sub>With sound; the captions are in French. The rally in the film, its contacts and its
-statistics are the ones the project measured; between two contacts, the ball's 3D
-trajectory is an illustration. Footage: PadelTracker100 dataset (CC-BY-4.0), World
-Padel Tour broadcast.</sub>
+<sub>With sound. The rally in the film, its contacts and its statistics are the ones
+the project measured; between two contacts, the ball's 3D trajectory is an
+illustration. Footage: PadelTracker100 dataset (CC-BY-4.0), World Padel Tour
+broadcast.</sub>
 
 ## What the project produces
 
-https://github.com/user-attachments/assets/a1eb8fcd-89af-4678-96fa-427a242407b9
+https://github.com/user-attachments/assets/8f2beb2f-770e-4e6d-b34e-88d834493704
 
 <sub>The whole rally as the project renders it: the tracked players, the ball, the area
 touched at each contact and the statistics panel. Footage: PadelTracker100 dataset
@@ -106,7 +106,7 @@ The report is given **by pair, not by player**: when tracking confuses two partn
 the pair's total stays right, but one player's distance is off by more than 12 % once
 in ten. The teams are followed from one change of ends to the next by the score, which
 says when they change; the report therefore starts at the first scoreboard reading.
-Occupancy is folded onto one half: the net at the top. (Figure labels are in French.)
+Occupancy is folded onto one half: the net at the top.
 
 ## Limitations
 

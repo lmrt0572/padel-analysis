@@ -1,13 +1,13 @@
 {
- "note": "Chaque juge a ete note une seule fois, apres que le modele a ete fige. Le modele a change depuis les premiers verdicts : les renoter aujourd'hui ne mesurerait plus la meme chose, donc ils sont consignes tels qu'ils ont ete rendus.",
+ "note": "Each judge was scored once, after the model was frozen. The model has changed since the first verdicts: scoring them again today would no longer measure the same thing, so they are recorded as they were given.",
  "judges": [
-  {"name": "Juge 1", "minutes": "FinalM 12000, 25000, 40000",
+  {"name": "Judge 1", "minutes": "FinalM 12000, 25000, 40000",
    "rules": {"right": 158, "shown": 231, "real": 239},
    "model": {"right": 188, "shown": 218, "real": 239}},
-  {"name": "Juge 2", "minutes": "FinalF 8000, FinalF 25000, FinalM 35000",
+  {"name": "Judge 2", "minutes": "FinalF 8000, FinalF 25000, FinalM 35000",
    "rules": {"right": 139, "shown": 219, "real": 238},
    "model": {"right": 188, "shown": 217, "real": 238}},
-  {"name": "Juge 3", "minutes": "FinalF 12000, FinalF 43000, FinalM 50000",
+  {"name": "Judge 3", "minutes": "FinalF 12000, FinalF 43000, FinalM 50000",
    "rules": {"right": 149, "shown": 195, "real": 239},
    "model": {"right": 180, "shown": 201, "real": 239}}
  ]
