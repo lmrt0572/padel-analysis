@@ -1,1754 +1,1732 @@
-# Padel Analysis : rapport d'évaluation
+# Padel Analysis: evaluation report
 
-Ce document détaille chaque mesure résumée dans le [README](../README.md) : comment elle a été obtenue, ce qu'elle vaut, et ce qu'elle ne dit pas. Les chiffres portent sur deux matchs du dataset PadelTracker100 : la finale féminine sert à régler, la finale masculine n'est utilisée qu'une fois, pour juger.
+This document details every measurement summarised in the [README](../README.md): how it was obtained, what it is worth, and what it does not say. The figures cover two matches of the PadelTracker100 dataset: the women's final is used for tuning, the men's final is used only once, for judging.
 
-## Résultats
+## Results
 
-### Stabilité de la caméra
+### Camera stability
 
-Homographie ORB + RANSAC entre la première frame et les suivantes, sur 407 frames :
+ORB + RANSAC homography between the first frame and the following ones, over 407 frames:
 
-| Mesure | Valeur |
+| Measure | Value |
 |---|---|
-| Déplacement maximal des coins de l'image | **0,02 px** |
+| Largest displacement of the image corners | **0.02 px** |
 
-La caméra de diffusion est fixe. Une seule calibration suffit par vidéo.
+The broadcast camera is fixed. A single calibration is enough per video.
 
-### Précision de la calibration
+### Calibration accuracy
 
-Treize points cliqués, dont **quatre points de contrôle exclus de l'ajustement** et
-répartis sur l'ensemble du court, pour que l'erreur rapportée ne soit pas optimiste.
+Thirteen clicked points, including **four control points excluded from the fit** and
+spread over the whole court, so that the reported error is not optimistic.
 
-| Mesure | Pixels | Centimètres |
+| Measure | Pixels | Centimetres |
 |---|---|---|
-| RMSE | 3,66 | 11,6 |
-| Médiane | 3,66 | 9,9 |
+| RMSE | 3.66 | 11.6 |
+| Median | 3.66 | 9.9 |
 
-Détail par point de contrôle :
+Detail by control point:
 
-| Point | Erreur (px) | Erreur (cm) |
+| Point | Error (px) | Error (cm) |
 |---|---|---|
-| Ligne de service proche, centre | 2,78 | 3,1 |
-| Filet, paroi droite | 4,34 | 7,4 |
-| Filet, centre | 3,95 | 12,4 |
-| Ligne de service éloignée, centre | 3,37 | 17,8 |
+| Near service line, centre | 2.78 | 3.1 |
+| Net, right wall | 4.34 | 7.4 |
+| Net, centre | 3.95 | 12.4 |
+| Far service line, centre | 3.37 | 17.8 |
 
-### Asymétrie de précision entre les deux moitiés du court
+### Accuracy asymmetry between the two halves of the court
 
-L'erreur en pixels est uniforme (2,8 à 4,3 px). L'erreur en mètres ne l'est pas,
-parce que l'échelle varie fortement avec la profondeur :
+The error in pixels is uniform (2.8 to 4.3 px). The error in metres is not, because
+the scale varies strongly with depth:
 
-| Position sur le court | Centimètres par pixel |
+| Position on the court | Centimetres per pixel |
 |---|---|
-| Fond proche | 1,51 |
-| Ligne de service proche | 2,05 |
-| Filet | 3,56 |
-| Ligne de service éloignée | 5,49 |
-| Fond éloigné | 6,47 |
+| Near back wall | 1.51 |
+| Near service line | 2.05 |
+| Net | 3.56 |
+| Far service line | 5.49 |
+| Far back wall | 6.47 |
 
-**Un pixel vaut 4,3 fois plus au fond éloigné qu'au fond proche.** Cette asymétrie
-est une propriété de la prise de vue, pas un défaut de la méthode : elle affecte
-toute estimation de position, quelle que soit la façon dont elle est obtenue.
+**A pixel is worth 4.3 times more at the far end than at the near end.** This asymmetry
+is a property of the camera angle, not a flaw of the method: it affects every position
+estimate, however it is obtained.
 
-Deux conséquences pour la suite :
+Two consequences for what follows:
 
-- Les positions des joueurs de la moitié éloignée sont intrinsèquement quatre fois
-  plus bruitées que celles de la moitié proche.
-- Le bruit gonfle les distances parcourues mesurées. La comparaison entre les deux
-  équipes n'est donc pas symétrique à l'intérieur d'un même jeu.
+- The positions of the players in the far half are intrinsically four times noisier
+  than those of the near half.
+- Noise inflates the measured distances covered. The comparison between the two teams
+  is therefore not symmetric within a single game.
 
-### Résolution d'inférence
+### Inference resolution
 
-L'entrée du modèle est redimensionnée avant inférence. Mesuré sur 300 frames
-annotées, soit 1200 joueurs à retrouver, en comparant le milieu des chevilles
-prédit aux chevilles annotées :
+The model input is resized before inference. Measured on 300 annotated frames, that
+is 1200 players to find, by comparing the predicted ankle midpoint with the annotated
+ankles:
 
-| imgsz | ms/frame | Erreur (px) | Moitié proche (cm) | Moitié éloignée (cm) | Joueurs retrouvés |
+| imgsz | ms/frame | Error (px) | Near half (cm) | Far half (cm) | Players found |
 |---|---|---|---|---|---|
-| 640 | 41 | 4,03 | 6,4 | 34,3 | 572 / 1200 |
-| 960 | 38 | 2,70 | 4,7 | 7,9 | 745 / 1200 |
-| 1280 | 59 | 2,46 | 4,4 | 7,1 | 1170 / 1200 |
-| **1600** | **90** | **2,06** | **3,8** | **6,2** | **1200 / 1200** |
+| 640 | 41 | 4.03 | 6.4 | 34.3 | 572 / 1200 |
+| 960 | 38 | 2.70 | 4.7 | 7.9 | 745 / 1200 |
+| 1280 | 59 | 2.46 | 4.4 | 7.1 | 1170 / 1200 |
+| **1600** | **90** | **2.06** | **3.8** | **6.2** | **1200 / 1200** |
 
-**La colonne décisive est la dernière.** La résolution ne gouverne pas seulement la
-précision, elle gouverne le **rappel** : à 640 pixels le modèle ne retrouve que 48 %
-des joueurs. Ceux du fond du court, hauts d'une centaine de pixels et fréquemment
-occultés par leur partenaire, disparaissent purement et simplement. L'erreur médiane
-de 4 px affichée à 640 ne le révèle pas, puisqu'elle ne porte que sur les joueurs
-effectivement trouvés.
+**The decisive column is the last one.** Resolution does not only govern accuracy, it
+governs **recall**: at 640 pixels the model finds only 48 % of the players. Those at
+the far end of the court, about a hundred pixels tall and often hidden by their
+partner, simply disappear. The median error of 4 px shown at 640 does not reveal it,
+since it only covers the players actually found.
 
-**Résolution retenue : 1600.** Elle retrouve tous les joueurs, et son erreur au fond
-du court (6,2 cm) passe sous l'erreur de calibration (9,9 cm) : affiner davantage la
-perception n'améliorerait plus rien, le plancher étant géométrique.
+**Resolution kept: 1600.** It finds every player, and its error at the far end of the
+court (6.2 cm) drops below the calibration error (9.9 cm): refining perception further
+would improve nothing, the floor being geometric.
 
-### Perception et suivi
+### Perception and tracking
 
-Mesuré sur 1800 frames consécutives, soit une minute de jeu :
+Measured on 1800 consecutive frames, that is one minute of play:
 
-| Mesure | Valeur |
+| Measure | Value |
 |---|---|
-| Cadence de la chaîne complète (GTX 1650, 4 Go) | 9,7 frames/s |
-| Frames à quatre joueurs identifiés | **96,50 %** |
-| Référence : frames à quatre personnes annotées | 99,94 % |
-| Positions hors du court en `x` | 0,00 % |
+| Speed of the full pipeline (GTX 1650, 4 GB) | 9.7 frames/s |
+| Frames with four identified players | **96.50 %** |
+| Reference: frames with four annotated people | 99.94 % |
+| Positions outside the court in `x` | 0.00 % |
 
-Le même pipeline à `imgsz` 1280 n'atteignait que 92,33 % : la résolution explique
-l'essentiel de l'écart.
+The same pipeline at `imgsz` 1280 reached only 92.33 %: resolution explains most of
+the gap.
 
-Une observation dont la position projetée sort largement de l'enceinte est refusée.
-Sans cette borne le taux affiché montait à 97,94 %, mais la différence tenait à des
-frames où un spectateur du bon côté du filet occupait un emplacement libre : le
-chiffre était flatteur et faux. Le refus a aussi séparé les deux emplacements du
-fond, dont les positions moyennes étaient confondues parce que ces intrus les
-occupaient par intermittence.
+An observation whose projected position falls well outside the enclosure is rejected.
+Without this bound the displayed rate rose to 97.94 %, but the difference came from
+frames where a spectator on the right side of the net filled a free slot: the figure
+was flattering and wrong. The rejection also separated the two far slots, whose mean
+positions were merged because these intruders filled them intermittently.
 
-L'identité est maintenue par appariement hongrois sur quatre emplacements fixes, deux
-de chaque côté du filet. Le côté vient du signe de la coordonnée `y` après projection :
-la calibration alimente donc directement le suivi. Le coût d'assignation combine la
-distance à la position prédite par un modèle à vitesse constante, la signature de
-couleur de la tenue et la confiance des chevilles.
+Identity is maintained by Hungarian matching over four fixed slots, two on each side
+of the net. The side comes from the sign of the `y` coordinate after projection: the
+calibration therefore feeds the tracking directly. The assignment cost combines the
+distance to the position predicted by a constant-velocity model, the colour signature
+of the outfit and the confidence of the ankles.
 
-Cette contrainte structurelle n'est pas décorative : **le détecteur trouve plus de
-quatre personnes dans 63 % des frames** (spectateurs, ramasseurs de balle, arbitre),
-et le suivi contraint retient systématiquement les quatre bonnes.
+This structural constraint is not decorative: **the detector finds more than four
+people in 63 % of the frames** (spectators, ball kids, umpire), and the constrained
+tracking consistently keeps the right four.
 
-La signature de couleur a été validée par la mesure avant d'être conservée : la
-dérive d'un même joueur d'une frame à l'autre vaut 0,031, contre 0,199 entre deux
-partenaires. Le rapport de 6,3 confirme qu'elle distingue bien des coéquipiers
-portant la même tenue, et pas seulement les deux équipes.
+The colour signature was validated by measurement before being kept: the drift of one
+player from one frame to the next is 0.031, against 0.199 between two partners. The
+ratio of 6.3 confirms that it does tell apart team-mates wearing the same outfit, and
+not only the two teams.
 
-### Analyse tactique : contrôle du filet
+### Tactical analysis: net control
 
-Mesuré sur le match complet, 45 934 frames, dont 44 911 portent les quatre joueurs.
+Measured on the full match, 45,934 frames, of which 44,911 carry all four players.
 
-Les joueurs occupent deux profondeurs distinctes. Sur 182 713 positions, le mode
-offensif culmine à **3,95 m** du filet et le mode défensif à **7,85 m**, contre la
-vitre de fond. Le creux qui les sépare tombe à **5,85 m**, et c'est là qu'est placé le
-seuil.
+The players occupy two distinct depths. Over 182,713 positions, the offensive mode
+peaks at **3.95 m** from the net and the defensive mode at **7.85 m**, against the back
+glass. The trough between them falls at **5.85 m**, and that is where the threshold is
+placed.
 
-La ligne de service, à 6,95 m, n'est délibérément pas utilisée : c'est une règle de
-service et non un marqueur de position tactique, et elle tombe du mauvais côté du
-creux : elle classerait toute la bande défensive comme offensive.
+The service line, at 6.95 m, is deliberately not used: it is a service rule and not a
+marker of tactical position, and it falls on the wrong side of the trough: it would
+class the whole defensive band as offensive.
 
-| Mesure | Valeur |
+| Measure | Value |
 |---|---|
-| Contrôle côté proche | **38,0 %** |
-| Contrôle côté éloigné | **20,5 %** |
-| Disputé | 41,5 % |
-| Frames évaluées | 44 911 |
+| Control, near side | **38.0 %** |
+| Control, far side | **20.5 %** |
+| Contested | 41.5 % |
+| Frames evaluated | 44,911 |
 
-**Le creux est large et peu profond**, donc la valeur exacte du seuil relève en partie
-de la convention, et les pourcentages la suivent :
+**The trough is wide and shallow**, so the exact value of the threshold is partly a
+convention, and the percentages follow it:
 
-| Seuil | Proche | Éloigné | Disputé | Rapport proche/éloigné |
+| Threshold | Near | Far | Contested | Near/far ratio |
 |---|---|---|---|---|
-| 5,00 m | 28,0 % | 12,3 % | 59,8 % | 2,28 |
-| 5,50 m | 33,9 % | 18,0 % | 48,2 % | 1,88 |
-| **5,85 m** | **38,0 %** | **20,5 %** | **41,5 %** | **1,85** |
-| 6,00 m | 39,7 % | 21,4 % | 38,9 % | 1,86 |
-| 6,50 m | 43,5 % | 23,5 % | 33,0 % | 1,85 |
+| 5.00 m | 28.0 % | 12.3 % | 59.8 % | 2.28 |
+| 5.50 m | 33.9 % | 18.0 % | 48.2 % | 1.88 |
+| **5.85 m** | **38.0 %** | **20.5 %** | **41.5 %** | **1.85** |
+| 6.00 m | 39.7 % | 21.4 % | 38.9 % | 1.86 |
+| 6.50 m | 43.5 % | 23.5 % | 33.0 % | 1.85 |
 
-Les valeurs absolues dépendent donc du seuil, mais **le rapport entre les deux paires
-ne bouge pratiquement pas** au-delà de 5,5 m. La conclusion robuste de ce match est
-que la paire du côté proche a tenu le filet environ **1,85 fois plus souvent** que
-l'autre, indépendamment de la convention retenue.
+The absolute values therefore depend on the threshold, but **the ratio between the two
+pairs hardly moves** beyond 5.5 m. The robust conclusion for this match is that the
+pair on the near side held the net about **1.85 times more often** than the other,
+whatever convention is chosen.
 
-### Analyse tactique : distance et vitesse
+### Tactical analysis: distance and speed
 
-La distance est donnée brute et lissée. L'écart entre les deux chiffre la part qu'y a
-prise le bruit de position, au lieu de la masquer.
+Distance is given raw and smoothed. The gap between the two quantifies the share that
+position noise took in it, instead of hiding it.
 
-| Emplacement | Moitié | Distance brute | Distance lissée | Part de bruit | Vitesse p95 | Profondeur moyenne |
+| Slot | Half | Raw distance | Smoothed distance | Noise share | Speed p95 | Mean depth |
 |---|---|---|---|---|---|---|
-| near_1 | proche | 2890 m | 2261 m | **21,8 %** | 3,50 m/s | 5,41 m |
-| near_2 | proche | 2807 m | 2210 m | **21,3 %** | 3,51 m/s | 5,44 m |
-| far_1 | éloignée | 3282 m | 2233 m | **32,0 %** | 3,77 m/s | 6,75 m |
-| far_2 | éloignée | 3300 m | 2285 m | **30,8 %** | 3,92 m/s | 6,77 m |
+| near_1 | near | 2890 m | 2261 m | **21.8 %** | 3.50 m/s | 5.41 m |
+| near_2 | near | 2807 m | 2210 m | **21.3 %** | 3.51 m/s | 5.44 m |
+| far_1 | far | 3282 m | 2233 m | **32.0 %** | 3.77 m/s | 6.75 m |
+| far_2 | far | 3300 m | 2285 m | **30.8 %** | 3.92 m/s | 6.77 m |
 
-**Ces lignes sont des emplacements, pas des joueurs.** Les quatre emplacements
-désignent deux positions de chaque côté du filet, et les équipes changent de côté
-sept fois au cours de ce match : `near_1` est donc successivement plusieurs personnes.
-Ces distances agrègent le trajet parcouru *à cet endroit du court*, ce qui reste une
-mesure valide et interprétable, mais ce n'est pas une distance par joueur. La section
-[Évaluation](#évaluation) explique pourquoi suivre un joueur à travers un changement
-de côté est hors de portée de l'image seule.
+**These rows are slots, not players.** The four slots stand for two positions on each
+side of the net, and the teams change ends seven times during this match: `near_1` is
+therefore several people in turn. These distances aggregate the ground covered *at
+that place on the court*, which remains a valid and interpretable measure, but it is
+not a distance per player. The [Evaluation](#evaluation) section explains why following
+a player across a change of ends is out of reach of the picture alone.
 
-**La part de bruit est une demi-fois plus élevée pour la moitié éloignée**, ce que
-prédit l'asymétrie de 4,3× documentée plus haut. Les distances lissées, elles, sont
-comparables entre les quatre emplacements alors que les distances brutes ne l'étaient
-pas : l'écart apparent de 400 mètres entre les deux paires était du bruit, pas du jeu.
+**The noise share is half as high again for the far half**, which the 4.3× asymmetry
+documented above predicts. The smoothed distances, for their part, are comparable
+between the four slots while the raw distances were not: the apparent gap of 400
+metres between the two pairs was noise, not play.
 
-## Évaluation
+## Evaluation
 
-Les mesures qui suivent comparent la sortie du pipeline aux annotations du dataset
-sur 9 000 frames, soit cinq minutes de jeu. **Les deux ablations sortent du même
-passage sur la vidéo** : aucune comparaison ne peut être faussée par un échantillon
-différent.
+The measurements that follow compare the output of the pipeline with the annotations
+of the dataset over 9,000 frames, that is five minutes of play. **Both ablations come
+from the same pass over the video**: no comparison can be skewed by a different sample.
 
-### Détection
+### Detection
 
-| Mesure | Valeur |
+| Measure | Value |
 |---|---|
-| Précision | 0,778 |
-| **Rappel** | **0,954** |
-| F1 | 0,857 |
-| Personnes prédites | 44 134 |
-| Personnes annotées | 36 006 |
-| Appariées (IoU ≥ 0,5) | 34 338 |
+| Precision | 0.778 |
+| **Recall** | **0.954** |
+| F1 | 0.857 |
+| People predicted | 44,134 |
+| People annotated | 36,006 |
+| Matched (IoU ≥ 0.5) | 34,338 |
 
-La précision de 0,778 ne dit pas que le détecteur se trompe. Il trouve **8 000
-personnes de plus qu'il n'y a de joueurs annotés** : arbitre, ramasseurs de balle,
-premiers rangs du public. Ces détections sont correctes, elles ne sont simplement pas
-des joueurs. C'est le rôle du suivi contraint de les écarter, et c'est ce que mesure
-l'ablation 2.
+The precision of 0.778 does not say that the detector is wrong. It finds **8,000 more
+people than there are annotated players**: umpire, ball kids, front rows of the
+audience. These detections are correct, they are simply not players. Discarding them
+is the job of the constrained tracking, and that is what ablation 2 measures.
 
-Le rappel est donc la mesure qui compte ici : **95,4 % des joueurs annotés sont
-retrouvés**.
+Recall is therefore the measure that counts here: **95.4 % of the annotated players
+are found**.
 
-### Ablation 1 : d'où vient le point au sol
+### Ablation 1: where the ground point comes from
 
-Deux façons de décider où un joueur touche le sol : le milieu de ses chevilles, ou le
-centre du bord inférieur de sa boîte englobante. Les deux implémentations coexistent
-dans le code pour que le choix soit tranché par la mesure.
+Two ways of deciding where a player touches the ground: the midpoint of the ankles, or
+the centre of the bottom edge of the bounding box. Both implementations coexist in the
+code so that the choice is settled by measurement.
 
-| Stratégie | Global | Moitié proche | Moitié éloignée |
+| Strategy | Overall | Near half | Far half |
 |---|---|---|---|
-| **Milieu des chevilles** | **1,89 px** | 2,01 px (3,0 cm) | 1,77 px (**11,5 cm**) |
-| Bas de la boîte | 19,61 px | 24,19 px (36,5 cm) | 16,64 px (**107,7 cm**) |
+| **Ankle midpoint** | **1.89 px** | 2.01 px (3.0 cm) | 1.77 px (**11.5 cm**) |
+| Bottom of the box | 19.61 px | 24.19 px (36.5 cm) | 16.64 px (**107.7 cm**) |
 
-Sur 34 338 échantillons appariés, **les chevilles font dix fois mieux**. Le bas de la
-boîte englobante n'est pas l'endroit où le joueur touche le sol : c'est le point le
-plus bas de l'englobant, qui inclut la raquette baissée et un pied levé.
+Over 34,338 matched samples, **the ankles do ten times better**. The bottom of the
+bounding box is not where the player touches the ground: it is the lowest point of the
+box, which includes the lowered racket and a raised foot.
 
-L'écart est plus grand en pixels près de la caméra, et plus grand en mètres au fond du
-court : les deux lectures sont vraies, et c'est l'asymétrie de 4,3× qui les sépare. Un
-mètre d'erreur au fond avec le bas de la boîte, c'est la moitié d'une zone de service.
+The gap is larger in pixels near the camera, and larger in metres at the far end of
+the court: both readings are true, and it is the 4.3× asymmetry that separates them. A
+metre of error at the far end with the bottom of the box is half a service box.
 
-### Vérité terrain d'identité
+### Identity ground truth
 
-Le dataset donne quatre personnes par frame mais ne dit jamais laquelle est laquelle.
-Reconstruire cette information est presque gratuit : sur un match entier, deux
-partenaires ne s'approchent **jamais** à moins de cinquante centimètres. La machine
-associe donc au plus proche voisin sur tout le match, et un humain n'arbitre que les
-moments où ça devient douteux.
+The dataset gives four people per frame but never says which is which. Rebuilding that
+information is almost free: over a whole match, two partners **never** come within
+fifty centimetres of each other. The machine therefore associates by nearest neighbour
+over the whole match, and a human arbitrates only the moments where it becomes
+doubtful.
 
-Mais cette association suppose une image continue, et elle ne l'est pas. **La vidéo du
-dataset est une concaténation des séquences de jeu**, temps morts retirés. Le tableau
-d'affichage le prouve : entre deux frames consécutives, le score passe de 30 à 40.
+But this association assumes a continuous picture, and it is not one. **The video of
+the dataset is a concatenation of the playing sequences**, dead time removed. The
+scoreboard proves it: between two consecutive frames, the score goes from 30 to 40.
 
-À chaque raccord, les joueurs réapparaissent ailleurs. Ce n'est pas un rapprochement
-(ils ne se frôlent pas, ils se téléportent), donc rien ne paraît ambigu, et l'identité
-peut changer en silence.
+At each cut, the players reappear elsewhere. It is not a close approach (they do not
+brush past each other, they teleport), so nothing looks ambiguous, and identity can
+change silently.
 
-| | rapprochements | raccords | changements de côté |
+| | close approaches | cuts | changes of ends |
 |---|---|---|---|
-| Final féminine | 14 | 83 | 7 |
-| Final masculine | 54 | 115 | 8 |
+| Women's final | 14 | 83 | 7 |
+| Men's final | 54 | 115 | 8 |
 
-**266 clips arbitrés à la main**, chacun rejoué en boucle avec les quatre joueurs
-encadrés de leur couleur d'emplacement.
+**266 clips arbitrated by hand**, each replayed in a loop with the four players framed
+in the colour of their slot.
 
-Détecter ces raccords demande un critère contre-intuitif. Exiger que **les deux**
-joueurs d'une paire bougent semble plus sûr, et c'est exactement l'inverse :
-l'association au plus proche voisin minimise le déplacement apparent, donc une paire
-qui échange ses places à un raccord produit le signal « ils n'ont pas bougé ». Le
-critère strict est aveugle aux cas qu'il devrait attraper. Un seul joueur au-dessus du
-seuil suffit donc, et la tolérance croît avec le temps écoulé : huit mètres en trois
-frames manquantes est un raccord, dix mètres en soixante-dix-sept est un joueur qui
-court.
+Detecting these cuts takes a counter-intuitive criterion. Requiring that **both**
+players of a pair move seems safer, and it is exactly the reverse: nearest-neighbour
+association minimises apparent displacement, so a pair that swaps places at a cut
+produces the signal "they did not move". The strict criterion is blind to the cases it
+should catch. A single player above the threshold is therefore enough, and the
+tolerance grows with the time elapsed: eight metres in three missing frames is a cut,
+ten metres in seventy-seven is a player running.
 
-Un changement de côté, lui, n'est pas une erreur à corriger. Les emplacements
-désignent une moitié de court : quand les équipes changent de côté, `near_1` est
-quelqu'un d'autre, et aucun échange d'étiquettes ne peut l'exprimer. **L'identité
-s'arrête là et repart** : les métriques d'identité coupent des deux côtés de la
-comparaison à cet endroit, et ne créditent ni ne pénalisent personne pour une
-frontière qu'aucune information de l'image ne permet de franchir.
+A change of ends, for its part, is not an error to correct. The slots stand for a half
+of the court: when the teams change ends, `near_1` is someone else, and no swap of
+labels can express it. **Identity stops there and starts again**: the identity metrics
+cut both sides of the comparison at that place, and neither credit nor penalise anyone
+for a boundary that no information in the picture allows to be crossed.
 
-### Ablation 2 : la contrainte de court
+### Ablation 2: the court constraint
 
-Le suivi contraint tient exactement quatre emplacements, deux de chaque côté du filet,
-et refuse toute position hors de l'enceinte. La ligne de base est ByteTrack, sans
-aucune de ces contraintes.
+The constrained tracking holds exactly four slots, two on each side of the net, and
+rejects any position outside the enclosure. The baseline is ByteTrack, without any of
+these constraints.
 
-| | Pistes moy. | Frames > 4 pistes | MOTA | IDF1 | Permutations |
+| | Mean tracks | Frames > 4 tracks | MOTA | IDF1 | Switches |
 |---|---|---|---|---|---|
-| **Suivi contraint** | **3,98** | **0** | **0,912** | **0,819** | **4** |
-| ByteTrack seul | 4,78 | 5 152 | 0,704 | 0,281 | 67 |
+| **Constrained tracking** | **3.98** | **0** | **0.912** | **0.819** | **4** |
+| ByteTrack alone | 4.78 | 5,152 | 0.704 | 0.281 | 67 |
 
-**ByteTrack dépasse quatre pistes sur 5 152 frames des 8 990 évaluées**, plus d'une
-sur deux. Rien ne le borne, et le détecteur lui fournit huit mille personnes de trop.
-L'IDF1 de 0,281 signifie que la plupart des identités de référence ne sont couvertes
-par aucune piste stable : des statistiques par joueur calculées là-dessus seraient du
-bruit.
+**ByteTrack exceeds four tracks on 5,152 frames of the 8,990 evaluated**, more than
+one in two. Nothing bounds it, and the detector hands it eight thousand people too
+many. The IDF1 of 0.281 means that most reference identities are not covered by any
+stable track: per-player statistics computed on that would be noise.
 
-### Ce que l'arbitrage change à la mesure
+### What arbitration changes in the measurement
 
-La vérité terrain d'identité peut être construite automatiquement, sans arbitrage
-humain. Elle donne alors ceci, sur exactement les mêmes frames et le même code :
+The identity ground truth can be built automatically, without human arbitration. It
+then gives this, on exactly the same frames and the same code:
 
-| | Sans arbitrage | Après arbitrage |
+| | Without arbitration | After arbitration |
 |---|---|---|
-| MOTA | 0,913 | 0,912 |
-| **IDF1** | **0,956** | **0,819** |
-| **Permutations d'identité** | **0** | **4** |
+| MOTA | 0.913 | 0.912 |
+| **IDF1** | **0.956** | **0.819** |
+| **Identity switches** | **0** | **4** |
 
-**La version automatique annonce zéro permutation. Il y en a quatre.**
+**The automatic version announces zero switches. There are four.**
 
-L'explication tient en une phrase : l'association au plus proche voisin qui construit
-la référence est la même hypothèse que celle du tracker évalué. Aux raccords, les deux
-se trompent ensemble, et la métrique compare une erreur à elle-même. L'IDF1 était
-surestimé de 0,137.
+The explanation fits in one sentence: the nearest-neighbour association that builds
+the reference is the same assumption as that of the tracker being evaluated. At the
+cuts, both are wrong together, and the metric compares an error with itself. IDF1 was
+overestimated by 0.137.
 
-MOTA ne bouge pas (0,913 → 0,912), ce qui est cohérent : il est dominé par les faux
-positifs et les manques de détection, pas par l'identité. **Il fallait IDF1 pour voir
-le problème, et une référence indépendante pour qu'IDF1 puisse le dire.**
+MOTA does not move (0.913 → 0.912), which is consistent: it is dominated by false
+positives and missed detections, not by identity. **IDF1 was needed to see the
+problem, and an independent reference for IDF1 to be able to say it.**
 
-Sur ces 9 000 frames il y a 18 raccords, 3 rapprochements et 1 changement de côté :
-le suivi contraint décroche 4 fois sur 21 occasions, ByteTrack 67 fois.
+Over these 9,000 frames there are 18 cuts, 3 close approaches and 1 change of ends:
+the constrained tracking loses identity 4 times in 21 opportunities, ByteTrack 67
+times.
 
-### Phases aériennes
+### Airborne phases
 
-Un point à hauteur `h` projeté par une homographie de sol atterrit à `d × H / (H − h)`
-de l'aplomb caméra au lieu de `d`. Le padel se joue en sautant (smash, bandeja,
-vibora), donc la question n'est pas de savoir si le biais existe mais ce qu'il pèse.
+A point at height `h` projected by a ground homography lands at `d × H / (H − h)` from
+the point below the camera instead of `d`. Padel is played jumping (smash, bandeja,
+vibora), so the question is not whether the bias exists but what it weighs.
 
-| | Frames en phase aérienne |
+| | Frames in an airborne phase |
 |---|---|
-| Final féminine | 1 640 / 183 456, soit **0,89 %** |
-| Final masculine | 2 293 / 211 252, soit **1,09 %** |
+| Women's final | 1,640 / 183,456, that is **0.89 %** |
+| Men's final | 2,293 / 211,252, that is **1.09 %** |
 
-| Hauteur du saut | Biais au filet | Biais au fond |
+| Jump height | Bias at the net | Bias at the far end |
 |---|---|---|
 | 15 cm | 16 cm | 36 cm |
 | 30 cm | 33 cm | **74 cm** |
 | 50 cm | 56 cm | **127 cm** |
 
-**Le biais est important quand il survient, et il survient rarement.** Un saut de
-30 cm décale la position projetée de 74 cm au fond du court, soit six fois l'erreur
-médiane des chevilles au même endroit. Mais sur 1 % des frames : sa contribution à une
-heatmap ou à une distance cumulée est marginale, alors qu'elle domine toute position
-instantanée mesurée pendant un smash.
+**The bias is large when it occurs, and it occurs rarely.** A 30 cm jump shifts the
+projected position by 74 cm at the far end of the court, six times the median error of
+the ankles at the same place. But on 1 % of the frames: its contribution to a heatmap
+or to a cumulative distance is marginal, while it dominates any instantaneous position
+measured during a smash.
 
-### Match tenu à l'écart
+### Held-out match
 
-Tout ce qui précède porte sur la finale féminine, qui a servi à régler le pipeline :
-résolution d'inférence, seuil du filet, bornes du court, stratégie de point au sol.
-La finale masculine n'a jamais servi à régler quoi que ce soit. Elle a été calibrée
-par transfert, annotée en identité, puis évaluée une fois.
+Everything above concerns the women's final, which was used to tune the pipeline:
+inference resolution, net threshold, court bounds, ground-point strategy. The men's
+final was never used to tune anything. It was calibrated by transfer, annotated for
+identity, then evaluated once.
 
-| | Finale féminine (réglage) | Finale masculine (tenue à l'écart) |
+| | Women's final (tuning) | Men's final (held out) |
 |---|---|---|
-| Précision | 0,778 | **0,828** |
-| Rappel | 0,954 | 0,943 |
-| **F1 détection** | 0,857 | **0,882** |
-| Chevilles, global | 1,89 px | 2,00 px |
-| Bas de boîte, global | 19,61 px | 20,57 px |
-| MOTA, suivi contraint | 0,912 | **0,856** |
-| **IDF1, suivi contraint** | **0,819** | **0,764** |
-| **Permutations d'identité** | **4** | **28** |
-| IDF1, ByteTrack | 0,281 | 0,252 |
-| Permutations, ByteTrack | 67 | 101 |
+| Precision | 0.778 | **0.828** |
+| Recall | 0.954 | 0.943 |
+| **Detection F1** | 0.857 | **0.882** |
+| Ankles, overall | 1.89 px | 2.00 px |
+| Bottom of the box, overall | 19.61 px | 20.57 px |
+| MOTA, constrained tracking | 0.912 | **0.856** |
+| **IDF1, constrained tracking** | **0.819** | **0.764** |
+| **Identity switches** | **4** | **28** |
+| IDF1, ByteTrack | 0.281 | 0.252 |
+| Switches, ByteTrack | 67 | 101 |
 
-**La détection et la localisation transfèrent. Le suivi d'identité, non.**
+**Detection and localisation transfer. Identity tracking does not.**
 
-La détection est même meilleure sur le match tenu à l'écart (F1 de 0,882 contre
-0,857) parce que sa précision monte de cinq points : le détecteur y trouve moins de
-personnes qui ne jouent pas. La localisation est à onze centièmes de pixel près
-identique, ce qui était attendu puisque la géométrie ne dépend pas des joueurs.
+Detection is even better on the held-out match (F1 of 0.882 against 0.857) because its
+precision rises by five points: the detector finds fewer people there who are not
+playing. Localisation is identical to within eleven hundredths of a pixel, which was
+expected since the geometry does not depend on the players.
 
-L'identité, elle, se dégrade nettement : **4 permutations deviennent 28**. Le chiffre
-brut exagère l'écart, parce que le match masculin offre davantage d'occasions de
-décrocher sur la même durée. Normalisé, l'écart reste :
+Identity, for its part, degrades sharply: **4 switches become 28**. The raw figure
+overstates the gap, because the men's match offers more opportunities to lose identity
+over the same duration. Normalised, the gap remains:
 
-| | Occasions | Permutations | Taux |
+| | Opportunities | Switches | Rate |
 |---|---|---|---|
-| Finale féminine | 21 (18 raccords, 3 rapprochements) | 4 | **19 %** |
-| Finale masculine | 38 (24 raccords, 14 rapprochements) | 28 | **74 %** |
+| Women's final | 21 (18 cuts, 3 close approaches) | 4 | **19 %** |
+| Men's final | 38 (24 cuts, 14 close approaches) | 28 | **74 %** |
 
-La cause tient dans la deuxième colonne : **14 rapprochements contre 3**, sur le même
-nombre de frames. Les hommes se croisent bien plus souvent et bien plus serré : le
-minimum de séparation entre partenaires descend à 0,41 m sur leur match contre 0,56 m
-sur celui des femmes. Le point faible du suivi contraint est là, et un match qui le
-sollicite cinq fois plus le met cinq fois plus en défaut.
+The cause is in the second column: **14 close approaches against 3**, over the same
+number of frames. The men cross much more often and much more tightly: the smallest
+separation between partners goes down to 0.41 m in their match against 0.56 m in the
+women's. The weak point of the constrained tracking is there, and a match that tests it
+five times more catches it out five times more.
 
-Ce que le changement de match ne remet pas en cause, c'est l'ablation : le suivi
-contraint garde un IDF1 trois fois supérieur à ByteTrack (0,764 contre 0,252) et ne
-dépasse jamais quatre pistes, là où ByteTrack le fait sur 3 231 frames.
+What the change of match does not call into question is the ablation: the constrained
+tracking keeps an IDF1 three times higher than ByteTrack (0.764 against 0.252) and
+never exceeds four tracks, where ByteTrack does so on 3,231 frames.
 
-### Candidats de balle
+### Ball candidates
 
-La balle mesure **10 px de côté** en médiane, sur une image de deux millions de
-pixels. Sur une frame figée, une ligne peinte, un logo ou un reflet lui ressemblent
-exactement. Ce qui la distingue n'est pas son apparence mais son **mouvement** : la
-caméra étant fixe, ce qui bouge dans l'image bouge réellement.
+The ball measures **10 px across** in the median, in a picture of two million pixels.
+On a frozen frame, a painted line, a logo or a reflection look exactly like it. What
+sets it apart is not its appearance but its **motion**: the camera being fixed, what
+moves in the picture really moves.
 
-L'étage de détection ne tranche donc pas. Il compare chaque frame à ses deux voisines,
-retient ce qui est plus clair que les deux, et renvoie une **liste de candidats
-classés**. Choisir lequel est la balle revient à l'étage de trajectoire.
+The detection stage therefore does not decide. It compares each frame with its two
+neighbours, keeps what is brighter than both, and returns a **ranked list of
+candidates**. Choosing which one is the ball is left to the trajectory stage.
 
-Mesuré sur la tranche d'évaluation du match de réglage, 3 638 balles annotées :
+Measured on the evaluation slice of the tuning match, 3,638 annotated balls:
 
-| Écart temporel | Rappel 5 px | 10 px | 20 px | Rang médian | Dans le top 10 | Candidats par frame |
+| Temporal gap | Recall 5 px | 10 px | 20 px | Median rank | In the top 10 | Candidates per frame |
 |---|---|---|---|---|---|---|
-| 1 frame | 0,445 | 0,611 | 0,658 | 4 | 52,3 % | 59 |
-| **2 frames** | **0,662** | **0,912** | **0,989** | **6** | **70,2 %** | 78 |
-| 3 frames | 0,661 | 0,913 | 0,991 | 7 | 63,7 % | 81 |
-| 4 frames | 0,653 | 0,907 | 0,990 | 8 | 59,9 % | 81 |
+| 1 frame | 0.445 | 0.611 | 0.658 | 4 | 52.3 % | 59 |
+| **2 frames** | **0.662** | **0.912** | **0.989** | **6** | **70.2 %** | 78 |
+| 3 frames | 0.661 | 0.913 | 0.991 | 7 | 63.7 % | 81 |
+| 4 frames | 0.653 | 0.907 | 0.990 | 8 | 59.9 % | 81 |
 
-**Comparer à une frame d'écart perd un tiers des balles.** À 30 images par seconde,
-une balle lente parcourt moins que son propre diamètre entre deux frames
-consécutives : elle se recouvre elle-même et la différence s'annule. À deux frames
-d'écart elle a bougé assez pour ne plus se chevaucher, et le rappel passe de 0,611 à
-0,912.
+**Comparing one frame apart loses a third of the balls.** At 30 frames per second, a
+slow ball travels less than its own diameter between two consecutive frames: it
+overlaps itself and the difference cancels out. Two frames apart it has moved enough
+not to overlap any more, and recall goes from 0.611 to 0.912.
 
-Les écarts 2, 3 et 4 se valent sur le rappel. **L'écart 2 est retenu parce qu'il place
-la balle plus haut dans la liste** : rang 6 contre 7 et 8, et 70 % de présence dans
-les dix premiers contre 64 % et 60 %. À rappel égal, c'est celui qui facilite le plus
-l'étage suivant.
+Gaps 2, 3 and 4 are equal on recall. **Gap 2 is kept because it places the ball higher
+in the list**: rank 6 against 7 and 8, and 70 % presence in the top ten against 64 %
+and 60 %. At equal recall, it is the one that helps the next stage most.
 
-Sur le match tenu à l'écart, 19 259 balles annotées, avec l'écart retenu :
+On the held-out match, 19,259 annotated balls, with the gap kept:
 
-| | Rappel 5 px | 10 px | 20 px | Rang médian | Dans le top 10 | Candidats par frame |
+| | Recall 5 px | 10 px | 20 px | Median rank | In the top 10 | Candidates per frame |
 |---|---|---|---|---|---|---|
-| Match de réglage | 0,662 | 0,912 | 0,989 | 6 | 70,2 % | 78 |
-| **Match tenu à l'écart** | **0,718** | **0,928** | **0,986** | 7 | 67,5 % | 87 |
+| Tuning match | 0.662 | 0.912 | 0.989 | 6 | 70.2 % | 78 |
+| **Held-out match** | **0.718** | **0.928** | **0.986** | 7 | 67.5 % | 87 |
 
-**Le rappel transfère sans perte**, et se trouve même légèrement meilleur sur le match
-jamais utilisé pour régler quoi que ce soit.
+**Recall transfers without loss**, and is even slightly better on the match never used
+to tune anything.
 
-**Ce chiffre est un plafond, pas une performance.** Il dit que la balle est disponible
-dans la liste, jamais que quoi que ce soit l'a choisie. La difficulté réelle est dans
-les deux dernières colonnes : la balle est le sixième candidat parmi **78**, et une
-fois sur trois elle n'est même pas dans les dix premiers. La départager est le travail
-de l'étage de trajectoire, et il n'est pas entamé ici.
+**This figure is a ceiling, not a performance.** It says that the ball is available in
+the list, never that anything chose it. The real difficulty is in the last two columns:
+the ball is the sixth candidate among **78**, and one time in three it is not even in
+the top ten. Picking it out is the job of the trajectory stage, and it is not started
+here.
 
-La chute du rappel à 5 px (0,662 contre 0,912 à 10 px) ne vient pas d'un biais
-corrigeable. Sur 512 balles, le décalage entre le centre de la tache de mouvement et
-le centre annoté vaut (−0,67, +0,88) px en moyenne, et −0,37 px une fois projeté sur
-la direction de déplacement. C'est de la dispersion, de norme médiane 3,3 px, pas un
-décalage systématique.
+The drop in recall at 5 px (0.662 against 0.912 at 10 px) does not come from a
+correctable bias. Over 512 balls, the offset between the centre of the motion blob and
+the annotated centre is (−0.67, +0.88) px on average, and −0.37 px once projected onto
+the direction of travel. It is scatter, with a median norm of 3.3 px, not a systematic
+offset.
 
-### Trajectoire de la balle
+### Ball trajectory
 
-L'étage précédent rend une liste de candidats classés, la balle s'y trouvant 91 % du
-temps mais au sixième rang parmi 78. Cet étage doit en tirer **une position par
-frame**, ou l'absence de position. Deux méthodes sont implémentées et mesurées côte à
-côte.
+The previous stage returns a ranked list of candidates, the ball being in it 91 % of
+the time but at the sixth rank among 78. This stage must draw from it **one position
+per frame**, or the absence of a position. Two methods are implemented and measured
+side by side.
 
-La **croissance gloutonne** est la ligne de base. Elle part d'un candidat, extrapole à
-vitesse constante, prend le candidat le plus proche de la prédiction, tolère deux
-frames manquées, et s'arrête. Les segments obtenus sont ensuite départagés, et les
-retenus concaténés.
+**Greedy growth** is the baseline. It starts from a candidate, extrapolates at constant
+velocity, takes the candidate closest to the prediction, tolerates two missed frames,
+and stops. The segments obtained are then arbitrated, and the ones kept are
+concatenated.
 
-L'**optimisation globale** ne décide rien frame par frame. Elle garde les 8 meilleurs
-candidats de chaque frame, y ajoute un état « absent » à coût fixe, et cherche par
-programmation dynamique la suite qui minimise, sur toute la fenêtre, la somme d'un
-coût d'accélération et d'un coût d'émission. L'état porte le candidat courant **et le
-précédent**, ce qui suffit à connaître la vitesse, donc à pénaliser un changement
-brutal sans jamais avoir eu à « suivre » quoi que ce soit.
+**Global optimisation** decides nothing frame by frame. It keeps the 8 best candidates
+of each frame, adds an "absent" state at a fixed cost, and searches by dynamic
+programming for the sequence that minimises, over the whole window, the sum of an
+acceleration cost and an emission cost. The state carries the current candidate **and
+the previous one**, which is enough to know the velocity, and so to penalise a sudden
+change without ever having had to "track" anything.
 
-Mesuré sur les deux matchs, la vérité terrain étant l'annotation de balle du dataset :
+Measured on both matches, the ground truth being the ball annotation of the dataset:
 
-| | | 5 px | 10 px | 20 px | Frames couvertes |
+| | | 5 px | 10 px | 20 px | Frames covered |
 |---|---|---|---|---|---|
-| **Réglage** (3 638 balles) | Croissance gloutonne | 0,074 | 0,162 | 0,203 | 2 042 / 4 100 |
-| | **Optimisation globale** | **0,534** | **0,716** | **0,764** | 4 100 / 4 100 |
-| **Tenu à l'écart** (19 259 balles) | Croissance gloutonne | 0,050 | 0,109 | 0,132 | 10 769 / 21 471 |
-| | **Optimisation globale** | **0,576** | **0,733** | **0,774** | 21 471 / 21 471 |
+| **Tuning** (3,638 balls) | Greedy growth | 0.074 | 0.162 | 0.203 | 2,042 / 4,100 |
+| | **Global optimisation** | **0.534** | **0.716** | **0.764** | 4,100 / 4,100 |
+| **Held out** (19,259 balls) | Greedy growth | 0.050 | 0.109 | 0.132 | 10,769 / 21,471 |
+| | **Global optimisation** | **0.576** | **0.733** | **0.774** | 21,471 / 21,471 |
 
-Rappel ; la précision de l'optimisation globale lui est égale, le chemin répondant sur
-toutes les frames. Pour la gloutonne elle vaut 0,317 et 0,214 à 10 px.
+Recall; the precision of global optimisation is equal to it, the path answering on
+every frame. For the greedy one it is 0.317 and 0.214 at 10 px.
 
-**Le facteur est de 4,4 sur le match de réglage et de 6,7 sur le match tenu à
-l'écart.** Les quatre paramètres du chemin ont été balayés sur 800 frames du seul match
-féminin et n'ont pas été retouchés ensuite ; le match masculin, cinq fois plus long,
-donne un résultat légèrement meilleur. La fraction du plafond capturée y est la même à
-un demi-point près : 79,0 % contre 78,5 %.
+**The factor is 4.4 on the tuning match and 6.7 on the held-out match.** The four
+parameters of the path were swept over 800 frames of the women's match alone and were
+not touched afterwards; the men's match, five times longer, gives a slightly better
+result. The fraction of the ceiling captured is the same there to within half a point:
+79.0 % against 78.5 %.
 
-**Pourquoi la ligne de base plafonne.** Trois mesures enchaînées le disent sans
-ambiguïté : la balle est dans la liste de candidats **93,9 %** du temps, un segment
-glouton la couvre **52,5 %** du temps, et il en reste **16,8 %** après arbitrage entre
-segments. La première chute est le prix de la décision locale : une extrapolation
-partie sur un mauvais candidat ne revient jamais. La seconde est le prix de
-l'arbitrage : il faut choisir entre des segments concurrents sans rien savoir de ce
-qui se passe ailleurs dans la séquence.
+**Why the baseline plateaus.** Three measurements in a row say it without ambiguity:
+the ball is in the list of candidates **93.9 %** of the time, a greedy segment covers
+it **52.5 %** of the time, and **16.8 %** of it remains after arbitration between
+segments. The first drop is the price of the local decision: an extrapolation that
+started on a wrong candidate never comes back. The second is the price of arbitration:
+one has to choose between competing segments without knowing anything of what happens
+elsewhere in the sequence.
 
-**Départager les segments par leur longueur était à l'envers.** Les segments qui
-suivent réellement la balle font **27 frames** en médiane ; les autres en font **31**.
-Un arc de balle est court par nature (il se termine à chaque contact), tandis qu'une
-fausse piste accrochée à un élément lent peut courir indéfiniment. Le critère correct
-est la **vitesse** : 13,2 px/frame pour les bons segments contre 8,8 pour les autres.
-Ce seul changement fait passer la précision de 0,168 à 0,405.
+**Arbitrating segments by their length was backwards.** The segments that really
+follow the ball are **27 frames** long in the median; the others are **31**. An arc of
+the ball is short by nature (it ends at every contact), while a false track hooked to
+a slow element can run indefinitely. The correct criterion is **speed**: 13.2 px/frame
+for the good segments against 8.8 for the others. This change alone takes precision
+from 0.168 to 0.405.
 
-**Ce que le plafond d'accélération fait, et ne fait pas.** Il était présenté au départ
-comme le mécanisme central, celui qui autorise les changements de direction brutaux
-aux contacts. Le balayage le dément : de 40 à l'infini, le rappel bouge d'un millième.
-Il ne mord quasiment jamais, et il est conservé comme garde-fou contre une frame
-pathologique, pas comme le ressort de la méthode.
+**What the acceleration cap does, and does not do.** It was presented at the start as
+the central mechanism, the one that allows sudden changes of direction at contacts.
+The sweep contradicts this: from 40 to infinity, recall moves by one thousandth. It
+almost never bites, and it is kept as a safeguard against a pathological frame, not as
+the spring of the method.
 
-**Ce qui reste à gagner.** 0,912 et 0,928 étaient disponibles dans la liste de
-candidats, 0,716 et 0,733 sont capturés. L'écart, un cinquième du plafond, est ce
-qui justifiera, ou non, de remplacer la détection par mouvement par un réseau.
+**What remains to be gained.** 0.912 and 0.928 were available in the list of
+candidates, 0.716 and 0.733 are captured. The gap, a fifth of the ceiling, is what
+will justify, or not, replacing motion detection with a network.
 
-**Réserve de méthode : la métrique récompense le fait de toujours répondre.** Une frame
-sans prédiction compte comme un échec de rappel, alors qu'une position produite là où
-aucune balle n'est annotée n'est pas comptabilisable : 2 212 frames dans ce cas sur le
-match tenu à l'écart. Le balayage a donc trouvé optimal un coût d'absence si élevé que
-le chemin ne renonce jamais, ce qui est en partie un artefact de la mesure et non une
-qualité propre de la méthode. Le comparatif ci-dessus reste valide, les deux méthodes
-étant jugées à la même aune, mais le 0,733 ne doit pas se lire comme « la balle est
-localisée trois fois sur quatre en toute circonstance ».
+**A caveat on method: the metric rewards always answering.** A frame without a
+prediction counts as a recall failure, while a position produced where no ball is
+annotated cannot be counted: 2,212 frames in this case on the held-out match. The
+sweep therefore found optimal an absence cost so high that the path never gives up,
+which is partly an artefact of the measurement and not a quality of the method itself.
+The comparison above remains valid, both methods being judged by the same yardstick,
+but the 0.733 must not be read as "the ball is located three times out of four in all
+circumstances".
 
-### Détection de balle par réseau
+### Ball detection by a network
 
-La détection par mouvement place la balle dans sa liste de candidats 91 % du temps,
-mais au sixième rang parmi 78, et la trajectoire n'en récupère que 79 %. **Un réseau
-entraîné détecte-t-il mieux ?** La question est posée sous forme d'**ablation** : le
-réseau remplace l'étage des candidats et rien d'autre. Il répond au même protocole que
-la détection par mouvement, et la même optimisation de trajectoire tourne derrière,
-avec les mêmes coûts. L'écart mesuré revient donc au détecteur seul.
+Motion detection places the ball in its list of candidates 91 % of the time, but at
+the sixth rank among 78, and the trajectory recovers only 79 % of that. **Does a
+trained network detect better?** The question is asked as an **ablation**: the network
+replaces the candidate stage and nothing else. It answers to the same protocol as
+motion detection, and the same trajectory optimisation runs behind it, with the same
+costs. The measured gap therefore belongs to the detector alone.
 
-#### Le réseau
+#### The network
 
-Un U-Net étroit lit **trois frames empilées**, espacées de trois images, et rend une
-**carte de chaleur** à 640×360. La cible d'entraînement est une gaussienne centrée sur
-la balle annotée plutôt qu'un masque binaire : une balle ne couvre ici que trois
-pixels, et un masque ne dirait pas où se trouve son centre. Les maxima locaux de la
-carte deviennent les candidats.
+A narrow U-Net reads **three stacked frames**, spaced three images apart, and returns a
+**heat map** at 640×360. The training target is a Gaussian centred on the annotated
+ball rather than a binary mask: a ball covers only three pixels here, and a mask would
+not say where its centre is. The local maxima of the map become the candidates.
 
-Seules les frames portant une balle annotée servent à l'entraînement. Une frame sans
-annotation n'est pas une frame sans balle : 17,5 % des frames annotées n'en portent
-pas, et rien ne dit si la balle y était absente ou seulement non étiquetée.
+Only the frames carrying an annotated ball are used for training. A frame without an
+annotation is not a frame without a ball: 17.5 % of the annotated frames carry none,
+and nothing says whether the ball was absent there or only unlabelled.
 
-#### Ce que la carte graphique a imposé
+#### What the graphics card imposed
 
-Une GTX 1650 offre 4,29 Go, dont 3,45 libres. Mesuré avant d'écrire la boucle
-d'entraînement :
+A GTX 1650 offers 4.29 GB, of which 3.45 are free. Measured before writing the training
+loop:
 
-| Configuration | Mémoire | Débit |
+| Configuration | Memory | Throughput |
 |---|---|---|
-| **Largeur 16, lot de 4, FP32** | **1,82 Go** | **15,1 frames/s** |
-| Largeur 32, lot de 4 | 3,61 Go | 5,7 frames/s |
-| Largeur 16, lot de 4, **précision mixte** | 0,91 Go | **5,3 frames/s** |
+| **Width 16, batch of 4, FP32** | **1.82 GB** | **15.1 frames/s** |
+| Width 32, batch of 4 | 3.61 GB | 5.7 frames/s |
+| Width 16, batch of 4, **mixed precision** | 0.91 GB | **5.3 frames/s** |
 
-**La précision mixte est trois fois plus lente.** C'est l'accélération habituelle, et
-sur cette carte elle ralentit : la TU117 n'a pas de cœurs tensoriels, donc le
-demi-format ne gagne rien et les conversions coûtent tout.
+**Mixed precision is three times slower.** It is the usual speed-up, and on this card
+it slows things down: the TU117 has no tensor cores, so the half format gains nothing
+and the conversions cost everything.
 
-**Le vrai goulot était le temps, pas la mémoire.** À 15 frames/s, une époque sur les
-34 265 frames d'entraînement prend 38 minutes. Deux budgets ont donc été entraînés :
+**The real bottleneck was time, not memory.** At 15 frames/s, one epoch over the
+34,265 training frames takes 38 minutes. Two budgets were therefore trained:
 
-| Modèle | Frames | Époques | Durée | Validation |
+| Model | Frames | Epochs | Duration | Validation |
 |---|---|---|---|---|
-| Une frame sur trois | 11 470 | 10 | 2 h 03 | 0,0103 → 0,0049 |
-| Toutes les frames | 34 265 | **6 sur 10** | 4 h 38 | 0,0056 → 0,0037 |
+| One frame in three | 11,470 | 10 | 2 h 03 | 0.0103 → 0.0049 |
+| Every frame | 34,265 | **6 out of 10** | 4 h 38 | 0.0056 → 0.0037 |
 
-Le second s'est arrêté à la sixième époque, avec la session qui le portait, alors que
-sa validation baissait encore. Les poids étant écrits après chaque époque, rien n'a été
-perdu. Les deux pertes de validation **ne se comparent pas entre elles** : elles ne
-portent pas sur les mêmes frames.
+The second stopped at the sixth epoch, with the session that carried it, while its
+validation was still falling. The weights being written after each epoch, nothing was
+lost. The two validation losses **cannot be compared with each other**: they do not
+cover the same frames.
 
-#### Le résultat
+#### The result
 
-Rappel final après l'optimisation de trajectoire :
+Final recall after the trajectory optimisation:
 
-| | Détecteur | 5 px | 10 px | 20 px |
+| | Detector | 5 px | 10 px | 20 px |
 |---|---|---|---|---|
-| **Réglage** | Mouvement | 0,534 | 0,716 | 0,764 |
-| | Réseau, une frame sur trois | 0,690 | 0,815 | 0,858 |
-| | **Réseau, toutes les frames** | **0,756** | **0,837** | **0,893** |
-| **Tenu à l'écart** | Mouvement | 0,576 | 0,733 | 0,774 |
-| | Réseau, une frame sur trois | 0,689 | **0,798** | 0,836 |
-| | **Réseau, toutes les frames** | **0,728** | 0,791 | **0,845** |
+| **Tuning** | Motion | 0.534 | 0.716 | 0.764 |
+| | Network, one frame in three | 0.690 | 0.815 | 0.858 |
+| | **Network, every frame** | **0.756** | **0.837** | **0.893** |
+| **Held out** | Motion | 0.576 | 0.733 | 0.774 |
+| | Network, one frame in three | 0.689 | **0.798** | 0.836 |
+| | **Network, every frame** | **0.728** | 0.791 | **0.845** |
 
-Match tenu à l'écart : frames 0 à 21 472, 19 259 balles annotées, comme pour la
-détection par mouvement. Les réseaux y ont été mesurés en deux passes, coupées à la
-frame 20 100, et combinées au prorata des balles annotées de chaque passe.
+Held-out match: frames 0 to 21,472, 19,259 annotated balls, as for motion detection.
+The networks were measured there in two passes, cut at frame 20,100, and combined in
+proportion to the annotated balls of each pass.
 
-**Le réseau gagne sur le match qu'il n'a jamais vu**, avec les deux modèles et aux
-trois tolérances : +6,5 points à 10 px, +15 à 5 px. La tranche d'évaluation du match
-de réglage n'avait jamais servi à l'entraînement, mais elle venait du même match :
-mêmes joueuses, même éclairage. Le match masculin répond à la question que celle-là
-ne pouvait pas trancher : le réseau a appris la balle, pas ce match-là.
+**The network wins on the match it has never seen**, with both models and at all three
+tolerances: +6.5 points at 10 px, +15 at 5 px. The evaluation slice of the tuning match
+had never been used for training, but it came from the same match: same players, same
+lighting. The men's match answers the question that one could not settle: the network
+learned the ball, not that match.
 
-**Le gain le plus fort est à 5 px** sur les deux matchs. Le réseau ne trouve pas
-seulement la balle plus souvent, il la **localise** plus précisément que le centre
-d'une tache de mouvement, dont la dispersion médiane valait 3,3 px.
+**The largest gain is at 5 px** on both matches. The network does not only find the
+ball more often, it **locates** it more precisely than the centre of a motion blob,
+whose median scatter was 3.3 px.
 
-**Tripler les données améliore la localisation, pas le rappel.** Le modèle entraîné
-sur toutes les frames gagne 4 points à 5 px sur le match tenu à l'écart, mais aucun à
-10 px : il y fait même 0,7 point de moins que le modèle à une frame sur trois. Son
-avance de 2 points à 10 px sur le match de réglage ne se transfère donc pas. Il n'a
-fait que six époques sur dix : c'est la seule réserve, et elle ne peut aller que dans
-son sens.
+**Tripling the data improves localisation, not recall.** The model trained on every
+frame gains 4 points at 5 px on the held-out match, but none at 10 px: it even does 0.7
+point worse there than the model at one frame in three. Its lead of 2 points at 10 px
+on the tuning match therefore does not transfer. It only did six epochs out of ten:
+that is the only caveat, and it can only go in its favour.
 
-Une observation annexe : avec les candidats du réseau, la croissance gloutonne, qui
-n'est pas la méthode retenue, se dégrade (0,162 → 0,093 à 10 px). La cause n'a pas été
-cherchée.
+A side observation: with the candidates of the network, greedy growth, which is not
+the method kept, degrades (0.162 → 0.093 at 10 px). The cause was not looked for.
 
-Les poids et le cache de frames ne sont pas versionnés. Ils se reconstruisent avec les
-commandes de [Reproduire l'évaluation](#reproduire-lévaluation).
+The weights and the frame cache are not versioned. They are rebuilt with the commands
+of [Reproducing the evaluation](#reproducing-the-evaluation).
 
-### Instants de contact
+### Contact instants
 
-L'étage précédent rend une position par frame et **ne renonce jamais** : il n'y a donc
-aucun trou où lire un contact. Le critère doit porter sur la forme du chemin.
+The previous stage returns a position per frame and **never gives up**: there is
+therefore no gap in which to read a contact. The criterion must bear on the shape of
+the path.
 
-Ce qui marque un contact est un changement de direction. Mesuré en pixels il n'est pas
-comparable d'un lob à un smash, donc le virage est **divisé par la vitesse qui l'a
-produit** : un écart de 40 px est un coude à 5 px/frame et une broutille à 30. Les
-contacts retenus sont les maxima locaux de ce rapport, un seul par fenêtre de 5 frames.
+What marks a contact is a change of direction. Measured in pixels it is not comparable
+from a lob to a smash, so the turn is **divided by the speed that produced it**: a gap
+of 40 px is an elbow at 5 px/frame and a trifle at 30. The contacts kept are the local
+maxima of this ratio, a single one per window of 5 frames.
 
-Mesuré sur les deux matchs, avec le même détecteur appliqué au chemin reconstruit et à
-la balle annotée (l'écart entre les deux lignes est donc imputable à la trajectoire et
-à rien d'autre) :
+Measured on both matches, with the same detector applied to the reconstructed path and
+to the annotated ball (the gap between the two rows is therefore attributable to the
+trajectory and to nothing else):
 
-| | Contacts | Rappel des frappes | Rebonds par échange |
+| | Contacts | Recall of strokes | Bounces per exchange |
 |---|---|---|---|
-| **Réglage** (92 frappes), balle annotée | 192 | 0,891 | 0,89 |
-| Réglage, chemin reconstruit | 244 | 0,902 | 1,23 |
-| **Tenu à l'écart** (475 frappes), balle annotée | 874 | 0,806 | 0,86 |
-| Tenu à l'écart, **chemin reconstruit** | **1 257** | **0,895** | **1,38** |
+| **Tuning** (92 strokes), annotated ball | 192 | 0.891 | 0.89 |
+| Tuning, reconstructed path | 244 | 0.902 | 1.23 |
+| **Held out** (475 strokes), annotated ball | 874 | 0.806 | 0.86 |
+| Held out, **reconstructed path** | **1,257** | **0.895** | **1.38** |
 
-**Le chemin reconstruit obtient un meilleur rappel que la balle annotée. Ce n'est pas
-une qualité, c'est un symptôme :** il produit 44 % de contacts en plus, et détecter
-davantage fait mécaniquement monter le rappel. La colonne qui compte est la troisième.
+**The reconstructed path gets a better recall than the annotated ball. It is not a
+quality, it is a symptom:** it produces 44 % more contacts, and detecting more
+mechanically raises recall. The column that counts is the third.
 
-**Une trajectoire juste à 73 % ne coûte que quelques points.** Le nombre de rebonds par
-échange passe de 0,86 à 1,38 : l'excédent est l'erreur de trajectoire, et il est
-mesurable comme tel plutôt que caché dans un rappel flatteur.
+**A trajectory that is 73 % right costs only a few points.** The number of bounces per
+exchange goes from 0.86 to 1.38: the excess is the trajectory error, and it is
+measurable as such rather than hidden in a flattering recall.
 
-#### La précision ne peut pas être rapportée comme une performance
+#### Precision cannot be reported as a performance
 
-L'annotation ne marque que les contacts avec une **raquette**, sous forme
-d'intervalles. Ces intervalles couvrent **48,2 %** des frames annotées du match de
-réglage. Un détecteur tirant ses instants **au hasard** y obtient donc une précision de
-0,485, et le détecteur de virages appliqué à la balle parfaitement annotée en obtient
-0,573. L'écart est trop mince pour démontrer quoi que ce soit.
+The annotation marks only the contacts with a **racket**, as intervals. These
+intervals cover **48.2 %** of the annotated frames of the tuning match. A detector
+drawing its instants **at random** therefore gets a precision of 0.485 there, and the
+turn detector applied to the perfectly annotated ball gets 0.573. The gap is too thin
+to demonstrate anything.
 
-Deux corrections ont été essayées et n'ont rien changé : un appariement un pour un
-entre contacts et frappes donne le même gain, et resserrer la cible autour du centre de
-l'intervalle échoue parce que l'impact ne s'y concentre pas : il se disperse sur
-presque toute la largeur, écart-type 0,48 en demi-largeur.
+Two corrections were tried and changed nothing: a one-to-one matching between contacts
+and strokes gives the same gain, and tightening the target around the centre of the
+interval fails because the impact is not concentrated there: it is spread over almost
+the whole width, standard deviation 0.48 in half-widths.
 
-**Le match tenu à l'écart est le meilleur instrument**, ses intervalles ne couvrant que
-31,0 % des frames :
+**The held-out match is the best instrument**, its intervals covering only 31.0 % of
+the frames:
 
-| | Précision | Au hasard | Gain |
+| | Precision | At random | Gain |
 |---|---|---|---|
-| Réglage, chemin reconstruit | 0,537 | 0,428 | 1,25× |
-| **Tenu à l'écart, chemin reconstruit** | **0,429** | **0,285** | **1,51×** |
-| Tenu à l'écart, balle annotée | 0,501 | 0,308 | 1,63× |
+| Tuning, reconstructed path | 0.537 | 0.428 | 1.25× |
+| **Held out, reconstructed path** | **0.429** | **0.285** | **1.51×** |
+| Held out, annotated ball | 0.501 | 0.308 | 1.63× |
 
-Sur l'instrument le moins complaisant, le détecteur bat le hasard d'un facteur 1,5.
-C'est une mesure, mais faible, et elle l'est restée jusqu'à ce qu'une vérité terrain
-produite à la main la remplace, plus bas.
-Le témoin aléatoire est calculé par le code et affiché à côté de chaque précision, pour
-qu'aucun de ces chiffres ne puisse être lu isolément.
+On the least indulgent instrument, the detector beats chance by a factor of 1.5. It is
+a measurement, but a weak one, and it stayed so until a ground truth produced by hand
+replaced it, further down.
+The random control is computed by the code and printed next to every precision, so
+that none of these figures can be read in isolation.
 
-#### Ce qui remplace la précision
+#### What replaces precision
 
-La physique du padel. Entre deux frappes, la balle rebondit **0 fois** (volée), **1**
-(sol) ou **2** (sol puis vitre, ou l'inverse). C'est un critère que l'annotation ne
-fournit pas et qu'elle ne peut pas fausser. Sur le match tenu à l'écart, la
-distribution obtenue est 0 : 170, 1 : 138, 2 : 78, 3 : 40, au-delà 42, soit **82 % des
-échanges dans ce que le jeu prédit**.
+The physics of padel. Between two strokes, the ball bounces **0 times** (volley), **1**
+(floor) or **2** (floor then glass, or the reverse). It is a criterion that the
+annotation does not provide and cannot skew. On the held-out match, the distribution
+obtained is 0: 170, 1: 138, 2: 78, 3: 40, beyond 42, that is **82 % of the exchanges
+within what the game predicts**.
 
-C'est aussi ce critère qui a fixé le réglage, et non la métrique d'événements.
+It is also this criterion that set the tuning, and not the event metric.
 
-#### L'encadrement du virage absolu
+#### Bounding the absolute turn
 
-Le critère relatif ne connaît que des rapports, ce qui le rend aveugle à une erreur
-propre au chemin reconstruit : sa vitesse au 95ᵉ centile vaut **512 px** contre **186**
-pour la balle annotée. Il fait des sauts qu'aucune balle ne fait, et chaque saut
-fabrique un virage. Le virage absolu est donc encadré entre 25 et 300 px.
+The relative criterion only knows ratios, which makes it blind to an error specific to
+the reconstructed path: its speed at the 95th percentile is **512 px** against **186**
+for the annotated ball. It makes jumps that no ball makes, and each jump manufactures a
+turn. The absolute turn is therefore bounded between 25 and 300 px.
 
-| | Contacts | Rappel | Rebonds par échange |
+| | Contacts | Recall | Bounces per exchange |
 |---|---|---|---|
-| Seuil relatif seul | 317 | 0,957 | 1,85 |
-| **Virage encadré** | **246** | **0,902** | **1,24** |
+| Relative threshold alone | 317 | 0.957 | 1.85 |
+| **Bounded turn** | **246** | **0.902** | **1.24** |
 
-La longue traîne (jusqu'à dix contacts entre deux frappes) disparaît avec le plafond.
-C'étaient des erreurs de chemin, pas des rebonds.
+The long tail (up to ten contacts between two strokes) disappears with the cap. They
+were path errors, not bounces.
 
-#### La précision, mesurée après coup
+#### Precision, measured afterwards
 
-Il manquait une vérité terrain d'instants de contact, toutes surfaces confondues, et
-aucun jeu de données public de padel ne la fournit. Elle a été produite pour classer
-les surfaces, dans la section suivante : chaque contact détecté y a été rejoué et jugé
-à la main, avec une réponse possible **« aucun contact »** lorsque la trajectoire passait
-tout droit.
+A ground truth of contact instants, all surfaces together, was missing, and no public
+padel dataset provides it. It was produced to classify the surfaces, in the next
+section: each detected contact was replayed there and judged by hand, with a possible
+answer **"no contact"** when the trajectory went straight through.
 
-Ces jugements donnent la précision que l'annotation de frappes ne pouvait pas donner :
+These judgements give the precision that the stroke annotation could not give:
 
-| | Contacts jugés | Aucun contact | **Précision** |
+| | Contacts judged | No contact | **Precision** |
 |---|---|---|---|
-| Match de réglage | 194, tous | 49 | **0,747** |
-| Match tenu à l'écart | 150, tirés au sort sur 886 | 36 | **0,760** |
+| Tuning match | 194, all | 49 | **0.747** |
+| Held-out match | 150, drawn at random out of 886 | 36 | **0.760** |
 
-**Un contact détecté sur quatre n'a pas eu lieu.** Le chiffre est stable d'un match à
-l'autre, et il remplace le « facteur 1,5 sur le hasard » du tableau précédent : celui-ci
-restait une mesure indirecte, celui-là est direct.
+**One detected contact in four did not happen.** The figure is stable from one match
+to the other, and it replaces the "factor of 1.5 over chance" of the previous table:
+that one remained an indirect measurement, this one is direct.
 
-Une précision importante sur sa portée : ces contacts ont été détectés sur la **balle
-annotée**, pas sur le chemin reconstruit. C'est donc la précision du critère de virage
-lui-même, hors de toute erreur de trajectoire. Sur le chemin reconstruit, qui produit
-44 % de contacts en plus, elle est très probablement plus basse, et elle n'est pas
-mesurée.
+An important point about its scope: these contacts were detected on the **annotated
+ball**, not on the reconstructed path. It is therefore the precision of the turn
+criterion itself, free of any trajectory error. On the reconstructed path, which
+produces 44 % more contacts, it is very probably lower, and it is not measured.
 
-### Surfaces de contact
+### Contact surfaces
 
-Savoir *quand* la balle a été touchée ne dit pas *contre quoi*. Un court de padel est
-fermé : la balle rebondit sur le sol, sur du verre, sur du grillage et sur des
-raquettes. C'est ce que cet étage doit trancher, et c'est ce qu'un pipeline de tennis
-n'a pas à faire, un court ouvert n'ayant ni vitre ni grillage.
+Knowing *when* the ball was touched does not say *against what*. A padel court is
+enclosed: the ball bounces off the floor, off glass, off mesh and off rackets. That is
+what this stage must decide, and it is what a tennis pipeline does not have to do, an
+open court having neither glass nor mesh.
 
-**Pourquoi l'homographie ne suffit pas.** Elle projette sur le plan du sol. Elle est
-donc exacte pour un rebond au sol et fausse pour tout contact en hauteur. Mesuré sur
-194 contacts réels : **un tiers se projette hors du rectangle du court**, certains à
-23 m pour un court qui en fait 20. Et la distribution est presque identique entre
-frappes annotées et non-frappes : 67,3 % contre 64,3 % dans le rectangle. **La position
-projetée seule ne sépare rien.**
+**Why the homography is not enough.** It projects onto the ground plane. It is
+therefore exact for a floor bounce and wrong for any contact above the ground.
+Measured on 194 real contacts: **a third project outside the rectangle of the court**,
+some at 23 m for a court that is 20 long. And the distribution is almost identical
+between annotated strokes and non-strokes: 67.3 % against 64.3 % inside the rectangle.
+**The projected position alone separates nothing.**
 
-**Ce qui la remplace.** Une caméra ne donne qu'un rayon : la balle est quelque part
-dessus, et rien ne dit où. C'est vrai en vol, et ça le reste. Mais **au moment d'un
-contact la balle est sur une surface**, et les surfaces d'un court sont cinq plans
-connus. Un rayon et un plan se coupent en un point. La hauteur, indéterminée en
-général, est déterminée précisément à l'instant qui nous intéresse.
+**What replaces it.** A camera only gives a ray: the ball is somewhere on it, and
+nothing says where. That is true in flight, and it stays true. But **at the moment of
+a contact the ball is on a surface**, and the surfaces of a court are five known
+planes. A ray and a plane meet at one point. The height, undetermined in general, is
+determined precisely at the instant we care about.
 
-#### Retrouver la caméra
+#### Recovering the camera
 
-Une homographie se contente de points au sol ; une pose de caméra ne le peut pas, un
-ensemble coplanaire laissant la direction verticale libre. Les repères manquants
-viennent d'une annotation manuelle des panneaux de mur : haut du verre à 3 m, haut du
-grillage à 4 m, haut du filet à 0,92 m.
+A homography makes do with points on the ground; a camera pose cannot, a coplanar set
+leaving the vertical direction free. The missing references come from a manual
+annotation of the wall panels: top of the glass at 3 m, top of the mesh at 4 m, top of
+the net at 0.92 m.
 
-Résultat : caméra à **x = −0,06 m, y = −26,18 m, z = +7,86 m**, centrée sur l'axe du
-court, vingt-six mètres derrière le fond proche, à près de huit mètres de haut.
+Result: camera at **x = −0.06 m, y = −26.18 m, z = +7.86 m**, centred on the axis of
+the court, twenty-six metres behind the near back wall, nearly eight metres high.
 
-Le chiffre qui engage quelque chose n'est pas celui de l'ajustement mais celui des
-**points de contrôle, qui n'entrent jamais dans l'ajustement** :
+The figure that commits to something is not that of the fit but that of the **control
+points, which never enter the fit**:
 
-| Points de contrôle | Écart médian |
+| Control points | Median gap |
 |---|---|
-| Au sol (filet, lignes de service) | **4,2 px** |
-| **En hauteur (0,92 m à 4 m, aux deux fonds)** | **8,6 px** |
-| Maximum, au fond éloigné | 14,4 px |
+| On the ground (net, service lines) | **4.2 px** |
+| **Above the ground (0.92 m to 4 m, at both ends)** | **8.6 px** |
+| Maximum, at the far end | 14.4 px |
 
-**Ce que 8,6 px valent en mètres dépend de la profondeur** : 13 cm près de la caméra,
-56 cm au fond éloigné, le facteur 4,3 déjà mesuré plus haut. Sur un seuil verre /
-grillage à 3 m, c'est une incertitude d'environ 20 % au pire.
+**What 8.6 px are worth in metres depends on depth**: 13 cm near the camera, 56 cm at
+the far end, the factor of 4.3 already measured above. On a glass / mesh threshold at
+3 m, that is an uncertainty of about 20 % at worst.
 
-#### La règle
+#### The rule
 
-**Raquette** : un poignet à proximité. Le dataset fournit dix-sept points par joueur,
-dont les deux poignets. Mesuré : la balle est à **50 px** du poignet le plus proche
-quand une frappe est annotée, contre **168 px** sinon.
+**Racket**: a wrist nearby. The dataset provides seventeen points per player,
+including both wrists. Measured: the ball is **50 px** from the nearest wrist when a
+stroke is annotated, against **168 px** otherwise.
 
-**Sol ou mur** : on coupe le rayon avec les cinq plans et on ne garde que les
-intersections physiquement admissibles : devant la caméra, et dans l'étendue réelle de
-la surface. La marge qui absorbe l'erreur de pose est exprimée **en mètres et jamais en
-pixels** : un pixel valant 1,51 cm près et 6,47 cm loin, une marge en pixels serait
-quatre fois plus laxiste au fond.
+**Floor or wall**: the ray is intersected with the five planes and only the physically
+admissible intersections are kept: in front of the camera, and within the real extent
+of the surface. The margin that absorbs the pose error is expressed **in metres and
+never in pixels**: a pixel being worth 1.51 cm near and 6.47 cm far, a margin in
+pixels would be four times more lax at the far end.
 
-**Verre ou grillage** : une table, une fois le point d'impact connu en trois
-dimensions. Fonds : verre sous 3 m. Côtés : verre à moins de 4,1 m d'un fond. Aucune
-heuristique.
+**Glass or mesh**: a table, once the point of impact is known in three dimensions.
+Back walls: glass below 3 m. Side walls: glass within 4.1 m of a back wall. No
+heuristic.
 
-#### La vérité terrain, qui n'existait nulle part
+#### The ground truth, which existed nowhere
 
-Aucun jeu de données public de padel n'étiquette les surfaces de contact : le dataset
-utilisé ici déclare une catégorie `Wall` et ne l'a jamais remplie. Elle a donc été
-produite à la main, sur les deux matchs.
+No public padel dataset labels contact surfaces: the dataset used here declares a
+`Wall` category and never filled it. It was therefore produced by hand, on both
+matches.
 
-| | Match de réglage | Match tenu à l'écart |
+| | Tuning match | Held-out match |
 |---|---|---|
-| Contacts soumis | **194**, recensement complet | **150**, tirés de 886 |
-| Contacts réels | 145 | 112 |
-| Illisibles | 0 | 2 |
+| Contacts submitted | **194**, full census | **150**, drawn from 886 |
+| Real contacts | 145 | 112 |
+| Unreadable | 0 | 2 |
 
-L'outil rejoue chaque instant en boucle, la balle marquée d'une croix fixe, et
-**n'affiche jamais ce que la règle prédit**. Une vérité terrain construite sur
-l'hypothèse qu'elle doit juger ne mesure que deux erreurs qui s'accordent : au
-sous-projet A, corriger ce défaut avait fait passer l'IDF1 de 0,956 à 0,819.
+The tool replays each instant in a loop, the ball marked with a fixed cross, and
+**never shows what the rule predicts**. A ground truth built on the assumption it has
+to judge only measures two errors agreeing: in sub-project A, correcting this flaw had
+taken IDF1 from 0.956 to 0.819.
 
-Le match masculin compte 886 contacts, soit deux heures d'arbitrage. L'échantillon est
-**stratifié**, et sa taille comme sa graine sont enregistrées dans le fichier : un
-tirage qu'on ne peut pas refaire ne serait pas une mesure.
+The men's match has 886 contacts, that is two hours of arbitration. The sample is
+**stratified**, and its size as well as its seed are recorded in the file: a draw that
+cannot be redone would not be a measurement.
 
-#### Ce que l'annotation mesure de l'étage précédent
+#### What the annotation measures of the previous stage
 
-**Un quart des contacts détectés n'ont pas eu lieu** : la trajectoire passait tout
-droit. La précision de l'étage des contacts vaut donc **0,747** sur le match de réglage
-et **0,760** sur le match tenu à l'écart, sur la balle parfaitement annotée, donc hors
-de toute erreur de trajectoire.
+**A quarter of the detected contacts did not happen**: the trajectory went straight
+through. The precision of the contact stage is therefore **0.747** on the tuning match
+and **0.760** on the held-out match, on the perfectly annotated ball, so free of any
+trajectory error.
 
-C'est la mesure que la section précédente déclarait impossible. L'annotation de frappes
-ne pouvait pas la donner : ses intervalles couvrent la moitié des frames, si bien qu'un
-détecteur tirant au hasard y obtenait déjà 0,480. Celle-ci est directe.
+This is the measurement that the previous section declared impossible. The stroke
+annotation could not give it: its intervals cover half the frames, so that a detector
+drawing at random already got 0.480 there. This one is direct.
 
-#### Ce que la règle vaut
+#### What the rule is worth
 
-| | Réglage | | | Tenu à l'écart | | |
+| | Tuning | | | Held out | | |
 |---|---|---|---|---|---|---|
-| **Classe** | **n** | **Précision** | **F1** | **n** | **Précision** | **F1** |
-| raquette | 75 | 0,830 | 0,896 | 58 | 0,806 | **0,892** |
-| sol | 51 | 0,842 | 0,719 | 42 | 0,923 | **0,706** |
-| mur | 17 | 0,789 | 0,833 | 12 | 0,714 | **0,769** |
+| **Class** | **n** | **Precision** | **F1** | **n** | **Precision** | **F1** |
+| racket | 75 | 0.830 | 0.896 | 58 | 0.806 | **0.892** |
+| floor | 51 | 0.842 | 0.719 | 42 | 0.923 | **0.706** |
+| wall | 17 | 0.789 | 0.833 | 12 | 0.714 | **0.769** |
 
-**Exactitude globale 0,828 en réglage, 0,821 tenu à l'écart.** Sept millièmes d'écart :
-les seuils n'ont pas été surajustés au match qui a servi à les choisir.
+**Overall accuracy 0.828 in tuning, 0.821 held out.** Seven thousandths apart: the
+thresholds were not overfitted to the match that was used to choose them.
 
-**Grillage et filet ne sont pas mesurables.** Un exemple et deux sur le match de
-réglage, aucun des deux dans l'échantillon tenu à l'écart. C'était prévu : le grillage
-n'occupe que le haut des fonds et le milieu des côtés. Aucun taux n'est publié pour
-eux, et leurs effectifs sont donnés plutôt que tus.
+**Mesh and net cannot be measured.** One example and two on the tuning match, neither
+in the held-out sample. It was expected: the mesh only occupies the top of the back
+walls and the middle of the sides. No rate is published for them, and their counts are
+given rather than kept quiet.
 
-#### L'arbitrage par la profondeur
+#### Arbitration by depth
 
-Quand le sol et un mur sont tous deux admissibles, lequel choisir ? La première version
-préférait le sol, systématiquement. Mesuré, ce choix coûtait **dix murs sur dix-sept**.
+When the floor and a wall are both admissible, which one to choose? The first version
+preferred the floor, systematically. Measured, this choice cost **ten walls out of
+seventeen**.
 
-La règle retenue préfère le mur lorsque le point-sol candidat tombe au-delà de
-`y = −7,5 m`. Ce seuil n'est pas un nombre ajusté : la caméra étant à `y = −26,18` et
-`z = 7,86`, un contact sur la vitre proche se projette au sol en
+The rule kept prefers the wall when the candidate floor point falls beyond
+`y = −7.5 m`. This threshold is not a fitted number: the camera being at `y = −26.18`
+and `z = 7.86`, a contact on the near glass projects onto the floor at
 
-| Hauteur du contact | 0,3 m | 0,5 m | 0,8 m | **1,0 m** | 1,6 m | 2,0 m |
+| Height of the contact | 0.3 m | 0.5 m | 0.8 m | **1.0 m** | 1.6 m | 2.0 m |
 |---|---|---|---|---|---|---|
-| y projeté | −9,36 | −8,90 | −8,17 | **−7,64** | −5,86 | −4,48 |
+| projected y | −9.36 | −8.90 | −8.17 | **−7.64** | −5.86 | −4.48 |
 
-Le seuil sépare donc les contacts de vitre **sous 1,05 m environ**. Au-delà, la
-projection entre dans le court et plus rien ne la distingue d'un rebond au sol.
+The threshold therefore separates the glass contacts **below about 1.05 m**. Beyond
+that, the projection enters the court and nothing distinguishes it from a floor bounce
+any more.
 
-| Rappel des murs | Avant | Après |
+| Recall of walls | Before | After |
 |---|---|---|
-| Match de réglage | 0,412 | **0,882** |
-| Match tenu à l'écart | non mesuré | **0,833** |
+| Tuning match | 0.412 | **0.882** |
+| Held-out match | not measured | **0.833** |
 
-**Le plafond n'est pas celui du seuil mais celui de la géométrie** : les murs manqués
-sont les murs hauts, et une seule caméra ne peut pas les distinguer d'un rebond.
+**The ceiling is not that of the threshold but that of the geometry**: the walls
+missed are the high walls, and a single camera cannot tell them from a bounce.
 
-#### Ce qui n'a pas été corrigé, et pourquoi
+#### What was not corrected, and why
 
-Deux erreurs ont été mesurées, une seule est corrigible.
+Two errors were measured, only one can be corrected.
 
-La seconde est que **des rebonds au sol sont pris pour des frappes** : quinze sur le
-match de réglage. Le seuil de proximité au poignet a été balayé de 50 à 120 px :
+The second is that **floor bounces are taken for strokes**: fifteen on the tuning
+match. The wrist proximity threshold was swept from 50 to 120 px:
 
-| Seuil | 50 | 60 | 70 | **80** | 90 | 100 | 120 |
+| Threshold | 50 | 60 | 70 | **80** | 90 | 100 | 120 |
 |---|---|---|---|---|---|---|---|
-| Exactitude | 0,745 | 0,793 | 0,828 | **0,828** | 0,828 | 0,834 | 0,786 |
+| Accuracy | 0.745 | 0.793 | 0.828 | **0.828** | 0.828 | 0.834 | 0.786 |
 
-C'est un plateau. Le déplacer échange des frappes contre des rebonds à somme nulle : il
-faudrait un autre signal, pas un autre seuil. **Le seuil est donc resté à 80 px**, et
-corriger quand même, pour annoncer deux corrections plutôt qu'une, aurait été ajuster
-du bruit.
+It is a plateau. Moving it trades strokes for bounces at zero sum: another signal
+would be needed, not another threshold. **The threshold therefore stayed at 80 px**,
+and correcting anyway, to announce two corrections rather than one, would have been
+fitting noise.
 
-#### Une strate nommée à l'envers
+#### A stratum named backwards
 
-Les contacts où **une seule** surface est admissible avaient été étiquetés « tranchés »,
-en supposant qu'une réponse unique valait confiance. Les deux campagnes disent
-l'inverse :
+The contacts where **a single** surface is admissible had been labelled "settled",
+assuming that a single answer meant confidence. The two campaigns say the opposite:
 
-| | Cas isolés | Dont sans contact |
+| | Isolated cases | Of which without a contact |
 |---|---|---|
-| Match de réglage | 24 | **24 (100 %)** |
-| Match tenu à l'écart | 16 | **14 (88 %)** |
+| Tuning match | 24 | **24 (100 %)** |
+| Held-out match | 16 | **14 (88 %)** |
 
-L'explication est géométrique. Un contact réel se produit dans le volume de jeu, où le
-fond proche est toujours admissible aussi, la caméra étant derrière lui : il est
-candidat pour 140 des 194 contacts du match de réglage. Un rayon qui ne rencontre
-qu'une seule surface est donc un rayon qui pointe hors du jeu.
+The explanation is geometric. A real contact happens in the volume of play, where the
+near back wall is always admissible too, the camera being behind it: it is a candidate
+for 140 of the 194 contacts of the tuning match. A ray that meets only one surface is
+therefore a ray that points outside the play.
 
-Ce n'est pas une mesure de confiance mais un **détecteur de faux positifs**, et la
-strate porte désormais ce nom. Il n'est pas appliqué comme filtre : 88 % sur seize cas
-ne justifie pas encore de supprimer des détections, et ce serait une décision à mesurer
-pour elle-même.
+It is not a measure of confidence but a **detector of false positives**, and the
+stratum now carries that name. It is not applied as a filter: 88 % on sixteen cases
+does not yet justify removing detections, and that would be a decision to measure for
+itself.
 
-### De bout en bout : ce que la démonstration affiche
+### End to end: what the demonstration shows
 
-Les sections précédentes jugent chaque étape sur ce que l'étape d'avant lui donne. Le
-spectateur, lui, voit la chaîne entière : un contact oublié ne s'affiche pas, un
-contact inventé éclaire une zone pour rien, et aucune des mesures ci-dessus ne les
-compte tous les deux.
+The previous sections judge each stage on what the stage before gives it. The viewer,
+for their part, sees the whole chain: a forgotten contact is not shown, an invented
+contact lights a zone for nothing, and none of the measurements above counts them
+both.
 
-#### Une vérité terrain complète
+#### A complete ground truth
 
-Juger les contacts qu'une chaîne propose ne mesure que sa précision : un mur qu'elle
-n'a jamais proposé n'est jamais jugé. Vingt minutes ont donc été **pointées en
-entier**, chaque contact réel à l'image près, avec un outil qui n'affiche rien de ce
-que le système détecte (`scripts/mark_contacts.py`) : 1 579 contacts.
+Judging the contacts a chain proposes only measures its precision: a wall it never
+proposed is never judged. Twenty minutes were therefore **marked in full**, each real
+contact to the frame, with a tool that shows nothing of what the system detects
+(`scripts/mark_contacts.py`): 1,579 contacts.
 
-| Minutes | Contacts | Rôle |
+| Minutes | Contacts | Role |
 |---|---|---|
-| Finale féminine, 4 minutes | 316 | réglage, puis entraînement |
-| Finale masculine, 5 minutes | 387 | entraînement |
-| Finale masculine, 3 autres minutes | 239 | **premier juge, noté une seule fois** |
-| Deux minutes féminines, une masculine | 238 | **second juge, noté une seule fois** |
-| Une minute de chaque finale | 160 | entraînement |
-| Deux minutes féminines, une masculine | 239 | **troisième juge, noté une seule fois** |
+| Women's final, 4 minutes | 316 | tuning, then training |
+| Men's final, 5 minutes | 387 | training |
+| Men's final, 3 other minutes | 239 | **first judge, scored only once** |
+| Two women's minutes, one men's | 238 | **second judge, scored only once** |
+| One minute of each final | 160 | training |
+| Two women's minutes, one men's | 239 | **third judge, scored only once** |
 
-Un contact détecté compte comme juste s'il tombe à trois images ou moins d'un contact
-pointé et porte la bonne surface. Le score combine les deux erreurs visibles :
-2 × justes / (affichés + réels).
+A detected contact counts as right if it falls within three frames of a marked contact
+and carries the right surface. The score combines the two visible errors:
+2 × right / (shown + real).
 
-#### Ce que les seuils ont donné
+#### What the thresholds gave
 
-La chaîne à règles de la démonstration a été réglée sur les quatre minutes féminines.
-Mesurer le virage sur trois images de part et d'autre au lieu de deux, avec un seuil
-de netteté abaissé de 0,50 à 0,40, fait passer les contacts justes de 177 à 194 sur
-316. Exiger un geste plus franc pour une frappe vue sans virage, 20 px par image au
-lieu de 10, retire 19 contacts inventés sans en perdre de juste.
+The rule chain of the demonstration was tuned on the four women's minutes. Measuring
+the turn over three frames on either side instead of two, with a sharpness threshold
+lowered from 0.50 to 0.40, takes the right contacts from 177 to 194 out of 316.
+Requiring a clearer gesture for a stroke seen without a turn, 20 px per frame instead
+of 10, removes 19 invented contacts without losing a right one.
 
-Tout le reste a été balayé sans gain :
+Everything else was swept without gain:
 
-- **le réseau de balle en 720p**, entraîné dix époques : 194 justes contre 194. Sur 97
-  contacts manqués, 94 avaient la balle correctement affichée à l'instant du contact.
-  Le goulot n'était plus de voir la balle, mais de lire son virage ;
-- le seuil de confiance de l'affichage, la distance au poignet, la marge des surfaces
-  et la coupe de profondeur : les valeurs en place étaient déjà les meilleures ;
-- la hauteur de la balle le long du joueur le plus proche, pour séparer un rebond
-  d'une frappe : un intervalle corrigeait sept erreurs au réglage et en créait une
-  ailleurs, sur des effectifs trop petits pour conclure.
+- **the ball network at 720p**, trained for ten epochs: 194 right against 194. Of 97
+  missed contacts, 94 had the ball correctly shown at the instant of the contact. The
+  bottleneck was no longer seeing the ball, but reading its turn;
+- the confidence threshold of the display, the distance to the wrist, the margin of
+  the surfaces and the depth cut: the values in place were already the best;
+- the height of the ball along the nearest player, to separate a bounce from a stroke:
+  an interval corrected seven errors in tuning and created one elsewhere, on counts
+  too small to conclude.
 
-Les erreurs restantes étaient des **combinaisons** d'indices : un virage mou à côté
-d'un poignet qui accélère est une frappe, le même virage avec la balle aux pieds du
-joueur est un rebond. Un seuil par indice ne peut pas l'exprimer.
+The remaining errors were **combinations** of cues: a soft turn next to an
+accelerating wrist is a stroke, the same turn with the ball at the player's feet is a
+bounce. One threshold per cue cannot express that.
 
-#### Un modèle appris
+#### A learned model
 
-`contact/learned.py` décrit chaque image par 58 indices : trajectoire, vitesses et
-virages sur une, deux et trois images, score du réseau et les autres positions qu'il
-proposait, geste du poignet le plus proche, distances de la balle aux coudes, poignets,
-hanches et chevilles du joueur le plus proche, sa taille apparente qui tient lieu de
-profondeur, surfaces que le rayon peut rencontrer et où, décision de la chaîne à
-règles. Un réseau convolutif temporel dilaté, qui voit
-une soixantaine d'images de contexte, classe chaque image en aucun contact, raquette,
-sol, mur ou filet ; les contacts sont les pics de probabilité. Vitre ou grillage se lit
-ensuite par la géométrie, comme pour les règles : trois contacts de grillage ne
-suffisent pas à l'apprendre. Trois réseaux sont moyennés.
+`contact/learned.py` describes each frame by 58 cues: trajectory, speeds and turns
+over one, two and three frames, score of the network and the other positions it
+proposed, gesture of the nearest wrist, distances from the ball to the elbows, wrists,
+hips and ankles of the nearest player, their apparent size which stands in for depth,
+surfaces the ray can meet and where, decision of the rule chain. A dilated temporal
+convolutional network, which sees
+about sixty frames of context, classes each frame as no contact, racket, floor, wall
+or net; the contacts are the probability peaks. Glass or mesh is then read from the
+geometry, as for the rules: three mesh contacts are not enough to learn it. Three
+networks are averaged.
 
-Chaque minute pointée a d'abord été prédite par un modèle entraîné **sur les autres
-seulement** :
+Each marked minute was first predicted by a model trained **on the others only**:
 
-| Minutes d'entraînement | 1 | 2 | 3 | 4 |
+| Training minutes | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
-| Contacts justes | 71,9 % | 75,5 % | 78,0 % | 80,1 % |
+| Right contacts | 71.9 % | 75.5 % | 78.0 % | 80.1 % |
 
-La courbe montait encore : quatre minutes masculines ont été pointées de plus. Sur les
-neuf minutes, en validation croisée :
+The curve was still rising: four more men's minutes were marked. Over the nine
+minutes, in cross-validation:
 
-| | Justes | Affichés | Score |
+| | Right | Shown | Score |
 |---|---|---|---|
-| Règles | 411 / 703 (58,5 %) | 598 | 0,632 |
-| **Modèle** | **568 / 703 (80,8 %)** | 658 | **0,835** |
+| Rules | 411 / 703 (58.5 %) | 598 | 0.632 |
+| **Model** | **568 / 703 (80.8 %)** | 658 | **0.835** |
 
-Le modèle gagne sur chacune des neuf minutes. Il transfère entre les matchs : entraîné
-sur les seules minutes féminines, il passe de 45 à 55 contacts justes sur 75 sur une
-minute masculine. Le seuil de décision, 0,7, a été choisi sur cette validation croisée.
+The model wins on each of the nine minutes. It transfers between the matches: trained
+on the women's minutes alone, it goes from 45 to 55 right contacts out of 75 on a
+men's minute. The decision threshold, 0.7, was chosen on this cross-validation.
 
-#### Le verdict
+#### The verdict
 
-Les trois minutes de juge n'avaient été ni regardées ni notées avant que le modèle
-soit figé.
+The three judge minutes had been neither looked at nor scored before the model was
+frozen.
 
-| Minute | Règles | Modèle |
+| Minute | Rules | Model |
 |---|---|---|
 | 12000 | 55 / 82 | **60 / 82** |
 | 25000 | 55 / 78 | **62 / 78** |
 | 40000 | 48 / 79 | **66 / 79** |
-| **Total** | 158 / 239 (66,1 %) | **188 / 239 (78,7 %)** |
-| Contacts affichés réels | 84,4 % | **93,6 %** |
-| Score | 0,672 | **0,823** |
+| **Total** | 158 / 239 (66.1 %) | **188 / 239 (78.7 %)** |
+| Shown contacts that are real | 84.4 % | **93.6 %** |
+| Score | 0.672 | **0.823** |
 
-Le modèle affiche moins de contacts que les règles, en trouve davantage et se trompe
-moins souvent de surface. Le chiffre du juge, 78,7 %, est à deux points de la
-validation croisée : la sélection n'a pas été flattée.
+The model shows fewer contacts than the rules, finds more of them and is wrong about
+the surface less often. The judge's figure, 78.7 %, is within two points of the
+cross-validation: the selection was not flattered.
 
-Les minutes de juge viennent d'un match dont d'autres minutes ont servi à
-l'entraînement. Le verdict mesure donc le passage à des **échanges jamais vus**, pas à
-un match, un court ou une caméra jamais vus.
+The judge minutes come from a match of which other minutes were used for training. The
+verdict therefore measures the move to **rallies never seen**, not to a match, a court
+or a camera never seen.
 
-#### Un second juge, et ce que la suite a coûté
+#### A second judge, and what the follow-up cost
 
-Le premier verdict a servi à décider que le modèle remplaçait les règles. Il ne pouvait
-donc plus mesurer ce qui a été construit ensuite. Trois minutes de plus ont été mises de
-côté (deux dans la finale féminine, une dans la masculine), pointées puis notées une
-seule fois, après que le modèle a été figé.
+The first verdict was used to decide that the model replaced the rules. It could
+therefore no longer measure what was built next. Three more minutes were set aside
+(two in the women's final, one in the men's), marked then scored only once, after the
+model was frozen.
 
-Ce qui a été essayé entre les deux verdicts, tout en validation croisée :
+What was tried between the two verdicts, all in cross-validation:
 
-| | Contacts justes sur 703 | Score |
+| | Right contacts out of 703 | Score |
 |---|---|---|
-| Modèle du premier verdict | 568 | 0,835 |
-| Symétrie gauche-droite du court | 566 | 0,829 |
-| Contexte temporel doublé, puis quadruplé | 573 / 574 | 0,846 / 0,847 |
-| Réseau plus large | 562 | 0,836 |
-| **Candidats du détecteur et squelette du joueur** | **573** | **0,848** |
+| Model of the first verdict | 568 | 0.835 |
+| Left-right symmetry of the court | 566 | 0.829 |
+| Temporal context doubled, then quadrupled | 573 / 574 | 0.846 / 0.847 |
+| Wider network | 562 | 0.836 |
+| **Candidates of the detector and skeleton of the player** | **573** | **0.848** |
 
-Trois graines par essai ont été nécessaires pour les départager : d'une graine à
-l'autre, le score bouge de ±0,006, soit autant que la plupart de ces écarts. Seuls les
-indices supplémentaires gagnent avec les trois graines : cinq contacts justes de plus et
-dix contacts inventés de moins en moyenne. Le contexte élargi, lui, gagne deux fois sur
-trois et perd la troisième : moyenne 0,843 contre 0,841, donc rien. Il n'a pas été
-retenu.
+Three seeds per trial were needed to tell them apart: from one seed to the next, the
+score moves by ±0.006, as much as most of these gaps. Only the additional cues win
+with all three seeds: five more right contacts and ten fewer invented contacts on
+average. The wider context, for its part, wins twice out of three and loses the third:
+mean 0.843 against 0.841, so nothing. It was not kept.
 
-La courbe d'apprentissage, prolongée, s'aplatit : 71,1 % à deux minutes d'entraînement,
-76,8 % à quatre, 78,3 % à six, 80,2 % à huit. Pointer encore rapporterait environ un
-demi-point par minute.
+The learning curve, extended, flattens: 71.1 % at two training minutes, 76.8 % at
+four, 78.3 % at six, 80.2 % at eight. Marking more would bring about half a point per
+minute.
 
-| Second juge, 238 contacts | Règles | Modèle |
+| Second judge, 238 contacts | Rules | Model |
 |---|---|---|
-| Surface juste | 139 (58,4 %) | **188 (79,0 %)** |
-| Contacts affichés réels | 83,6 % | **91,7 %** |
-| Score | 0,608 | **0,826** |
+| Right surface | 139 (58.4 %) | **188 (79.0 %)** |
+| Shown contacts that are real | 83.6 % | **91.7 %** |
+| Score | 0.608 | **0.826** |
 
-Trois mesures indépendantes (validation croisée 80,7 %, premier juge 78,7 %, second
-juge 79,0 %) donnent le même chiffre. Ces minutes-ci viennent des deux finales, donc le
-résultat ne tient pas à un seul match ; il reste établi sur un tournoi et un angle de
-caméra.
+Three independent measurements (cross-validation 80.7 %, first judge 78.7 %, second
+judge 79.0 %) give the same figure. These minutes come from both finals, so the result
+does not rest on a single match; it remains established on one tournament and one
+camera angle.
 
-#### Un troisième juge, pour l'enchaînement de l'échange
+#### A third judge, for the sequence of the rally
 
-Le dernier levier envisagé était la structure de l'échange : après une frappe vient un
-sol ou un mur, deux frappes à quelques images d'écart sont rares. Écrite en règles
-strictes, elle avait échoué (voir plus haut). Elle a été reprise en probabilités : le
-réseau propose des contacts candidats avec un seuil bas, une table apprise sur les
-pointages donne la probabilité de chaque étiquette selon la précédente et l'écart en
-images, et l'algorithme de Viterbi choisit sur toute la minute quels candidats garder
-et comment les étiqueter.
+The last lever considered was the structure of the rally: after a stroke comes a floor
+or a wall, two strokes a few frames apart are rare. Written as strict rules, it had
+failed (see above). It was taken up again as probabilities: the network proposes
+candidate contacts with a low threshold, a table learned on the marks gives the
+probability of each label given the previous one and the gap in frames, and the
+Viterbi algorithm chooses over the whole minute which candidates to keep and how to
+label them.
 
-Deux minutes d'entraînement de plus portent l'ensemble à onze minutes et 863
-contacts. Le modèle y est à 80,8 %, comme sur neuf minutes : la courbe d'apprentissage
-est bien à plat.
+Two more training minutes bring the set to eleven minutes and 863 contacts. The model
+is at 80.8 % there, as on nine minutes: the learning curve is indeed flat.
 
-| Validation croisée, 863 contacts | Graines 0-2 | 3-5 | 6-8 |
+| Cross-validation, 863 contacts | Seeds 0-2 | 3-5 | 6-8 |
 |---|---|---|---|
-| Décodage par pics | 0,838 | 0,838 | 0,838 |
-| Enchaînement, poids 0,5 | 0,842 | 0,836 | 0,833 |
-| Enchaînement, poids 1,5 | 0,844 | 0,842 | 0,835 |
+| Peak decoding | 0.838 | 0.838 | 0.838 |
+| Sequence, weight 0.5 | 0.842 | 0.836 | 0.833 |
+| Sequence, weight 1.5 | 0.844 | 0.842 | 0.835 |
 
-L'écart moyen est de l'ordre de +0,002, gagné sur un jeu de graines et perdu sur un
-autre : l'enchaînement n'a pas été retenu. Le réseau voit déjà deux secondes autour de
-chaque instant, et ce que l'échange pouvait lui apprendre, il l'avait appris.
+The mean gap is of the order of +0.002, won on one set of seeds and lost on another:
+the sequence model was not kept. The network already sees two seconds around each
+instant, and what the rally could teach it, it had learned.
 
-Le modèle a donc été figé tel quel, puis noté sur trois nouvelles minutes :
+The model was therefore frozen as it was, then scored on three new minutes:
 
-| Troisième juge, 239 contacts | Règles | Modèle |
+| Third judge, 239 contacts | Rules | Model |
 |---|---|---|
-| Surface juste | 149 (62,3 %) | **180 (75,3 %)** |
-| Contacts affichés réels | 88,7 % | **94,5 %** |
-| Score | 0,687 | **0,818** |
+| Right surface | 149 (62.3 %) | **180 (75.3 %)** |
+| Shown contacts that are real | 88.7 % | **94.5 %** |
+| Score | 0.687 | **0.818** |
 
-Sur les trois juges réunis, 716 contacts jamais regardés avant leur verdict, le modèle
-donne la bonne surface à **77,7 %** des contacts réels, contre 62,3 % pour les règles.
-C'est le chiffre à retenir : les trois juges pris un à un varient de 75,3 % à 79,0 %,
-et c'est cet écart, plus que la validation croisée, qui dit la précision réelle
-d'une mesure faite sur trois minutes.
+Over the three judges together, 716 contacts never looked at before their verdict, the
+model gives the right surface to **77.7 %** of the real contacts, against 62.3 % for
+the rules. That is the figure to keep: the three judges taken one by one vary from
+75.3 % to 79.0 %, and it is this spread, more than the cross-validation, that says the
+real precision of a measurement made on three minutes.
 
-#### Ce que l'affichage éclaire
+#### What the display lights
 
-Le modèle choisit sol, mur ou filet ; la paroi exacte et la zone se lisent ensuite par
-le rayon. Quand plusieurs parois étaient admissibles, la première de la liste l'emportait,
-et les fonds y passent avant les côtés : 6 % des contacts de vitre éclairaient le fond
-pour un contact sur le côté. La paroi retenue est désormais celle que le rayon atteint en
-premier depuis la caméra, puisque la balle, visible, ne peut pas être derrière une autre
-surface.
+The model chooses floor, wall or net; the exact wall and the zone are then read from
+the ray. When several walls were admissible, the first in the list won, and the back
+walls come before the sides there: 6 % of the glass contacts lit the back wall for a
+contact on the side. The wall kept is now the one the ray reaches first from the
+camera, since the ball, being visible, cannot be behind another surface.
 
-La zone entière est éclairée : carré de service, rectangle du fond, panneau de vitre. Une
-tache centrée sur l'impact a aussi été essayée : elle absorbe l'erreur de position au
-lieu de faire basculer une zone près d'une ligne, mais la zone entière se lit mieux à
-l'écran. Elle reste disponible (`--impact-patch`). Mesuré au passage, la zone tirée de
-l'instant détecté est celle de l'instant réel dans 98 rebonds sur 101 : ce qui bascule,
-c'est la position près d'une ligne, pas l'instant.
+The whole zone is lit: service box, back rectangle, glass panel. A patch centred on
+the impact was also tried: it absorbs the position error instead of flipping a zone
+near a line, but the whole zone reads better on screen. It remains available
+(`--impact-patch`). Measured in passing, the zone drawn from the detected instant is
+that of the real instant in 98 bounces out of 101: what flips is the position near a
+line, not the instant.
 
-#### Où le modèle se trompe encore
+#### Where the model is still wrong
 
-Sur les onze minutes d'entraînement, chaque minute prédite par un modèle qui ne l'a pas
-vue, voici pour chaque contact pointé à la main ce que le modèle a répondu (« rien »
-pour un contact manqué, et une ligne « rien » pour les contacts inventés) :
+Over the eleven training minutes, each minute predicted by a model that has not seen
+it, here is for each hand-marked contact what the model answered ("nothing" for a
+missed contact, and a "nothing" row for the invented contacts):
 
-![Matrice de confusion des surfaces](figures/confusion.png)
+![Confusion matrix of the surfaces](figures/confusion.png)
 
-Les frappes sont retrouvées à 92 % (411 sur 445) et le sol à 81 % (219 sur 272). **La
-vitre est le point faible : 64 sur 128 seulement**, 44 manquées et 12 prises pour le
-sol. C'est la confusion que la géométrie annonçait (au-dessus d'environ un mètre, un
-contact sur la vitre proche et un rebond au sol tombent sur le même pixel), et c'est là
-que se trouverait le prochain gain, pas dans davantage de minutes pointées :
+Strokes are found at 92 % (411 out of 445) and the floor at 81 % (219 out of 272).
+**The glass is the weak point: only 64 out of 128**, 44 missed and 12 taken for the
+floor. It is the confusion the geometry announced (above about one metre, a contact on
+the near glass and a floor bounce fall on the same pixel), and that is where the next
+gain would be, not in more marked minutes:
 
-![Courbe d'apprentissage](figures/courbe.png)
+![Learning curve](figures/courbe.png)
 
-La courbe, refaite sur onze minutes, monte de 73,2 % à deux minutes d'entraînement à
-81,6 % à huit, puis 81,9 % à dix.
+The curve, redone over eleven minutes, rises from 73.2 % at two training minutes to
+81.6 % at eight, then 81.9 % at ten.
 
-**Pourquoi la vitre, et ce qui a été tenté.** Rangées par paroi, les vitres pointées ne
-posent pas le même problème partout :
+**Why the glass, and what was tried.** Sorted by wall, the marked glass contacts do not
+pose the same problem everywhere:
 
-| Vitre | Justes | Manquées | Prises pour le sol ou une frappe |
+| Glass | Right | Missed | Taken for the floor or a stroke |
 |---|---|---|---|
-| Fond proche de la caméra | 43 | 17 | 21 |
-| Fond éloigné | 14 | **24** | 1 |
-| Côtés | 8 | 4 | 0 |
+| Back wall near the camera | 43 | 17 | 21 |
+| Far back wall | 14 | **24** | 1 |
+| Sides | 8 | 4 | 0 |
 
-Au fond proche, la vitre est confondue avec le sol : c'est l'ambiguïté géométrique déjà
-décrite, au-dessus d'environ un mètre. Au fond éloigné, elle est simplement **manquée**,
-et souvent le modèle n'y voyait aucun contact. La trajectoire l'explique : autour d'un
-contact sur la vitre du fond, la balle poursuit à l'image une course lisse, sans virage.
-À trente mètres de la caméra, l'aller-retour en profondeur contre la vitre ne déplace
-la balle que de quelques pixels, pendant que sa montée ou sa descente en déplace
-beaucoup plus ; sa taille apparente, elle, varierait d'un tiers de pixel. Le rebond est
-presque invisible pour une caméra de diffusion.
+At the near end, the glass is confused with the floor: it is the geometric ambiguity
+already described, above about one metre. At the far end, it is simply **missed**, and
+often the model saw no contact there at all. The trajectory explains it: around a
+contact on the back glass, the ball carries on in the picture along a smooth course,
+without a turn. Thirty metres from the camera, the trip in depth to the glass and back
+moves the ball by only a few pixels, while its rise or fall moves it by many more; its
+apparent size, for its part, would vary by a third of a pixel. The bounce is almost
+invisible to a broadcast camera.
 
-Donner plus de poids aux murs à l'entraînement, et les accepter plus tôt, a été mesuré
-sur trois jeux de graines :
+Giving more weight to the walls in training, and accepting them earlier, was measured
+on three sets of seeds:
 
-| Validation croisée, moyenne de 3 graines | Justes / 863 | Score | Vitres justes / 135 |
+| Cross-validation, mean of 3 seeds | Right / 863 | Score | Right glass / 135 |
 |---|---|---|---|
-| Modèle retenu | 697 | 0,838 | 66 (49 %) |
-| Murs pondérés ×2, seuil 0,7 | 701 | 0,840 | 70 (52 %) |
-| Murs pondérés ×2, seuil 0,3 | 706 | 0,835 | 76 (56 %) |
+| Model kept | 697 | 0.838 | 66 (49 %) |
+| Walls weighted ×2, threshold 0.7 | 701 | 0.840 | 70 (52 %) |
+| Walls weighted ×2, threshold 0.3 | 706 | 0.835 | 76 (56 %) |
 
-La version agressive retrouve une dizaine de vitres de plus à chaque graine, mais en
-invente autant : c'est un échange, pas un gain, et le score baisse. **Le modèle n'a pas
-été changé.** Retrouver ces vitres demanderait une autre vue (une seconde caméra, ou
-un micro) plutôt qu'un autre réglage.
+The aggressive version finds about ten more glass contacts with each seed, but invents
+as many: it is a trade, not a gain, and the score goes down. **The model was not
+changed.** Finding these glass contacts would take another view (a second camera, or a
+microphone) rather than another setting.
 
-#### Ce que l'affichage perdait
+#### What the display was losing
 
-La validation croisée note ce que le modèle décide ; la démonstration, et donc les
-juges, notent ce qu'elle affiche. Entre les deux, un contact était écarté quand la
-balle manquait à son image exacte, faute de position où l'éclairer. Elle y manque
-souvent : le filtre d'affichage retire le sommet d'un virage serré comme un point
-aberrant, et une frappe cache la balle derrière la raquette. Sur les onze minutes
-d'entraînement, chacune prédite par un modèle qui ne l'a pas vue, **51 contacts décidés
-disparaissaient ainsi, dont 43 justes**.
+Cross-validation scores what the model decides; the demonstration, and so the judges,
+score what it shows. Between the two, a contact was discarded when the ball was
+missing at its exact frame, for want of a position at which to light it. It is often
+missing there: the display filter removes the vertex of a sharp turn as an outlier,
+and a stroke hides the ball behind the racket. Over the eleven training minutes, each
+predicted by a model that has not seen it, **51 decided contacts disappeared this way,
+43 of them right**.
 
-La balle est désormais prise à l'image voisine la plus proche ; l'instant du contact
-reste celui que le modèle a choisi.
+The ball is now taken at the nearest neighbouring frame; the instant of the contact
+remains the one the model chose.
 
-| Portée de la recherche | Justes / 863 | Affichés | Score |
+| Reach of the search | Right / 863 | Shown | Score |
 |---|---|---|---|
-| 0 image (avant) | 654 (75,8 %) | 750 | 0,811 |
-| 1 image | 696 (80,6 %) | 799 | 0,838 |
-| **2 images (retenue)** | **697 (80,8 %)** | **801** | **0,838** |
-| 4, 6 ou 8 images | 697 | 801 | 0,838 |
+| 0 frames (before) | 654 (75.8 %) | 750 | 0.811 |
+| 1 frame | 696 (80.6 %) | 799 | 0.838 |
+| **2 frames (kept)** | **697 (80.8 %)** | **801** | **0.838** |
+| 4, 6 or 8 frames | 697 | 801 | 0.838 |
 
-À deux images, l'affichage montre exactement ce que le modèle décide : les chiffres
-sont ceux du décodage, déjà mesurés sur trois jeux de graines. **Les trois juges
-ci-dessus ont été notés avant cette correction, sur ce qui était affiché** : ils
-sous-estiment le modèle de ce que l'affichage perdait.
+At two frames, the display shows exactly what the model decides: the figures are those
+of the decoding, already measured on three sets of seeds. **The three judges above
+were scored before this correction, on what was shown**: they underestimate the model
+by what the display was losing.
 
-#### La logique du padel pour compléter l'image : un résultat négatif
+#### The logic of padel to complete the picture: a negative result
 
-Ce que l'image ne montre pas, les règles du jeu pourraient le déduire : après une
-frappe, la balle rebondit une fois chez l'adversaire avant toute vitre ; un joueur au
-fond ne la prend pas de volée ; une frappe ne suit pas une frappe du même côté. La
-vérité terrain dit d'abord à quel point le jeu est prévisible. Entre deux frappes
-successives, sur les 1 579 contacts pointés :
+What the picture does not show, the rules of the game could deduce: after a stroke,
+the ball bounces once on the opponent's side before any glass; a player at the back
+does not take it on the volley; a stroke does not follow a stroke from the same side.
+The ground truth first says how predictable the game is. Between two successive
+strokes, over the 1,579 marked contacts:
 
-| Entre deux frappes | Part |
+| Between two strokes | Share |
 |---|---|
-| Rien : volée | 47 % |
-| Un rebond | 24 % |
-| Rebond puis vitre | 16 % |
-| Rebond puis deux vitres | 3 % |
-| Autres enchaînements | 10 % |
+| Nothing: volley | 47 % |
+| One bounce | 24 % |
+| Bounce then glass | 16 % |
+| Bounce then two glass contacts | 3 % |
+| Other sequences | 10 % |
 
-La même suite visible cache donc plusieurs suites réelles. Les règles ont été croisées
-avec ce que la table ne voit pas (le côté du frappeur, sa distance au filet, le côté
-et la profondeur d'un rebond) et mesurées sur les onze minutes d'entraînement,
-chacune prédite par un modèle qui ne l'a pas vue, affichage corrigé. Un contact déduit
-compte comme retrouvé si un contact réellement manqué de même nature se trouve entre
-les deux contacts qui l'encadrent, sans exiger l'instant exact ; il fallait neuf
-réussites sur dix pour garder une règle.
+The same visible sequence therefore hides several real sequences. The rules were
+crossed with what the table does not see (the side of the striker, their distance to
+the net, the side and the depth of a bounce) and measured on the eleven training
+minutes, each predicted by a model that has not seen it, display corrected. A deduced
+contact counts as found if a really missed contact of the same kind lies between the
+two contacts that frame it, without requiring the exact instant; nine successes out of
+ten were needed to keep a rule.
 
-| Règle | Contacts déduits | Réellement manqués là | Score (0,838 sans) |
+| Rule | Contacts deduced | Really missed there | Score (0.838 without) |
 |---|---|---|---|
-| Rebond avant une frappe prise à plus de 7 m du filet | 57 | 7 (12 %) | 0,815 |
-| La même, à plus de 9 m | 11 | 1 (9 %) | 0,832 |
-| Rebond avant une vitre détectée sans rebond depuis la frappe | 8 | 2 (25 %) | 0,836 |
-| Vitre du fond, quand le joueur frappe plus près du filet que le rebond | 16 | 5 (31 %) | 0,829 |
+| Bounce before a stroke taken more than 7 m from the net | 57 | 7 (12 %) | 0.815 |
+| The same, at more than 9 m | 11 | 1 (9 %) | 0.832 |
+| Bounce before a glass contact detected without a bounce since the stroke | 8 | 2 (25 %) | 0.836 |
+| Back glass, when the player strikes closer to the net than the bounce | 16 | 5 (31 %) | 0.829 |
 
-**Aucune n'a été gardée.** Les rebonds déduits à tort se répartissent en deux causes.
-La première tient au jeu : 25 sur 50 étaient de vraies volées, prises entre 7 et 9 m
-du filet : la bandeja et la víbora se jouent en l'air, loin du filet. La seconde tient
-aux entrées de la règle : 22 fois, une frappe manquée par le modèle s'intercalait
-entre les deux, et l'enchaînement sur lequel la règle raisonne était faux dès le départ.
-Les 3 derniers doublaient un rebond déjà affiché.
+**None was kept.** The wrongly deduced bounces split into two causes. The first is in
+the game: 25 out of 50 were real volleys, taken between 7 and 9 m from the net: the
+bandeja and the víbora are played in the air, far from the net. The second is in the
+inputs of the rule: 22 times, a stroke missed by the model came between the two, and
+the sequence the rule reasons on was wrong from the start. The last 3 doubled a bounce
+already shown.
 
-La règle inverse, retirer l'une de deux frappes consécutives du même côté, ferait pire :
-sur 55 paires de ce genre, 38 sont deux frappes réelles. Entre elles, la frappe adverse
-a été manquée 9 fois, et 26 fois il n'y en avait aucune : l'une des deux frappes est
-attribuée au mauvais côté. Une frappe mal attribuée fait deux paires fautives, avec
-celle d'avant et celle d'après : ces 26 paires sont 12 frappes, mesurées plus bas.
+The reverse rule, removing one of two consecutive strokes from the same side, would do
+worse: out of 55 pairs of this kind, 38 are two real strokes. Between them, the
+opposing stroke was missed 9 times, and 26 times there was none: one of the two
+strokes is attributed to the wrong side. A wrongly attributed stroke makes two faulty
+pairs, with the one before and the one after: these 26 pairs are 12 strokes, measured
+further down.
 
-La logique du jeu n'apporte donc rien que le réseau n'ait déjà : il voit deux secondes
-autour de chaque instant, ce que l'enchaînement appris de l'échange avait déjà montré.
+The logic of the game therefore brings nothing the network does not already have: it
+sees two seconds around each instant, which the sequence learned from the rally had
+already shown.
 
-#### Les vitres : la physique, le décodage, et un ensemble plus large
+#### Glass: physics, decoding, and a wider ensemble
 
-Une règle de logique échoue parce que le jeu permet plusieurs suites. Une règle de
-physique n'a pas ce défaut. Une balle arrive sur un rebond à une vitesse que la frappe
-d'avant et le rebond donnent, et un rebond en garde bien plus de la moitié. Quand le
-joueur de ce côté frappe ensuite si près du rebond que la balle, à ce rythme, l'aurait
-atteint plusieurs fois, elle est allée ailleurs d'abord : sur le mur dans son axe.
-Sur 151 rebonds suivis d'une frappe du même côté, les retours directs vont de 40 à
-90 % de la vitesse d'arrivée, les détours restent sous 35 %. Dans ces cas-là, et quand
-le trajet par le mur reste possible dans le temps, une vitre réelle non détectée se
-trouve entre le rebond et la frappe **13 fois sur 14**.
+A rule of logic fails because the game allows several sequences. A rule of physics
+does not have this flaw. A ball arrives at a bounce at a speed given by the stroke
+before and the bounce, and a bounce keeps well over half of it. When the player on
+that side then strikes so close to the bounce that the ball, at that pace, would have
+reached them several times over, it went somewhere else first: to the wall in its
+line. Out of 151 bounces followed by a stroke from the same side, direct returns go
+from 40 to 90 % of the arrival speed, detours stay under 35 %. In those cases, and
+when the path by the wall remains possible in the time, a real undetected glass
+contact lies between the bounce and the stroke **13 times out of 14**.
 
-Savoir qu'une vitre a eu lieu ne dit pas quand. L'instant tiré de la physique tombe
-rarement à trois images près ; celui où le réseau voyait un mur le plus probable, même
-sous son seuil, y tombe bien plus souvent, et quand ce pic est sur le rebond, c'est
-que le rebond était la vitre. `contact/glass_inference.py` fait les deux.
+Knowing that a glass contact happened does not say when. The instant drawn from
+physics rarely falls within three frames; the one where the network saw a wall as most
+likely, even under its threshold, falls there far more often, and when this peak is on
+the bounce, it is that the bounce was the glass. `contact/glass_inference.py` does
+both.
 
-Trois autres changements ont suivi, chacun mesuré sur les onze minutes d'entraînement,
-chaque minute prédite par un modèle qui ne l'a pas vue, sur plusieurs jeux de graines :
+Three other changes followed, each measured on the eleven training minutes, each
+minute predicted by a model that has not seen it, on several sets of seeds:
 
-| Chaîne | Contacts justes / 863 | Vitres justes / 128 | Inventés | Score |
+| Chain | Right contacts / 863 | Right glass / 128 | Invented | Score |
 |---|---|---|---|---|
-| Modèle, affichage corrigé | 696 à 697 | 64 à 66 | 54 à 56 | 0,838 à 0,839 |
-| + vitres déduites | 699 à 703 | 70 à 73 | 60 à 61 | 0,838 à 0,841 |
-| + un contact d'une autre nature à trois images | 708 à 713 | 72 à 75 | 62 à 66 | 0,840 à 0,847 |
-| **+ 18 réseaux moyennés au lieu de 3** | **718** | **75** | **57** | **0,855** |
+| Model, display corrected | 696 to 697 | 64 to 66 | 54 to 56 | 0.838 to 0.839 |
+| + deduced glass | 699 to 703 | 70 to 73 | 60 to 61 | 0.838 to 0.841 |
+| + a contact of another kind at three frames | 708 to 713 | 72 to 75 | 62 to 66 | 0.840 to 0.847 |
+| **+ 18 networks averaged instead of 3** | **718** | **75** | **57** | **0.855** |
 
-- **Deux contacts de nature différente peuvent se suivre de près.** Un rebond est
-  souvent suivi de la vitre du fond cinq ou six images plus tard, et le décodage
-  gardait un seul pic tous les quatre images. Deux contacts de même nature restent à
-  quatre images ; un contact d'une autre nature peut venir à trois, au-dessus de 0,85.
-- **Un ensemble plus large invente moins.** Trois réseaux donnent 0,844 en moyenne sur
-  six jeux de graines ; neuf, 0,847 et 0,856 ; dix-huit, 0,855, avec 57 contacts
-  inventés au lieu de 67 en moyenne.
-- **Le côté du frappeur alterne.** Contre l'alternance des frappes pointées, 12 frappes
-  sur 403 étaient attribuées à la mauvaise moitié du terrain, presque toutes un lob ou
-  un smash du joueur proche, qui monte dans l'image à côté des joueurs du fond. Trois
-  frappes de suite d'une même moitié étant impossibles dans un échange, celle du
-  milieu va au joueur le plus proche de l'autre moitié : 6 erreurs sur 403. Les vitres
-  n'y gagnent rien, les statistiques par joueur si.
+- **Two contacts of different kinds can follow each other closely.** A bounce is often
+  followed by the back glass five or six frames later, and the decoding kept a single
+  peak every four frames. Two contacts of the same kind stay at four frames; a contact
+  of another kind can come at three, above 0.85.
+- **A wider ensemble invents less.** Three networks give 0.844 on average over six
+  sets of seeds; nine, 0.847 and 0.856; eighteen, 0.855, with 57 invented contacts
+  instead of 67 on average.
+- **The side of the striker alternates.** Against the alternation of the marked
+  strokes, 12 strokes out of 403 were attributed to the wrong half of the court, almost
+  all of them a lob or a smash by the near player, who rises in the picture next to the
+  far players. Three strokes in a row from the same half being impossible in a rally,
+  the middle one goes to the nearest player of the other half: 6 errors out of 403.
+  The glass gains nothing from it, the per-player statistics do.
 
-Ce qui a été essayé sans être gardé :
+What was tried without being kept:
 
-| Essai | Résultat |
+| Trial | Result |
 |---|---|
-| Physique donnée au réseau comme indices, calculée sur les contacts des règles | score 0,843 à 0,845 sur 3 jeux de graines, vitres 62 à 63 : les rebonds des règles sont trop peu sûrs |
-| Deux passes : physique calculée sur les contacts du modèle, relue par un second réseau (validation emboîtée, 110 modèles) | vitres 67 à 70, score 0,836 à 0,843 : le même gain que la règle écrite, pour deux modèles |
-| Pondérer les murs ×1,5, ×2 ou ×3 à l'entraînement | +2 vitres en moyenne avec 3 réseaux ; avec 9, 75 vitres et 0,852 contre 77 et 0,856 |
-| Accepter les murs dès 0,3 à 0,6 | jusqu'à 79 vitres, autant d'inventés en plus : un échange, pas un gain |
-| Recaler l'instant d'une vitre sur le virage le plus net de la trajectoire | au mieux inchangé |
-| Une deuxième vitre quand le trajet par la première reste trop lent | 3 doubles vitres sur 52 cas, non séparables |
-| Une vitre entre deux frappes adverses sans rien de détecté entre elles | 2 vitres sur 70 cas : même lente, la balle est prise de volée |
-| Le frappeur choisi par la géométrie du rayon plutôt que par l'image | 11 à 25 % d'erreurs de moitié, contre 3 % |
+| Physics given to the network as cues, computed on the contacts of the rules | score 0.843 to 0.845 on 3 sets of seeds, glass 62 to 63: the bounces of the rules are too unreliable |
+| Two passes: physics computed on the contacts of the model, read again by a second network (nested validation, 110 models) | glass 67 to 70, score 0.836 to 0.843: the same gain as the written rule, for two models |
+| Weighting the walls ×1.5, ×2 or ×3 in training | +2 glass on average with 3 networks; with 9, 75 glass and 0.852 against 77 and 0.856 |
+| Accepting the walls from 0.3 to 0.6 | up to 79 glass, as many more invented: a trade, not a gain |
+| Realigning the instant of a glass contact on the sharpest turn of the trajectory | unchanged at best |
+| A second glass contact when the path by the first remains too slow | 3 double glass contacts out of 52 cases, not separable |
+| A glass contact between two opposing strokes with nothing detected between them | 2 glass contacts out of 70 cases: even slow, the ball is taken on the volley |
+| The striker chosen by the geometry of the ray rather than by the picture | 11 to 25 % of errors of half, against 3 % |
 
-**Ce qui reste.** Au fond proche, 50 vitres sur 78 sont justes, 9 sur 10 sur les côtés.
-Au fond éloigné, 22 vitres sur 38 restent manquées : c'est la limite
-de la caméra décrite plus haut. Ailleurs, les vitres sont souvent trouvées au mauvais
-instant plutôt que manquées : 17 sont détectées entre quatre et huit images de
-l'instant pointé, contre 7 rebonds et 5 frappes sur des effectifs bien plus grands, et
-sans biais d'un côté ou de l'autre. L'instant exact d'un contact contre la vitre est
-peut-être aussi le plus difficile à pointer à la main. Ces chiffres sont ceux des
-minutes d'entraînement : les juges ont été notés avant tous ces changements.
+**What remains.** At the near end, 50 glass contacts out of 78 are right, 9 out of 10
+on the sides. At the far end, 22 glass contacts out of 38 remain missed: it is the
+limit of the camera described above. Elsewhere, the glass contacts are often found at
+the wrong instant rather than missed: 17 are detected between four and eight frames
+from the marked instant, against 7 bounces and 5 strokes on much larger counts, and
+without a bias one way or the other. The exact instant of a contact against the glass
+is perhaps also the hardest to mark by hand. These figures are those of the training
+minutes: the judges were scored before all these changes.
 
-#### Le verdict des juges, après ces changements
+#### The judges' verdict, after these changes
 
-Tout ce qui précède a été décidé sur les onze minutes d'entraînement. La chaîne ainsi
-figée a ensuite été notée une seule fois sur les neuf minutes de juge. Elles avaient
-déjà servi au premier verdict, mais aucun des changements n'a été choisi en les
-regardant :
+Everything above was decided on the eleven training minutes. The chain frozen in this
+way was then scored only once on the nine judge minutes. They had already served for
+the first verdict, but none of the changes was chosen by looking at them:
 
-| Contacts affichés avec la bonne surface | Juge 1 (239) | Juge 2 (238) | Juge 3 (239) | Trois juges (716) |
+| Contacts shown with the right surface | Judge 1 (239) | Judge 2 (238) | Judge 3 (239) | Three judges (716) |
 |---|---|---|---|---|
-| Premier verdict | 78,7 % | 79,0 % | 75,3 % | 77,7 % |
-| **Chaîne actuelle** | **83,7 %** | **82,8 %** | **84,1 %** | **83,5 %** |
+| First verdict | 78.7 % | 79.0 % | 75.3 % | 77.7 % |
+| **Current chain** | **83.7 %** | **82.8 %** | **84.1 %** | **83.5 %** |
 
-Les trois juges progressent, de 3,8 à 8,8 points. Sur les 716 contacts : frappes justes
-à 93,2 % (355 sur 381), rebonds à 81,4 % (180 sur 221), **vitres à 61,4 % (62 sur
-101)**, comme les 59 % des minutes d'entraînement. Les contacts affichés sont réels à
-93 %, 92,5 % et 95 % selon le juge. Le filet reste manqué (0 sur 9) : trop rare pour
-être appris.
+All three judges improve, by 3.8 to 8.8 points. Over the 716 contacts: strokes right
+at 93.2 % (355 out of 381), bounces at 81.4 % (180 out of 221), **glass at 61.4 % (62
+out of 101)**, like the 59 % of the training minutes. The contacts shown are real at
+93 %, 92.5 % and 95 % depending on the judge. The net remains missed (0 out of 9): too
+rare to be learned.
 
-Ces minutes avaient déjà servi. Trois minutes neuves ont donc été pointées après coup,
-sans rien voir de ce que la chaîne détecte, et notées une seule fois :
+These minutes had already been used. Three new minutes were therefore marked
+afterwards, without seeing anything of what the chain detects, and scored only once:
 
-| Quatrième juge (247 contacts) | FinalF 32000 | FinalM 16000 | FinalM 45000 | Total |
+| Fourth judge (247 contacts) | FinalF 32000 | FinalM 16000 | FinalM 45000 | Total |
 |---|---|---|---|---|
-| Surface juste | 70 / 81 | 66 / 76 | 69 / 90 | **205 / 247 (83,0 %)** |
+| Right surface | 70 / 81 | 66 / 76 | 69 / 90 | **205 / 247 (83.0 %)** |
 
-Frappes à 92,8 %, rebonds à 81,3 %, **vitres à 62,8 % (27 sur 43)** : les chiffres des
-trois premiers juges, à un point près. 217 des 224 contacts affichés sont réels
-(96,9 %). Par paroi, les vitres latérales sont toutes trouvées (5 sur 5), celles du
-fond proche à 12 sur 21, celles du fond éloigné à 10 sur 17.
+Strokes at 92.8 %, bounces at 81.3 %, **glass at 62.8 % (27 out of 43)**: the figures
+of the first three judges, to within a point. 217 of the 224 contacts shown are real
+(96.9 %). By wall, the side glass contacts are all found (5 out of 5), those of the
+near end at 12 out of 21, those of the far end at 10 out of 17.
 
-#### Les juges deviennent des données
+#### The judges become data
 
-Un juge qui a rendu son verdict ne peut plus juger, mais ses contacts pointés à la main
-restent des exemples. Les douze minutes de juge ont rejoint l'entraînement : 23
-minutes, 1 826 contacts, 272 vitres au lieu de 128. La validation croisée porte sur
-les 23 minutes, chacune prédite par 18 réseaux entraînés sur les 22 autres, et compare
-sur les mêmes minutes le modèle entraîné sur les onze minutes d'origine :
+A judge that has given its verdict can no longer judge, but its hand-marked contacts
+remain examples. The twelve judge minutes joined the training: 23 minutes, 1,826
+contacts, 272 glass contacts instead of 128. The cross-validation covers the 23
+minutes, each predicted by 18 networks trained on the 22 others, and compares on the
+same minutes the model trained on the eleven original minutes:
 
-| Validation croisée, 1 826 contacts | 11 minutes d'entraînement | 22 minutes d'entraînement |
+| Cross-validation, 1,826 contacts | 11 training minutes | 22 training minutes |
 |---|---|---|
-| Surface juste | 1 521 (83,3 %) | **1 591 (87,1 %)** |
-| Vitres | 164 / 272 (60,3 %) | **184 / 272 (67,6 %)** |
-| Rebonds | 467 / 568 (82,2 %) | 490 / 568 (86,3 %) |
-| Frappes | 884 / 951 (93,0 %) | 905 / 951 (95,2 %) |
-| Contacts inventés | 108 | 98 |
-| Score | 0,859 | **0,888** |
+| Right surface | 1,521 (83.3 %) | **1,591 (87.1 %)** |
+| Glass | 164 / 272 (60.3 %) | **184 / 272 (67.6 %)** |
+| Bounces | 467 / 568 (82.2 %) | 490 / 568 (86.3 %) |
+| Strokes | 884 / 951 (93.0 %) | 905 / 951 (95.2 %) |
+| Invented contacts | 108 | 98 |
+| Score | 0.859 | **0.888** |
 
-Le gain est le même sur les onze minutes d'entraînement d'origine (83,2 → 87,1 %) et
-sur les douze minutes de juge (83,4 → 87,1 %). La courbe d'apprentissage, à plat pour
-le premier modèle entre huit et dix minutes, ne l'est plus pour la chaîne actuelle :
-doubler les données vaut près de quatre points, et sept sur les vitres. Minute par
-minute, 21 des 23 minutes progressent, de 1 à 7 contacts ; deux ne bougent pas, une
-recule de 3.
+The gain is the same on the eleven original training minutes (83.2 → 87.1 %) and on
+the twelve judge minutes (83.4 → 87.1 %). The learning curve, flat for the first model
+between eight and ten minutes, is no longer flat for the current chain: doubling the
+data is worth nearly four points, and seven on the glass. Minute by minute, 21 of the
+23 minutes improve, by 1 to 7 contacts; two do not move, one falls back by 3.
 
-Un cinquième juge a ensuite été pointé, trois minutes jamais regardées, et noté une
-seule fois avec les deux modèles, tous deux figés avant :
+A fifth judge was then marked, three minutes never looked at, and scored only once
+with both models, both frozen beforehand:
 
-| Cinquième juge (253 contacts) | FinalF 5000 | FinalF 23000 | FinalM 33000 | Total | Vitres |
+| Fifth judge (253 contacts) | FinalF 5000 | FinalF 23000 | FinalM 33000 | Total | Glass |
 |---|---|---|---|---|---|
-| Modèle entraîné sur 11 minutes | 69 / 83 | 70 / 79 | 68 / 91 | 207 (81,8 %) | 24 / 38 |
-| Modèle entraîné sur 23 minutes | 69 / 83 | 71 / 79 | 68 / 91 | 208 (82,2 %) | 25 / 38 |
+| Model trained on 11 minutes | 69 / 83 | 70 / 79 | 68 / 91 | 207 (81.8 %) | 24 / 38 |
+| Model trained on 23 minutes | 69 / 83 | 71 / 79 | 68 / 91 | 208 (82.2 %) | 25 / 38 |
 
-**Le juge ne confirme pas le gain** : un contact de plus, là où la validation croisée
-en annonçait une dizaine. Trois minutes à 0, +1 et 0 existent dans la validation
-croisée, mais les tirer toutes les trois est peu probable, de l'ordre de 2 %. Soit
-l'ajout des juges aide moins qu'elle ne le dit, soit ce juge est tombé sur des minutes
-où il ne change rien ; un indice va dans le premier sens : les trois minutes du
-quatrième juge, pointées elles aussi plus tard, gagnaient moins que les autres (+2,7
-contre +3,5 en moyenne). Le modèle livré reste celui des 23 minutes, jamais moins bon
-sur les minutes neuves ; **le chiffre à retenir pour une minute jamais vue est celui
-des juges neufs, 82 à 83 %**, et non celui de la validation croisée.
+**The judge does not confirm the gain**: one more contact, where the cross-validation
+announced about ten. Three minutes at 0, +1 and 0 exist in the cross-validation, but
+drawing all three is unlikely, of the order of 2 %. Either adding the judges helps less
+than it says, or this judge fell on minutes where it changes nothing; one clue points
+the first way: the three minutes of the fourth judge, also marked later, gained less
+than the others (+2.7 against +3.5 on average). The model shipped remains that of the
+23 minutes, never worse on the new minutes; **the figure to keep for a minute never
+seen is that of the fresh judges, 82 to 83 %**, and not that of the cross-validation.
 
-#### Les coins, une limite connue
+#### Corners, a known limit
 
-Jusqu'au 29 septembre, l'outil de pointage remplaçait toute marque posée à deux images
-ou moins d'une autre. Une balle qui touche deux vitres dans un coin, d'une image à
-l'autre, n'en gardait qu'une : les minutes pointées avant comptent 12,0 vitres par
-minute, les deux derniers juges 13 à 14. L'outil accepte désormais deux contacts
-voisins. La relecture des vitres pointées près d'un coin a été faite sur trois minutes
-sur dix-neuf : 4 secondes vitres ajoutées pour 19 moments revus, environ une par
-minute. Le modèle, lui, n'affiche jamais deux contacts de même nature à moins de cinq
-images : la seconde vitre d'un coin est toujours manquée. L'apprendre vaudrait moins
-d'un contact par minute, sous l'écart d'un lot de minutes à l'autre, et demanderait un
-nouveau juge pour le prouver ; ce n'a pas été fait.
+Until 29 September, the marking tool replaced any mark placed within two frames of
+another. A ball that touches two glass panels in a corner, from one frame to the next,
+kept only one: the minutes marked before count 12.0 glass contacts per minute, the
+last two judges 13 to 14. The tool now accepts two neighbouring contacts. The review
+of the glass contacts marked near a corner was done on three minutes out of nineteen:
+4 second glass contacts added for 19 moments reviewed, about one per minute. The
+model, for its part, never shows two contacts of the same kind within five frames: the
+second glass of a corner is always missed. Learning it would be worth less than one
+contact per minute, below the spread from one batch of minutes to another, and would
+need a new judge to prove it; it was not done.
 
-#### Découper un match en échanges
+#### Cutting a match into rallies
 
-La vidéo du dataset garde les échanges et coupe les temps morts : un nouveau point
-s'ouvre au raccord. Un raccord se lit dans l'image elle-même : deux images successives
-de plans différents diffèrent partout, alors qu'en jeu seuls les joueurs et la balle
-bougent : l'écart moyen de niveaux de gris entre deux miniatures vaut 0,5 en médiane
-pendant le jeu, et de 5,6 à 11,5 aux raccords (`io/splices.py`).
+The video of the dataset keeps the rallies and cuts the dead time: a new point opens
+at the cut. A cut can be read in the picture itself: two successive frames from
+different shots differ everywhere, while in play only the players and the ball move:
+the mean grey-level gap between two thumbnails is 0.5 in the median during play, and
+from 5.6 to 11.5 at the cuts (`io/splices.py`).
 
-La vérité existe déjà : le dataset marque les services sur les 20 100 premières images
-de chaque finale. Un début d'échange annoncé est juste s'il tombe à deux secondes au
-plus d'un service. Les minutes qui ont entraîné le modèle de contacts ont réglé la
-règle, les six autres de la zone annotée l'ont jugée une fois.
+The truth already exists: the dataset marks the serves over the first 20,100 frames of
+each final. An announced start of a rally is right if it falls within two seconds of a
+serve. The minutes that trained the contact model tuned the rule, the six others of
+the annotated zone judged it once.
 
-| | Services retrouvés | Débuts annoncés | Précision | Rappel |
+| | Serves found | Starts announced | Precision | Recall |
 |---|---|---|---|---|
-| Réglage, 5 minutes | 16 / 17 | 18 | 89 % | 94 % |
-| **Juge, 6 minutes** | **14 / 16** | **15** | **93 %** | **88 %** |
+| Tuning, 5 minutes | 16 / 17 | 18 | 89 % | 94 % |
+| **Judge, 6 minutes** | **14 / 16** | **15** | **93 %** | **88 %** |
 
-La règle la plus simple était la meilleure : un raccord ouvre un échange. Exiger une
-frappe après le raccord ne changeait rien ; ouvrir un point après un long silence sans
-contact ajoutait plus de faux débuts qu'il ne rattrapait de services filmés sans
-coupure : ce sont eux, les services manqués. Le seuil de raccord est stable entre 3
-et 4, et perd la moitié des points à 5.
+The simplest rule was the best: a cut opens a rally. Requiring a stroke after the cut
+changed nothing; opening a point after a long silence without a contact added more
+false starts than it recovered serves filmed without a cut: those are the missed
+serves. The cut threshold is stable between 3 and 4, and loses half the points at 5.
 
-#### Lire le score au tableau d'affichage
+#### Reading the score off the scoreboard
 
-Le tableau de la retransmission est à une place fixe, une ligne par paire : les noms,
-une colonne par set, puis une case claire pour les points. Cette case est le repère :
-c'est la seule claire (blanche, ou dorée au point en or) et elle se décale d'une
-colonne à chaque set, ce qui donne le set en cours ; les jeux sont dans la case sombre
-à sa gauche, et la paire au service porte un point jaune (`io/scoreboard.py`). Onze
-valeurs suffisent (0, 15, 30, 40 et les jeux de 0 à 6) et la police ne change
-jamais : chaque case est comparée à des modèles, sans moteur de reconnaissance de
-texte. Les modèles sont tirés d'images listées avec leur valeur
-(`ground_truth/scoreboard/templates.json`) et recalculés depuis la vidéo, que le dépôt
-ne contient pas.
+The scoreboard of the broadcast is at a fixed place, one row per pair: the names, one
+column per set, then a light cell for the points. This cell is the landmark: it is the
+only light one (white, or golden at the golden point) and it shifts by one column at
+each set, which gives the current set; the games are in the dark cell to its left, and
+the serving pair carries a yellow dot (`io/scoreboard.py`). Eleven values are enough
+(0, 15, 30, 40 and the games from 0 to 6) and the typeface never changes: each cell is
+compared with templates, without a text recognition engine. The templates are drawn
+from frames listed with their value (`ground_truth/scoreboard/templates.json`) and
+recomputed from the video, which the repository does not contain.
 
-Le tableau est lu au début de chaque séquence entre deux raccords, et la grammaire du
-score dit qui a gagné le point : un seul pas de 0 à 15, 30, 40, ou un jeu gagné avec
-les points remis à zéro (`analytics/points.py`).
+The scoreboard is read at the start of each sequence between two cuts, and the grammar
+of the score says who won the point: a single step from 0 to 15, 30, 40, or a game won
+with the points reset to zero (`analytics/points.py`).
 
-| | Séquences | Tableau lu | Points attribués | Changements rejetés |
+| | Sequences | Scoreboard read | Points attributed | Changes rejected |
 |---|---|---|---|---|
-| Finale féminine | 63 | 54 | 48 | 5 |
-| Finale masculine | 141 | 83 | 69 | 7 |
+| Women's final | 63 | 54 | 48 | 5 |
+| Men's final | 141 | 83 | 69 | 7 |
 
-Deux contrôles. **À l'œil, 48 tableaux tirés au hasard, 24 par finale : les 48
-lectures sont justes**, jeux, points et service. **Par la grammaire** : les douze
-changements rejetés ont tous plusieurs points d'écart entre deux lectures : un point
-absent de la vidéo, ou joué pendant une séquence où le tableau était caché. Aucun n'est
-une lecture fausse : la règle refuse de deviner. Deux faits en ressortent au passage :
-aucune séquence féminine ne répète le même score, ce qui confirme qu'un raccord ouvre
-bien un point ; et le tableau manque sur deux séquences masculines sur cinq, ralentis
-et gros plans compris.
+Two checks. **By eye, 48 scoreboards drawn at random, 24 per final: all 48 readings
+are right**, games, points and serve. **By the grammar**: the twelve rejected changes
+all have several points of gap between two readings: a point absent from the video, or
+played during a sequence where the scoreboard was hidden. None is a wrong reading: the
+rule refuses to guess. Two facts come out in passing: no women's sequence repeats the
+same score, which confirms that a cut does open a point; and the scoreboard is missing
+on two men's sequences out of five, slow motions and close-ups included.
 
-**Du point de la paire au point du joueur.** La vidéo de statistiques crédite chaque
-point à un joueur : la paire gagnante vient du tableau, son côté du court de la paire
-au service (le point jaune) et de la première frappe de l'échange, qui est le
-service ; le dernier frappeur de l'échange reçoit un **point gagnant** s'il est de la
-paire gagnante, une **faute** sinon. Ce partage n'a pas de vérité terrain : les
-pointages de contacts ne disent pas qui frappe. Il hérite des frappes manquées par le
-modèle, environ une sur dix, qui donnent le point au mauvais joueur ; la vidéo le
-dit sous le panneau.
+**From the pair's point to the player's point.** The statistics video credits each
+point to a player: the winning pair comes from the scoreboard, its side of the court
+from the serving pair (the yellow dot) and from the first stroke of the rally, which is
+the serve; the last striker of the rally receives a **winner** if they are of the
+winning pair, an **error** otherwise. This split has no ground truth: the contact marks
+do not say who strikes. It inherits the strokes missed by the model, about one in ten,
+which give the point to the wrong player; the video says so under the panel.
 
-### Un autre tournoi, avec le son
+### Another tournament, with sound
 
-Tout ce qui précède est mesuré sur deux matchs d'un même tournoi, filmés par la même
-caméra. Un second jeu de données public, publié avec l'article de Decorte et al.
+Everything above is measured on two matches of one tournament, filmed by the same
+camera. A second public dataset, published with the paper by Decorte et al.
 (*Multi-Modal Hit Detection and Positional Analysis in Padel Competitions*, CVPR
-Workshops 2024), offre d'autres tournois du circuit, filmés de la même place mais dans
-d'autres salles, à 25 images par seconde au lieu de 30, **et avec le son**. Il n'annote
-que des fenêtres de frappe. Un de ses échanges, `20230528_VIGO_11`, une minute de jeu,
-a servi de test : aucune vidéo ni image n'est versionnée, seulement sa calibration et
-ses contacts pointés à la main.
+Workshops 2024), offers other tournaments of the tour, filmed from the same place but
+in other venues, at 25 frames per second instead of 30, **and with sound**. It only
+annotates stroke windows. One of its rallies, `20230528_VIGO_11`, one minute of play,
+served as a test: no video or image is versioned, only its calibration and its
+hand-marked contacts.
 
-**La calibration** d'un nouveau court prend dix minutes : 3,4 px d'erreur au sol (5,5 cm),
-3,7 px en médiane pour la pose de la caméra, mieux que les 5,8 px de la finale féminine.
+**The calibration** of a new court takes ten minutes: 3.4 px of error on the ground
+(5.5 cm), 3.7 px in the median for the camera pose, better than the 5.8 px of the
+women's final.
 
-**La chaîne, sans rien réentraîner**, notée contre les 88 contacts de l'échange (46 frappes,
-soit les 46 fenêtres des auteurs, puis 25 rebonds, 15 vitres, 2 grillages) :
+**The chain, without retraining anything**, scored against the 88 contacts of the
+rally (46 strokes, that is the 46 windows of the authors, then 25 bounces, 15 glass
+contacts, 2 mesh contacts):
 
-| VIGO_11, 88 contacts | Modèle entraîné sur 11 minutes | Sur 23 minutes |
+| VIGO_11, 88 contacts | Model trained on 11 minutes | On 23 minutes |
 |---|---|---|
-| Surface juste | 68 (77 %) | **76 (86 %)** |
-| Frappes | 41 / 46 | 43 / 46 |
-| Rebonds | 19 / 25 | 21 / 25 |
-| Vitres | 8 / 15 | **12 / 15** |
-| Inventés | 2 | 1 |
+| Right surface | 68 (77 %) | **76 (86 %)** |
+| Strokes | 41 / 46 | 43 / 46 |
+| Bounces | 19 / 25 | 21 / 25 |
+| Glass | 8 / 15 | **12 / 15** |
+| Invented | 2 | 1 |
 
-Un autre court, une autre lumière et une autre cadence ne font pas décrocher la chaîne.
-Sur un seul échange, l'écart entre les deux modèles est une tendance, pas une mesure.
+Another court, another light and another frame rate do not throw the chain off. On a
+single rally, the gap between the two models is a trend, not a measurement.
 
-**Le son.** Un impact de balle est un front d'énergie très bref dans les aigus, que la
-voix et le public n'ont pas : le flux spectral entre 2 et 12 kHz, comparé à sa médiane
-glissante, retrouve 44 des 46 frappes annotées. Mais chaque contact ne s'entend pas
-autant :
+**Sound.** A ball impact is a very brief burst of energy in the high frequencies,
+which the voice and the audience do not have: the spectral flux between 2 and 12 kHz,
+compared with its sliding median, finds 44 of the 46 annotated strokes. But not every
+contact is heard as much:
 
-| Force médiane du pic sonore | Frappes | Vitres | Rebonds |
+| Median strength of the sound peak | Strokes | Glass | Bounces |
 |---|---|---|---|
 | | **48** | 6 | 4 |
-| Entendus au-dessus de 8 | 43 / 46 | 6 / 15 | 4 / 25 |
+| Heard above 8 | 43 / 46 | 6 / 15 | 4 / 25 |
 
-À ce niveau de 8, l'échange compte 46 autres pics sans aucun contact : chaussures, voix,
-échos des frappes. Le timbre sépare la frappe du reste (41 sur 46), pas le rebond de la
-vitre. Sur les douze erreurs restantes de la chaîne, le son aurait rattrapé deux ou
-trois frappes ; **les trois vitres manquées sont silencieuses** dans l'enregistrement.
-Le micro de diffusion ne capte pas ce que la caméra ne voit pas : le son aiderait les
-frappes, déjà trouvées à 93 %, et non les vitres du fond.
+At this level of 8, the rally has 46 other peaks without any contact: shoes, voices,
+echoes of the strokes. The timbre separates the stroke from the rest (41 out of 46),
+not the bounce from the glass. Of the twelve remaining errors of the chain, sound
+would have recovered two or three strokes; **the three missed glass contacts are
+silent** in the recording. The broadcast microphone does not pick up what the camera
+does not see: sound would help the strokes, already found at 93 %, and not the back
+glass.
 
-### Le bilan d'un match entier
+### The report of a whole match
 
-Les deux finales ont été analysées en entier, minute par minute
-(`scripts/analyse_match.py`, trois heures et demie sur une GTX 1650), puis assemblées en
-un bilan par paire (`scripts/match_stats.py`). Trois difficultés n'existaient pas à
-l'échelle d'un échange ; chacune est mesurée.
+Both finals were analysed in full, minute by minute (`scripts/analyse_match.py`, three
+and a half hours on a GTX 1650), then assembled into a report by pair
+(`scripts/match_stats.py`). Three difficulties did not exist at the scale of a rally;
+each is measured.
 
-**Suivre les joueurs d'un bout à l'autre.** Le suivi repart de zéro à chaque minute
-analysée. Rejoué d'un seul tenant sur le match, contre la vérité d'identité :
+**Following the players from start to finish.** The tracking starts from zero at each
+analysed minute. Replayed in one go over the match, against the identity truth:
 
-| IDF1 sur le match entier | Minute par minute | D'un seul tenant |
+| IDF1 over the whole match | Minute by minute | In one go |
 |---|---|---|
-| Finale féminine | 0,615 (80 changements d'identité) | **0,791** (30) |
-| Finale masculine | 0,662 (159) | **0,639** (87) |
+| Women's final | 0.615 (80 identity changes) | **0.791** (30) |
+| Men's final | 0.662 (159) | **0.639** (87) |
 
-Presque toutes les confusions restantes sont entre partenaires. Leur effet sur les
-chiffres se mesure en appliquant le même calcul aux positions annotées du dataset,
-segment par segment entre deux changements de côté :
+Almost all the remaining confusions are between partners. Their effect on the figures
+is measured by applying the same computation to the annotated positions of the
+dataset, segment by segment between two changes of ends:
 
-| Écart à la vérité, par segment | Femmes | Hommes |
+| Gap from the truth, by segment | Women | Men |
 |---|---|---|
-| Distance d'un **joueur** : médiane, 1 sur 10, pire | 2,3 %, 12,5 %, 28 % | 3,2 %, 11,9 %, 19 % |
-| Temps au filet d'un **joueur** : médiane, 1 sur 10 | 1,6 pt, 5,4 pt | 5,3 pt, 9,2 pt |
-| Distance d'une **paire** : médiane, pire | 0,5 %, 2,4 % | 0,7 %, 6,0 % |
+| Distance of a **player**: median, 1 in 10, worst | 2.3 %, 12.5 %, 28 % | 3.2 %, 11.9 %, 19 % |
+| Time at the net of a **player**: median, 1 in 10 | 1.6 pt, 5.4 pt | 5.3 pt, 9.2 pt |
+| Distance of a **pair**: median, worst | 0.5 %, 2.4 % | 0.7 %, 6.0 % |
 
-Quand le suivi confond deux partenaires, les mètres de l'un passent à l'autre, et la
-somme de la paire n'en est pas changée. **Le bilan est donc donné par paire** ; un
-chiffre par joueur faux de plus de 12 % une fois sur dix n'est pas publié.
+When the tracking confuses two partners, the metres of one go to the other, and the
+sum of the pair is not changed by it. **The report is therefore given by pair**; a
+per-player figure that is wrong by more than 12 % once in ten is not published.
 
-**Savoir quelle paire joue où.** Les équipes changent de côté après le premier, le
-troisième et chaque jeu impair d'un set, et le tableau d'affichage dit combien de jeux
-ont été joués (`analytics/sides.py`). Contre la vérité d'identité, cette règle retrouve
-tous les changements de côté postérieurs à la première lecture du tableau, sur l'image
-même : 6 sur 6 chez les femmes, 7 sur 7 chez les hommes. Elle en trouve un huitième
-chez les hommes, à l'image 32 137, que la vérité terrain n'avait pas : vérifié à l'image,
-la paire en noir est côté caméra à l'image 31 900 et celle en bleu clair à l'image 32 287. La
-vérité avait manqué ce changement. Le service, première frappe de chaque échange, dit
-ensuite laquelle des deux lignes du tableau joue de quel côté : 50 services sur 54 et
-74 sur 80 votent pour la même orientation, les autres étant des frappeurs attribués à
-la mauvaise moitié. Le changement de côté qui précède la première lecture échappe à la
-règle ; le bilan commence donc à cette lecture, soit 23 minutes de jeu sur 25 chez les
-femmes et 29 sur 30 chez les hommes. La couleur des maillots a été essayée pour le
-retrouver, et pour vérifier les autres : vue de dos au premier plan et de face au
-fond, une même tenue ne donne pas la même couleur, et elle ne voit que 2 changements
-chez les femmes pour 18, la plupart faux, chez les hommes.
+**Knowing which pair plays where.** The teams change ends after the first, the third
+and every odd game of a set, and the scoreboard says how many games have been played
+(`analytics/sides.py`). Against the identity truth, this rule finds every change of
+ends after the first reading of the scoreboard, to the very frame: 6 out of 6 for the
+women, 7 out of 7 for the men. It finds an eighth one for the men, at frame 32,137,
+which the ground truth did not have: checked in the picture, the pair in black is on
+the camera side at frame 31,900 and the one in light blue at frame 32,287. The truth
+had missed this change. The serve, the first stroke of each rally, then says which of
+the two rows of the scoreboard plays on which side: 50 serves out of 54 and 74 out of
+80 vote for the same orientation, the others being strikers attributed to the wrong
+half. The change of ends that precedes the first reading escapes the rule; the report
+therefore starts at that reading, that is 23 minutes of play out of 25 for the women
+and 29 out of 30 for the men. The colour of the shirts was tried to recover it, and to
+check the others: seen from behind in the foreground and from the front at the far
+end, the same outfit does not give the same colour, and it sees only 2 changes for the
+women against 18, most of them false, for the men.
 
-**Ce que valent les chiffres du bilan :**
+**What the figures of the report are worth:**
 
-| Statistique | Vérifiée contre | Écart |
+| Statistic | Checked against | Gap |
 |---|---|---|
-| Points gagnés | le tableau d'affichage | exacts : 48 et 69 points que le tableau tranche |
-| Distance d'une paire, match entier | les positions annotées | +0,3 % à +1,3 % |
-| Temps au filet d'une paire | les positions annotées | 0,3 point au plus |
-| Frappes | 26 minutes pointées, 1 077 frappes | +1,2 % (2,6 % par minute, en médiane) |
-| Volées | les mêmes | +7,2 % |
-| Frappes après un rebond | les mêmes | −4,9 % |
-| Frappes après une vitre | les mêmes | −5,8 % (14 % par minute) |
-| Échanges de 1-3, 4-7, 8 coups et plus | les mêmes | 14, 25, 52 contre 15, 24, 53 |
+| Points won | the scoreboard | exact: 48 and 69 points that the scoreboard settles |
+| Distance of a pair, whole match | the annotated positions | +0.3 % to +1.3 % |
+| Time at the net of a pair | the annotated positions | 0.3 point at most |
+| Strokes | 26 marked minutes, 1,077 strokes | +1.2 % (2.6 % per minute, in the median) |
+| Volleys | the same | +7.2 % |
+| Strokes after a bounce | the same | −4.9 % |
+| Strokes after the glass | the same | −5.8 % (14 % per minute) |
+| Rallies of 1-3, 4-7, 8 shots and more | the same | 14, 25, 52 against 15, 24, 53 |
 
-Les frappes sont comptées à chaque minute par un modèle qui ne l'a pas vue. Un rebond
-manqué transforme une frappe après rebond en volée : le partage entre les deux penche
-de quelques pour cent vers les volées, toujours dans le même sens. Les points gagnants
-et les fautes par joueur, crédités au dernier frappeur, n'ont pas de vérité terrain et
-restent dans la vidéo de statistiques, hors du bilan.
+The strokes are counted at each minute by a model that has not seen it. A missed
+bounce turns a stroke after a bounce into a volley: the split between the two leans by
+a few per cent towards the volleys, always in the same direction. The winners and
+errors per player, credited to the last striker, have no ground truth and stay in the
+statistics video, outside the report.
 
-![Bilan par paire des deux finales](figures/bilan_paires.png)
+![Report by pair for both finals](figures/bilan_paires.png)
 
-![Points gagnés selon la longueur de l'échange](figures/points_longueur.png)
+![Points won by rally length](figures/points_longueur.png)
 
-![Occupation du terrain par paire](figures/occupation_paires.png)
+![Court occupancy by pair](figures/occupation_paires.png)
 
-## Limites connues
+## Known limitations
 
-**Un emplacement pouvait suivre quelqu'un derrière la vitre du fond.** Le suivi
-tolérait quatre mètres de débordement dans les deux sens, pour laisser passer une
-joueuse qui sort par une ouverture latérale. Mais ces ouvertures sont sur les côtés :
-derrière une vitre du fond, dans la largeur du court, il n'y a que le public et le
-personnel. Sur les vingt minutes analysées, **3 783 images sur 36 000** avaient un
-« joueur » placé là : sur l'une, un emplacement a suivi vingt secondes une personne
-assise derrière le fond pendant que la vraie joueuse n'était pas suivie. Ces positions
-sont désormais refusées, et toute position hors du court est pénalisée, pour qu'une
-personne sur le court soit toujours préférée à une personne à côté. La vidéo de
-statistiques rejoue le suivi corrigé. Les statistiques tactiques et les mesures
-d'identité de ce rapport ont été faites avant ce correctif, et sont à refaire sur le
-match entier.
+**A slot could follow someone behind the back glass.** The tracking tolerated four
+metres of overflow in both directions, to let through a player who goes out by a side
+opening. But these openings are on the sides: behind a back glass, across the width of
+the court, there is only the audience and the staff. Over the twenty minutes analysed,
+**3,783 frames out of 36,000** had a "player" placed there: on one, a slot followed
+for twenty seconds a person sitting behind the back wall while the real player was not
+tracked. These positions are now rejected, and any position outside the court is
+penalised, so that a person on the court is always preferred to a person beside it.
+The statistics video replays the corrected tracking. The tactical statistics and the
+identity measurements of this report were made before this fix, and are to be redone
+on the whole match.
 
-**Ce que le correctif a changé, et ce qu'il n'a pas réglé.** La campagne d'identité
-refait la détection des joueurs sur tout le match, des heures par essai. Un banc plus
-léger rejoue le suivi sur les minutes déjà analysées (`scripts/identity_bench.py`) :
-vingt minutes pour régler, et huit minutes neuves, quatre par finale, pour juger une
-seule fois : la vérité d'identité couvrant les deux matchs, elles n'ont demandé aucun
-pointage.
+**What the fix changed, and what it did not solve.** The identity campaign redoes the
+detection of the players over the whole match, hours per trial. A lighter bench
+replays the tracking on the minutes already analysed (`scripts/identity_bench.py`):
+twenty minutes for tuning, and eight new minutes, four per final, to judge only once:
+the identity truth covering both matches, they required no marking.
 
-| Juge, 8 minutes neuves | IDF1 | Changements d'identité |
+| Judge, 8 new minutes | IDF1 | Identity changes |
 |---|---|---|
-| Suivi d'origine | 0,811 | 26 |
-| Refus derrière la vitre du fond | **0,841** | **22** |
-| dont finale féminine | 0,812 → **0,872** | 10 → 6 |
-| dont finale masculine | 0,809 → 0,809 | 16 → 16 |
+| Original tracking | 0.811 | 26 |
+| Rejection behind the back glass | **0.841** | **22** |
+| of which women's final | 0.812 → **0.872** | 10 → 6 |
+| of which men's final | 0.809 → 0.809 | 16 → 16 |
 
-Presque tous les changements restants se produisent **aux raccords** de la vidéo, où
-les joueurs réapparaissent ailleurs, avec des partenaires éloignés de trois à six
-mètres ; les croisements serrés n'en expliquent qu'une poignée. Trois idées ont été
-essayées sur les minutes de réglage :
+Almost all the remaining changes happen **at the cuts** of the video, where the
+players reappear elsewhere, with partners three to six metres apart; tight crossings
+explain only a handful. Three ideas were tried on the tuning minutes:
 
-- **effacer la vitesse qu'un raccord laisse derrière lui**. Mesurée à travers un
-  raccord, c'est celle d'une téléportation : +5,6 points d'IDF1 sur les minutes
-  masculines de réglage, **rien sur le juge**. Gardée, parce qu'elle est juste et ne
-  coûte rien, mais sans gain démontré ;
-- **le côté habituel de chaque partenaire** (le joueur de drive à droite, celui de
-  revers à gauche) : tenu dans 94,8 % des raccords chez les femmes mais 83,7 % chez les
-  hommes. Ajouté au mouvement, il ne gagnait que 0,005 d'IDF1 sur les vingt minutes :
-  du bruit, **non retenu** ;
-- **la couleur de la tête et du bas du corps**, puisque les partenaires portent le même
-  maillot : elle retrouve la bonne paire dans 76 % des cas seulement, et n'a rien
-  changé au suivi. **Non retenue.**
+- **erasing the velocity that a cut leaves behind**. Measured across a cut, it is that
+  of a teleportation: +5.6 points of IDF1 on the men's tuning minutes, **nothing on
+  the judge**. Kept, because it is right and costs nothing, but without a demonstrated
+  gain;
+- **the usual side of each partner** (the drive player on the right, the backhand one
+  on the left): held in 94.8 % of the cuts for the women but 83.7 % for the men. Added
+  to the motion, it gained only 0.005 of IDF1 over the twenty minutes: noise, **not
+  kept**;
+- **the colour of the head and of the lower body**, since the partners wear the same
+  shirt: it finds the right pair in only 76 % of the cases, and changed nothing in the
+  tracking. **Not kept.**
 
-Le suivi d'identité masculin reste donc le point faible des statistiques par joueur.
+The men's identity tracking therefore remains the weak point of the per-player
+statistics.
 
 
-**Un joueur ne peut pas être suivi à travers un changement de côté.** Les quatre
-emplacements désignent des moitiés de court, et le suivi refuse par construction une
-observation du mauvais côté du filet : c'est ce qui lui donne son « 0 frame au-dessus
-de quatre ». Le prix de cette contrainte est qu'un joueur qui change de côté change
-d'emplacement. Rien dans l'image ne permettrait de le rattacher : le pipeline ne lit
-ni les visages ni les numéros. Les statistiques par emplacement restent valides sur le
-match entier ; les statistiques **par joueur** ne le sont qu'à l'intérieur d'un
-segment entre deux changements de côté.
+**A player cannot be followed across a change of ends.** The four slots stand for
+halves of the court, and the tracking rejects by construction an observation on the
+wrong side of the net: that is what gives it its "0 frames above four". The price of
+this constraint is that a player who changes ends changes slot. Nothing in the picture
+would allow them to be linked up: the pipeline reads neither faces nor numbers. The
+per-slot statistics remain valid over the whole match; the **per-player** statistics
+are only valid within a segment between two changes of ends.
 
-**Le suivi d'identité ne généralise pas aussi bien que la détection.** Sur le match
-de réglage il décroche 4 fois pour 21 occasions, soit 19 %. Sur le match tenu à l'écart,
-28 fois pour 38 occasions, soit **74 %**. La détection, elle, transfère sans perte, et la
-localisation aussi. Un pipeline jugé sur son seul F1 de détection paraîtrait
-généraliser ; il ne généralise que sur la moitié de ce qu'il fait.
+**Identity tracking does not generalise as well as detection.** On the tuning match it
+loses identity 4 times in 21 opportunities, that is 19 %. On the held-out match, 28
+times in 38 opportunities, that is **74 %**. Detection, for its part, transfers
+without loss, and so does localisation. A pipeline judged on its detection F1 alone
+would seem to generalise; it only generalises on half of what it does.
 
-**Le point faible est le croisement serré entre partenaires**, pas le raccord. Sur le
-même nombre de frames, le match masculin compte 14 rapprochements contre 3, et ses
-partenaires descendent à 0,41 m l'un de l'autre contre 0,56 m. C'est là que se joue
-l'écart entre 19 % et 74 %, et c'est la piste à travailler en priorité.
+**The weak point is the tight crossing between partners**, not the cut. Over the same
+number of frames, the men's match has 14 close approaches against 3, and its partners
+come down to 0.41 m from each other against 0.56 m. That is where the gap between 19 %
+and 74 % is decided, and it is the lead to work on first.
 
-Mesurer tout cela a coûté 266 clips d'arbitrage humain. Sur les 47 clips de la finale
-masculine dont la réponse a été tracée, 11 portaient une permutation réelle : **près
-d'un raccord sur quatre fait décrocher l'identité**.
+Measuring all this cost 266 clips of human arbitration. Of the 47 clips of the men's
+final whose answer was traced, 11 carried a real switch: **nearly one cut in four
+makes identity slip**.
 
-**La vérité terrain d'identité dépend d'un jugement humain non reproductible.** Les
-266 arbitrages ont été rendus par une seule personne, sans second annotateur, donc
-sans accord inter-annotateurs à rapporter. Les sept changements de côté de la finale
-féminine ont en revanche été confirmés par deux voies indépendantes : la tenue des
-équipes échantillonnée sur tout le match, et le tableau d'affichage sur le passage
-douteux.
+**The identity ground truth depends on a human judgement that cannot be reproduced.**
+The 266 arbitrations were given by a single person, without a second annotator, so
+without an inter-annotator agreement to report. The seven changes of ends of the
+women's final were however confirmed by two independent routes: the outfit of the
+teams sampled over the whole match, and the scoreboard on the doubtful passage.
 
-**Les frames incomplètes sont des échecs de détection**, pas de suivi : ce sont
-exactement celles où le modèle ne trouve que trois personnes, toujours au fond du
-court, lorsque deux joueuses adjacentes s'occultent mutuellement.
+**The incomplete frames are detection failures**, not tracking failures: they are
+exactly those where the model finds only three people, always at the far end of the
+court, when two adjacent players hide each other.
 
-**Les parois latérales ne sont pas modélisées.** Seules les parois de fond le sont ;
-la géométrie en paliers des côtés demande une vérification dans le règlement FIP.
+**The side walls are not modelled.** Only the back walls are; the stepped geometry of
+the sides needs checking against the FIP rules.
 
-**Le lissage ne retire pas tout le bruit.** L'écart entre distance brute et distance
-lissée dit ce que le lissage a enlevé, pas ce qu'il reste. Les distances lissées
-correspondent à environ 88 mètres par minute de **jeu effectif** : la vidéo étant
-montée sur les échanges, elle ne contient aucun temps mort. Ce chiffre n'est donc pas
-directement comparable aux distances par match que rapporte la littérature, qui
-incluent les interruptions.
+**Smoothing does not remove all the noise.** The gap between raw distance and smoothed
+distance says what smoothing removed, not what remains. The smoothed distances
+correspond to about 88 metres per minute of **effective play**: the video being edited
+down to the rallies, it contains no dead time. This figure is therefore not directly
+comparable with the distances per match reported in the literature, which include the
+interruptions.
 
-**Le seuil du filet est une convention, quoique mesurée.** Le creux entre les deux
-modes est réel mais large : les pourcentages absolus de contrôle bougent de quinze
-points selon l'endroit où on le place dans ce creux. Le rapport entre les deux paires,
-lui, est stable : c'est cette forme-là qu'il faut citer.
+**The net threshold is a convention, although a measured one.** The trough between the
+two modes is real but wide: the absolute control percentages move by fifteen points
+depending on where it is placed in that trough. The ratio between the two pairs, for
+its part, is stable: that is the form to quote.
 
-## Reproduire l'évaluation
+## Reproducing the evaluation
 
-Les métriques de suivi ajoutent deux dépendances, séparées parce qu'elles ne servent
-qu'à mesurer :
+The tracking metrics add two dependencies, kept separate because they are only used
+for measuring:
 
 ```bash
 pip install -e ".[eval]"
 ```
 
-Le dataset ne fournit pas d'identité. Il faut la reconstruire, puis arbitrer à la main
-les moments où la reconstruction est douteuse.
+The dataset does not provide identity. It has to be rebuilt, then the moments where
+the reconstruction is doubtful have to be arbitrated by hand.
 
 ```bash
 python scripts/build_identity_truth.py --annotations <pose.json> \
-    --calibration ground_truth/calibrations/<nom>.json --out ground_truth/identity/<nom>.json
+    --calibration ground_truth/calibrations/<name>.json --out ground_truth/identity/<name>.json
 
 python scripts/detect_cuts.py --annotations <pose.json> \
-    --calibration ground_truth/calibrations/<nom>.json --identity ground_truth/identity/<nom>.json
+    --calibration ground_truth/calibrations/<name>.json --identity ground_truth/identity/<name>.json
 
 python scripts/review_identity.py --video <video.mp4> \
-    --annotations <pose.json> --identity ground_truth/identity/<nom>.json
+    --annotations <pose.json> --identity ground_truth/identity/<name>.json
 ```
 
-Le premier associe au plus proche voisin sur tout le match et liste les rapprochements
-douteux ; le deuxième ajoute les raccords de plan, que la proximité ne voit pas ; le
-troisième rejoue chaque moment douteux en boucle, les joueurs encadrés de leur couleur
-d'emplacement.
+The first associates by nearest neighbour over the whole match and lists the doubtful
+close approaches; the second adds the broadcast cuts, which proximity does not see;
+the third replays each doubtful moment in a loop, the players framed in the colour of
+their slot.
 
-La question posée n'est pas « se sont-ils croisés » mais **« le même joueur porte-t-il
-la même couleur avant et après »**.
+The question asked is not "did they cross" but **"does the same player wear the same
+colour before and after"**.
 
-| Touche | Sur un rapprochement | Sur un raccord |
+| Key | On a close approach | On a cut |
 |---|---|---|
-| `n` | pas de permutation | aucune permutation |
-| `s` | permutation | sans objet |
-| `p` / `e` / `b` | sans objet | la paire proche, éloignée, ou les deux ont permuté |
-| `c` | sans objet | les équipes ont changé de côté |
-| `r` | revenir au clip précédent et annuler sa réponse | idem |
-| `q` | quitter en conservant les réponses rendues | idem |
+| `n` | no switch | no switch |
+| `s` | switch | not applicable |
+| `p` / `e` / `b` | not applicable | the near pair, the far pair, or both have switched |
+| `c` | not applicable | the teams have changed ends |
+| `r` | go back to the previous clip and cancel its answer | same |
+| `q` | quit, keeping the answers given | same |
 
-Le fichier est réécrit après chaque réponse, de façon atomique : une coupure de
-courant coûte le clip en cours, pas l'arbitrage entier.
+The file is rewritten after each answer, atomically: a power cut costs the clip in
+progress, not the whole arbitration.
 
-La campagne calcule ensuite la détection, la localisation et les deux ablations en un
-seul passage sur la vidéo :
+The campaign then computes detection, localisation and both ablations in a single pass
+over the video:
 
 ```bash
 python scripts/run_evaluation.py --video <video.mp4> --annotations <pose.json> \
-    --calibration ground_truth/calibrations/<nom>.json --identity ground_truth/identity/<nom>.json \
-    --out outputs/<nom>_eval.json --frames 9000
+    --calibration ground_truth/calibrations/<name>.json --identity ground_truth/identity/<name>.json \
+    --out outputs/<name>_eval.json --frames 9000
 ```
 
-La balle est mesurée à part, les deux méthodes de trajectoire étant calculées en un
-seul passage sur la plage demandée :
+The ball is measured separately, both trajectory methods being computed in a single
+pass over the requested range:
 
 ```bash
-python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 0 --stop 21472 --out outputs/<nom>_trajectory.json
+python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 0 --stop 21472 --out outputs/<name>_trajectory.json
 ```
 
-Les contacts se mesurent de la même façon, sur le chemin reconstruit et sur la balle
-annotée en un seul passage :
+The contacts are measured in the same way, on the reconstructed path and on the
+annotated ball in a single pass:
 
 ```bash
-python scripts/measure_contacts.py --video <video.mp4> --annotations <ball.json>     --shots <shots.csv> --identity ground_truth/identity/<nom>.json     --start 0 --stop 20099 --out outputs/<nom>_contacts.json
+python scripts/measure_contacts.py --video <video.mp4> --annotations <ball.json>     --shots <shots.csv> --identity ground_truth/identity/<name>.json     --start 0 --stop 20099 --out outputs/<name>_contacts.json
 ```
 
-Les surfaces demandent une vérité terrain qui n'existe pas : elle se produit à la main.
-Le premier script dresse la liste des contacts à juger, le second les rejoue un par un.
+The surfaces need a ground truth that does not exist: it is produced by hand. The
+first script draws up the list of contacts to judge, the second replays them one by
+one.
 
 ```bash
-python scripts/build_surface_tasks.py --annotations <ball.json> --poses <pose.json>     --calibration ground_truth/calibrations/<nom>.json --start 16000 --stop 20099     --video <nom> --out ground_truth/surfaces/<nom>.json
+python scripts/build_surface_tasks.py --annotations <ball.json> --poses <pose.json>     --calibration ground_truth/calibrations/<name>.json --start 16000 --stop 20099     --video <name> --out ground_truth/surfaces/<name>.json
 
-python scripts/review_surfaces.py --video <video.mp4>     --annotations <ball.json> --truth ground_truth/surfaces/<nom>.json
+python scripts/review_surfaces.py --video <video.mp4>     --annotations <ball.json> --truth ground_truth/surfaces/<name>.json
 ```
 
-| Touche | Réponse |
+| Key | Answer |
 |---|---|
-| `s` `v` `g` `t` | le sol, une vitre, le grillage, le filet |
-| `f` | une frappe, donc une raquette |
-| `n` | aucun contact : la trajectoire passe tout droit |
-| `x` | illisible, je ne peux pas trancher |
-| `r` / `q` | revenir au clip précédent / quitter en conservant |
+| `s` `v` `g` `t` | the floor, a glass panel, the mesh, the net |
+| `f` | a stroke, so a racket |
+| `n` | no contact: the trajectory goes straight through |
+| `x` | unreadable, I cannot decide |
+| `r` / `q` | go back to the previous clip / quit, keeping the answers |
 
-`n` et `x` ne disent pas la même chose et ne sont jamais additionnés. `x` est une
-non-mesure ; `n` est un faux positif constaté de l'étage des contacts.
+`n` and `x` do not say the same thing and are never added together. `x` is a
+non-measurement; `n` is an observed false positive of the contact stage.
 
-Le réseau de détection de balle s'entraîne sur un cache de frames réduites, construit
-hors de la tranche d'évaluation. Une session interrompue se reprend avec `--resume` :
-
-```bash
-python scripts/build_frame_cache.py --video <video.mp4> --annotations <ball.json>     --exclude 16000 20099 --step 1 --out cache/<nom>
-
-python scripts/train_ball_net.py --cache cache/<nom> --epochs 10 --out weights/ball_net
-
-python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 16000 --stop 20099 --spacing 3 --weights weights/ball_net_best.pt     --out outputs/<nom>_trajectory_net.json
-```
-
-`--spacing 3` est obligatoire avec `--weights` : le réseau a été entraîné sur des frames
-espacées de trois, et le script refuse tout autre écart plutôt que de rendre en silence
-une liste de candidats vide.
-
-La pose de caméra se contrôle sur les repères qu'elle n'a jamais ajustés :
+The ball detection network is trained on a cache of reduced frames, built outside the
+evaluation slice. An interrupted session is resumed with `--resume`:
 
 ```bash
-python scripts/check_camera_pose.py --calibration ground_truth/calibrations/<nom>.json
+python scripts/build_frame_cache.py --video <video.mp4> --annotations <ball.json>     --exclude 16000 20099 --step 1 --out cache/<name>
+
+python scripts/train_ball_net.py --cache cache/<name> --epochs 10 --out weights/ball_net
+
+python scripts/measure_trajectory.py --video <video.mp4> --annotations <ball.json>     --start 16000 --stop 20099 --spacing 3 --weights weights/ball_net_best.pt     --out outputs/<name>_trajectory_net.json
 ```
 
-## Ce que ce dépôt versionne
+`--spacing 3` is mandatory with `--weights`: the network was trained on frames spaced
+three apart, and the script refuses any other gap rather than silently returning an
+empty list of candidates.
 
-Aucune image, aucune vidéo, aucun poids de modèle. `data/`, où atterrit le dataset
-téléchargé, est exclu en bloc et sans exception.
+The camera pose is checked on the references it never fitted:
 
-`ground_truth/` en revanche est versionné, parce que sans lui les chiffres de la
-section [Évaluation](#évaluation) ne seraient pas reproductibles :
+```bash
+python scripts/check_camera_pose.py --calibration ground_truth/calibrations/<name>.json
+```
 
-| Fichier | Contenu |
+## What this repository versions
+
+No image, no video, no model weights. `data/`, where the downloaded dataset lands, is
+excluded as a whole and without exception.
+
+`ground_truth/` on the other hand is versioned, because without it the figures of the
+[Evaluation](#evaluation) section would not be reproducible:
+
+| File | Content |
 |---|---|
-| `calibrations/*.json` | 23 points cliqués par vidéo : 13 au sol dont 4 de contrôle, et 10 en hauteur dont 8 de contrôle |
-| `identity/*.json` | assignation des 4 emplacements sur tout le match, liste des moments douteux, et les 266 arbitrages humains |
-| `surfaces/*.json` | les 194 contacts à juger et les 194 jugements rendus |
-| `contact_marks/*.json` | tous les contacts de vingt minutes pointés à la main, avec leur surface |
+| `calibrations/*.json` | 23 clicked points per video: 13 on the ground including 4 control points, and 10 above the ground including 8 control points |
+| `identity/*.json` | assignment of the 4 slots over the whole match, list of the doubtful moments, and the 266 human arbitrations |
+| `surfaces/*.json` | the 194 contacts to judge and the 194 judgements given |
+| `contact_marks/*.json` | all the contacts of twenty minutes marked by hand, with their surface |
 
-**`surfaces/` et `contact_marks/` sont les seuls de ces fichiers qui ne dérivent de rien.** Les surfaces de
-contact ne sont étiquetées dans aucun jeu de données public de padel : ces fichiers sont
-la mesure elle-même, et sans lui la section sur les surfaces ne serait qu'une règle
-sans juge. Les points en hauteur de `calibrations/` sont dans le même cas : ils sont
-relevés à la main sur les panneaux de mur, et sans eux la pose de caméra ne se
-résoudrait pas.
+**`surfaces/` and `contact_marks/` are the only ones of these files that derive from nothing.** Contact
+surfaces are not labelled in any public padel dataset: these files are the measurement
+itself, and without them the section on surfaces would only be a rule without a judge.
+The points above the ground in `calibrations/` are in the same case: they are taken by
+hand on the wall panels, and without them the camera pose could not be solved.
 
-Ces fichiers dérivent des annotations du dataset, en CC-BY-4.0, et n'en contiennent
-aucune donnée d'image. Avec eux, reproduire l'évaluation demande de télécharger le
-dataset public et de lancer la campagne, pas de refaire l'arbitrage.
+These files derive from the annotations of the dataset, under CC-BY-4.0, and contain
+none of its image data. With them, reproducing the evaluation takes downloading the
+public dataset and launching the campaign, not redoing the arbitration.
 
-**Les trois calibrations sont identiques**, et c'est intentionnel. Les deux matchs
-sont filmés depuis la même position au même tournoi, et l'extrait d'essai est tiré de
-la finale féminine. La calibration ajustée sur cette dernière a été transférée aux
-deux autres puis vérifiée par superposition du modèle de court sur une frame de
-chacune : contour, lignes de service, ligne centrale et filet tombent juste. Un seul
-jeu de points cliqués couvre donc tout le dataset.
-
+**The three calibrations are identical**, and that is intentional. Both matches are
+filmed from the same position at the same tournament, and the trial excerpt is taken
+from the women's final. The calibration fitted on the latter was transferred to the
+other two then checked by overlaying the court model on a frame of each: outline,
+service lines, centre line and net fall right. A single set of clicked points
+therefore covers the whole dataset.
