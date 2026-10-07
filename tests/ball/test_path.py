@@ -15,7 +15,7 @@ def test_a_bend_costs_what_it_deviates():
 
 
 def test_the_cost_of_a_bounce_is_capped():
-    """Un rebond doit rester possible : son cout est borne, pas infini."""
+    """A bounce must stay possible: its cost is bounded, not infinite."""
     cost = acceleration_cost((0.0, 0.0), (50.0, 0.0), (0.0, 0.0), ceiling=80.0)
     assert cost == pytest.approx(80.0)
 
@@ -55,7 +55,7 @@ def test_a_clean_straight_line_is_followed():
 
 
 def test_a_decoy_that_breaks_the_line_is_refused():
-    """Le chemin global prefere la continuite a un score isole."""
+    """The global path prefers continuity to an isolated score."""
     candidates = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(10)}
     candidates[5] = [Candidate(800.0, 700.0, 900.0)] + candidates[5]
     found = best_path(candidates, start=0, stop=9)
@@ -63,7 +63,7 @@ def test_a_decoy_that_breaks_the_line_is_refused():
 
 
 def test_this_is_what_the_greedy_version_could_not_do():
-    """Une amorce sur le leurre condamnait le segment glouton ; ici non."""
+    """A seed on the decoy doomed the greedy segment; not here."""
     candidates = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(12)}
     for f in (0, 1):
         candidates[f] = [Candidate(700.0 + 3.0 * f, 700.0, 900.0)] + candidates[f]
@@ -79,9 +79,9 @@ def test_a_frame_without_candidates_comes_back_absent():
 
 
 def test_a_cheaper_absence_makes_the_path_give_up_more_often():
-    """Une frame absente blanchit un saut : elle ne contraint la vitesse ni en
-    entrant ni en sortant. C'est bon marche, donc le prix de l'absence doit rester
-    au-dessus de celui d'un rebond."""
+    """An absent frame whitewashes a jump: it constrains the velocity neither going
+    in nor coming out. It is cheap, so the price of absence must stay above that of
+    a bounce."""
     candidates = {f: [Candidate(500.0 * (f % 2), 700.0, 100.0)] for f in range(10)}
     cheap = best_path(candidates, start=0, stop=9, absent_cost=1.0)
     dear = best_path(candidates, start=0, stop=9, absent_cost=10000.0)
@@ -103,8 +103,8 @@ def test_every_requested_frame_is_answered():
 
 
 def test_the_width_bounds_what_is_considered():
-    """Le cout croit comme le cube du nombre de candidats retenus, et la balle est
-    dans les dix premiers 96 % du temps. Ce qui est au-dela n'est pas vu."""
+    """The cost grows as the cube of the number of candidates kept, and the ball is
+    in the top ten 96 % of the time. What is beyond is not seen."""
     candidates = {
         f: [Candidate(9000.0, 9000.0, 1.0)] * 8
         + [Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
@@ -115,8 +115,8 @@ def test_the_width_bounds_what_is_considered():
 
 
 def test_the_path_follows_a_bounce_rather_than_dropping_out():
-    """Disparaitre ne doit pas etre moins cher que suivre un rebond, sinon la balle
-    s'evanouirait a chaque contact - et il y en a un toutes les quinze frames."""
+    """Disappearing must not be cheaper than following a bounce, otherwise the ball
+    would vanish at every contact, and there is one every fifteen frames."""
     candidates = {}
     for f in range(6):
         candidates[f] = [Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
@@ -127,7 +127,7 @@ def test_the_path_follows_a_bounce_rather_than_dropping_out():
 
 
 def test_a_bounce_is_allowed_by_the_capped_cost():
-    """La balle repart en sens inverse : le chemin doit la suivre malgre tout."""
+    """The ball goes back the other way: the path must follow it all the same."""
     candidates = {}
     for f in range(6):
         candidates[f] = [Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
@@ -138,7 +138,7 @@ def test_a_bounce_is_allowed_by_the_capped_cost():
 
 
 def test_the_default_costs_still_follow_a_bounce():
-    """Un rebond franc doit rester payable au tarif par defaut."""
+    """A clear bounce must stay affordable at the default rate."""
     candidates = {}
     for f in range(6):
         candidates[f] = [Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
@@ -149,8 +149,8 @@ def test_the_default_costs_still_follow_a_bounce():
 
 
 def test_the_default_weight_does_not_let_a_strong_decoy_win():
-    """Le poids d'emission a un optimum interieur ; trop haut, le score l'emporte
-    sur la continuite."""
+    """The emission weight has an interior optimum; too high, the score wins over
+    continuity."""
     candidates = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(10)}
     candidates[5] = [Candidate(800.0, 700.0, 900.0)] + candidates[5]
     found = best_path(candidates, start=0, stop=9)
@@ -158,7 +158,7 @@ def test_the_default_weight_does_not_let_a_strong_decoy_win():
 
 
 def test_an_absolute_score_makes_a_weak_best_candidate_costly():
-    """En relatif le meilleur d'une image ne coute rien, meme tres faible."""
+    """In relative mode the best of a frame costs nothing, even if very weak."""
     weak = [Candidate(0.0, 0.0, 0.05)]
     assert emission_cost(weak[0], weak, weight=100.0) == pytest.approx(0.0)
     assert emission_cost(weak[0], weak, weight=100.0, absolute=True) == pytest.approx(95.0)

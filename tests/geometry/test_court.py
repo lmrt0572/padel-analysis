@@ -18,7 +18,7 @@ def test_reference_points_are_four_court_corners_in_order():
     court = Court()
     corners = court.corners()
     assert corners.shape == (4, 2)
-    # ordre : arriere-gauche, arriere-droit, avant-droit, avant-gauche
+    # order: back-left, back-right, front-right, front-left
     expected = np.array(
         [
             [-court.half_width, -court.half_length],
@@ -43,7 +43,7 @@ def test_offensive_zone_excludes_a_point_behind_the_service_line():
 
 
 def test_the_side_wall_glass_leaves_mesh_in_the_middle():
-    """Variante Crystal : du verre a chaque bout, du grillage entre les deux."""
+    """Crystal variant: glass at each end, mesh between the two."""
     court = Court()
     assert court.side_wall_glass_length * 2 < court.length
 

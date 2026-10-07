@@ -68,7 +68,7 @@ def test_the_verdict_counts_the_admissible_surfaces(synthetic_pose):
 
 
 def test_a_wider_margin_can_only_admit_more(synthetic_pose):
-    """La marge absorbe l'erreur de pose : elle elargit, elle ne restreint jamais."""
+    """The margin absorbs the pose error: it widens, it never restricts."""
     pose, _, _ = synthetic_pose
     ball = pose.project(np.array([[4.9, 9.8, 0.0]]))[0]
     tight = classify(ball, [], pose, _surfaces(), margin=0.0).candidates
@@ -91,7 +91,7 @@ def test_a_racket_verdict_names_no_material(synthetic_pose):
 
 
 def test_a_deep_floor_candidate_yields_to_a_wall(synthetic_pose):
-    """Un point-sol trop profond trahit un contact bas contre la vitre proche."""
+    """A floor point that is too deep gives away a low contact against the near glass."""
     pose, _, _ = synthetic_pose
     ball = pose.project(np.array([[0.0, -10.0, 0.6]]))[0]
     without = classify(ball, [], pose, _surfaces(), depth_cut=None)
@@ -107,12 +107,12 @@ def test_a_shallow_floor_candidate_keeps_the_floor(synthetic_pose):
 
 
 def test_the_cut_needs_another_candidate_to_yield_to(synthetic_pose):
-    """Sans second candidat, le sol reste : on ne remplace pas une reponse par rien.
+    """Without a second candidate, the floor stays: an answer is not replaced by nothing.
 
-    Juste au-dela de la ligne de fond, la marge admet encore le sol mais plus le mur,
-    dont l'intersection passe alors sous le niveau zero. Le point-sol y est plus
-    profond que le seuil : sans garde-fou, l'arbitrage irait chercher un second
-    candidat qui n'existe pas.
+    Just beyond the baseline, the margin still admits the floor but no longer the
+    wall, whose intersection then goes below level zero. The floor point is deeper
+    than the threshold there: without a safeguard, the arbitration would go looking
+    for a second candidate that does not exist.
     """
     pose, _, _ = synthetic_pose
     ball = pose.project(np.array([[0.0, -10.28, 0.0]]))[0]
@@ -129,7 +129,7 @@ def test_a_racket_is_decided_before_any_depth_question(synthetic_pose):
 
 
 def test_the_cut_leaves_the_candidate_count_alone(synthetic_pose):
-    """L'arbitrage choisit parmi les admissibles ; il n'en ajoute ni n'en retire."""
+    """The arbitration chooses among the admissible ones; it neither adds nor removes any."""
     pose, _, _ = synthetic_pose
     ball = pose.project(np.array([[0.0, -10.0, 0.6]]))[0]
     assert (

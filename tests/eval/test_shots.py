@@ -58,7 +58,7 @@ def test_an_event_reports_whether_it_contains_a_frame():
 
 
 def test_a_category_change_without_a_gap_starts_a_new_event(tmp_path):
-    """Deux frappes qui se suivent sans frame vide entre elles."""
+    """Two strokes that follow each other without an empty frame between them."""
     path = _write(
         tmp_path / "shots.csv",
         [(1, 1, "Serve"), (2, 1, "Serve"), (3, 1, "Forehand"), (4, 1, "Forehand")],

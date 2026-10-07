@@ -8,7 +8,7 @@ midpoint is unaffected, so a naive check would pass.
 
 import numpy as np
 
-# Ordre utilise par Ultralytics et par la convention COCO.
+# Order used by Ultralytics and by the COCO convention.
 COCO_KEYPOINTS: tuple[str, ...] = (
     "nose",
     "left_eye",
@@ -29,7 +29,7 @@ COCO_KEYPOINTS: tuple[str, ...] = (
     "right_ankle",
 )
 
-# Ordre reellement present dans les fichiers `*_pose.json` de PadelTracker100.
+# Order actually found in the `*_pose.json` files of PadelTracker100.
 DATASET_KEYPOINTS: tuple[str, ...] = (
     "nose",
     "right_eye",

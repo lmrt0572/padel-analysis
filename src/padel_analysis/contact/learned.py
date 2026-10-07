@@ -143,8 +143,8 @@ def _skeleton(ball: Point | None, people: Sequence, height: int) -> list[float]:
         row += [min(min(gaps, default=3.0), 3.0)]
     ankles = [near.keypoints[j][1] for j in ANKLES if near.keypoints[j][2] > 0.3]
     foot = max(ankles, default=bottom)
-    # Hauteur de la balle au-dessus des pieds, en tailles de joueur : contrairement aux
-    # pixels, elle ne depend pas de la profondeur.
+    # Height of the ball above the feet, in player heights: unlike pixels, it does
+    # not depend on depth.
     row += [max(min((foot - ball[1]) / max(bottom - top, 1.0), 3.0), -3.0)]
     other = min((math.dist(ball, _centre(p)) for p in ordered[1:]), default=1500.0)
     row += [min(other / 500, 3.0)]
@@ -189,7 +189,7 @@ def _geometry(
         admissible += inside
         where = 0.0
         if inside:
-            # Profondeur pour le sol, hauteur pour un mur ou le filet.
+            # Depth for the floor, height for a wall or the net.
             where = meeting[1] / 10 if surface.name == "floor" else meeting[2] / 4
             if wall == NO_WALL and surface.name not in ("floor", "net"):
                 wall = MESH_WALL if surface.material_at(meeting) == MESH else GLASS_WALL

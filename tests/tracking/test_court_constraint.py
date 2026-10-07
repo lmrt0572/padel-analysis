@@ -49,18 +49,18 @@ def test_identity_is_kept_when_players_move_slightly():
 
 
 def test_partners_crossing_do_not_swap_identities():
-    """Le cas qui fait sauter les identifiants avec un tracker generique."""
+    """The case that makes identifiers jump with a generic tracker."""
     tracker = CourtSlotTracker()
     first = tracker.update([_observation(-3, -5), _observation(3, -5),
                             _observation(-3, 5), _observation(3, 5)])
-    # Les deux partenaires du cote negatif convergent puis se croisent.
+    # The two partners on the negative side converge then cross.
     for left_x, right_x in ((-1.5, 1.5), (-0.5, 0.5), (0.5, -0.5), (1.5, -1.5)):
         assignment = tracker.update(
             [_observation(left_x, -5), _observation(right_x, -5),
              _observation(-3, 5), _observation(3, 5)]
         )
-    # Les observations 0 et 1 ont echange leurs positions. Chaque slot doit
-    # continuer a suivre la meme observation qu'au depart.
+    # Observations 0 and 1 have swapped positions. Each slot must keep following
+    # the same observation as at the start.
     assert assignment["near_1"] == first["near_1"]
     assert assignment["near_2"] == first["near_2"]
 
@@ -86,7 +86,7 @@ def test_a_missing_player_keeps_its_slot_coasting():
 
 
 def test_a_fifth_person_is_ignored():
-    """Ramasseurs de balle et arbitre ne doivent pas voler un slot."""
+    """Ball kids and the umpire must not steal a slot."""
     tracker = CourtSlotTracker()
     tracker.update([_observation(-2, -5), _observation(2, -5),
                     _observation(-2, 5), _observation(2, 5)])
@@ -105,8 +105,8 @@ def test_appearance_breaks_a_positional_tie():
         _observation(-2, -5, appearance=red), _observation(2, -5, appearance=black),
         _observation(-2, 5, appearance=red), _observation(2, 5, appearance=black),
     ])
-    # Les deux partenaires echangent leurs positions exactes, sans changer de tenue.
-    # Sans apparence, la position seule ferait sauter les identites.
+    # The two partners swap their exact positions, without changing outfit. Without
+    # appearance, position alone would make the identities jump.
     assignment = tracker.update([
         _observation(2, -5, appearance=red), _observation(-2, -5, appearance=black),
         _observation(-2, 5, appearance=red), _observation(2, 5, appearance=black),
@@ -125,7 +125,7 @@ def test_low_confidence_observations_cost_more():
 
 
 def test_a_spectator_in_the_stands_is_refused():
-    """Sans borne, un spectateur du bon cote peut voler un slot."""
+    """Without a bound, a spectator on the right side can steal a slot."""
     tracker = CourtSlotTracker()
     tracker.update([_observation(-2, -5), _observation(2, -5),
                     _observation(-2, 5), _observation(2, 5)])
@@ -138,7 +138,7 @@ def test_a_spectator_in_the_stands_is_refused():
 
 
 def test_a_player_leaving_through_the_side_opening_is_still_accepted():
-    """Au padel on sort du court pour rattraper un lob : la borne doit etre large."""
+    """In padel one leaves the court to chase a lob: the bound must be wide."""
     tracker = CourtSlotTracker()
     tracker.update([_observation(-2, -5), _observation(2, -5),
                     _observation(-2, 5), _observation(2, 5)])
@@ -151,7 +151,7 @@ def test_a_player_leaving_through_the_side_opening_is_still_accepted():
 
 
 def test_nobody_can_be_playing_behind_the_back_glass():
-    """Vu sur la finale feminine : une personne assise derriere la vitre du fond."""
+    """Seen in the women's final: a person sitting behind the back glass."""
     tracker = CourtSlotTracker()
     tracker.update([_observation(-2, -5), _observation(2, -5), _observation(-2, 5)])
     assignment = tracker.update([_observation(-2, -5), _observation(2, -5),
@@ -161,7 +161,7 @@ def test_nobody_can_be_playing_behind_the_back_glass():
 
 def test_someone_on_the_court_is_preferred_to_someone_beside_it():
     tracker = CourtSlotTracker()
-    # La vraie joueuse n'est pas detectee au debut : un arbitre assis prend l'emplacement.
+    # The real player is not detected at the start: a seated umpire takes the slot.
     for _ in range(5):
         tracker.update([_observation(-2, -5), _observation(2, -5),
                         _observation(2, 5), _observation(6.5, 2.0)])

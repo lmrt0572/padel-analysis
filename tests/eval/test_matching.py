@@ -21,7 +21,7 @@ def test_touching_boxes_have_an_iou_of_zero():
 
 
 def test_half_overlap_gives_a_third():
-    """Deux boites de meme taille dont la moitie se recouvre : 0.5 / 1.5."""
+    """Two boxes of the same size half of which overlap: 0.5 / 1.5."""
     assert iou(_box(0, 0, 10, 10), _box(5, 0, 15, 10)) == pytest.approx(1 / 3)
 
 

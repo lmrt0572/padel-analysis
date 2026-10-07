@@ -1,14 +1,14 @@
-"""Dresse la liste des contacts trouves par la chaine de demonstration, pour les juger.
+"""Draws up the list of contacts found by the demonstration chain, to judge them.
 
-Les jugements anterieurs portaient sur des contacts detectes sur la balle ANNOTEE. La
-video de demonstration, elle, travaille sur la trajectoire reconstruite : c'est la
-qu'il faut mesurer ce que l'on voit. Chaque instant est juge une fois, pour ce qui s'y
-est reellement passe ; n'importe quelle variante de la chaine se note ensuite sur ces
-jugements en rapprochant ses contacts des instants juges, a deux images pres.
+The earlier judgements were on contacts detected on the ANNOTATED ball. The
+demonstration video, for its part, works on the reconstructed trajectory: that is where
+what is seen has to be measured. Each instant is judged once, for what really happened
+there; any variant of the chain is then scored on these judgements by matching its
+contacts to the judged instants, to within two frames.
 
-Pour couvrir plusieurs variantes d'un seul coup, la liste est l'union des contacts
-trouves avec et sans les filtres d'affichage. Les positions calculees sont ecrites a
-cote, pour que l'outil d'arbitrage montre ce que le systeme affirme.
+To cover several variants at once, the list is the union of the contacts found with and
+without the display filters. The computed positions are written alongside, so that the
+arbitration tool shows what the system claims.
 
 Usage:
     python scripts/build_demo_contact_tasks.py --analysis outputs/demo_FinalF_analysis.pkl \
@@ -31,7 +31,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--analysis", type=Path, required=True)
     parser.add_argument("--video", required=True)
-    parser.add_argument("--merge", type=int, default=2, help="images en deca desquelles deux contacts n'en font qu'un")
+    parser.add_argument("--merge", type=int, default=2, help="frames within which two contacts count as one")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -53,7 +53,7 @@ def main() -> None:
     frames.sort()
 
     if args.out.exists():
-        raise SystemExit(f"{args.out} existe deja : les jugements rendus seraient perdus")
+        raise SystemExit(f"{args.out} already exists: the judgements given would be lost")
     SurfaceGroundTruth(
         video=args.video,
         frame_range=(start, stop),
@@ -66,7 +66,7 @@ def main() -> None:
         encoding="utf-8",
     )
     counts = ", ".join(f"{name} {len(c)}" for name, c in variants.items())
-    print(f"{len(frames)} instants a juger ({counts}) -> {args.out}")
+    print(f"{len(frames)} instants to judge ({counts}) -> {args.out}")
 
 
 if __name__ == "__main__":

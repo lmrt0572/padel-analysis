@@ -36,9 +36,9 @@ class RallyContact:
     """One contact of a rally, as the contact model decided it."""
 
     frame: int
-    kind: str  # raquette, sol, verre, grillage, filet
-    point: Point3 | None  # sur la surface touchee, en metres ; None pour une frappe
-    player: str | None  # l'emplacement du frappeur, pour une frappe
+    kind: str  # raquette, sol, verre, grillage, filet (racket, floor, glass, mesh, net)
+    point: Point3 | None  # on the surface touched, in metres; None for a stroke
+    player: str | None  # the striker's slot, for a stroke
 
 
 @dataclass(frozen=True)
@@ -97,7 +97,7 @@ class SpeedSegment:
     start: int
     stop: int
     metres_per_second: float
-    estimated: bool  # un bout est une frappe, placee par convention
+    estimated: bool  # one end is a stroke, placed by convention
 
     @property
     def kmh(self) -> float:
@@ -137,7 +137,7 @@ def _place(rally: Rally, contact: RallyContact) -> Point3 | None:
 class Movement:
     """How far a player went during the rally, and how much of it at the net."""
 
-    path: np.ndarray  # (N, 2) positions lissees, en metres
+    path: np.ndarray  # (N, 2) smoothed positions, in metres
     distance: float
     net_share: float
 

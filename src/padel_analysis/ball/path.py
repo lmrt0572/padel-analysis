@@ -69,9 +69,9 @@ def emission_cost(
     if weight == 0.0:
         return 0.0
     if absolute:
-        # Un score deja borne dans [0, 1] - celui du reseau - se lit tel quel : un
-        # candidat faible coute cher meme quand il est le meilleur de son image, et
-        # c'est ce qui permet au chemin de renoncer quand la balle n'est pas la.
+        # A score already bounded in [0, 1] (the network's) is read as it is: a weak
+        # candidate is costly even when it is the best of its frame, and that is what
+        # lets the path give up when the ball is not there.
         return weight * (1.0 - min(1.0, max(0.0, candidate.score)))
     if not frame:
         return 0.0
@@ -178,7 +178,7 @@ def best_path(
                 there = position(frame, k)
                 behind = position(previous_frame, i)
                 if here is None or there is None or behind is None:
-                    move = 0.0  # un etat absent ne revendique aucun mouvement
+                    move = 0.0  # an absent state claims no motion
                 else:
                     move = acceleration_cost(behind, here, there, gate)
                 total = so_far + move + emission

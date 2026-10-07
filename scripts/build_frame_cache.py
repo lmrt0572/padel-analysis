@@ -1,12 +1,12 @@
-"""Extrait les frames d'entrainement en JPEG reduit, avec la balle mise a l'echelle.
+"""Extracts the training frames as reduced JPEGs, with the ball scaled to match.
 
-Une frame sur trois. A 30 images par seconde deux frames consecutives portent presque
-la meme information : le sous-echantillonnage coute peu et divise le temps d'epoque par
-trois. Les frames empilees etant espacees de 3 elles aussi, les voisins d'un centre
-tombent sur la meme grille et un seul cache suffit aux trois canaux.
+One frame in three. At 30 frames per second two consecutive frames carry almost the
+same information: subsampling costs little and divides the epoch time by three. The
+stacked frames being spaced 3 apart too, the neighbours of a centre fall on the same
+grid and a single cache is enough for the three channels.
 
-La tranche d'evaluation est exclue. Elle doit rester intacte : un reseau qui l'aurait
-vue ne mesurerait plus rien.
+The evaluation slice is excluded. It must stay intact: a network that had seen it would
+no longer measure anything.
 
 Usage:
     python scripts/build_frame_cache.py --video <video.mp4> --annotations <ball.json> \
@@ -37,8 +37,8 @@ def main() -> None:
 
     if args.width % 8 or args.height % 8:
         raise SystemExit(
-            "largeur et hauteur doivent etre multiples de 8 : le reseau divise la "
-            "resolution par deux trois fois, et 540 ne s'y prete pas"
+            "width and height must be multiples of 8: the network halves the "
+            "resolution three times, and 540 does not allow it"
         )
     low, high = args.exclude
     centres = BallAnnotations.load(args.annotations).centres()
@@ -69,7 +69,7 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    print(f"{written} frames ecrites, dont {len(balls)} avec une balle annotee")
+    print(f"{written} frames written, {len(balls)} of them with an annotated ball")
 
 
 if __name__ == "__main__":

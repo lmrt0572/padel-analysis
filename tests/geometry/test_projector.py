@@ -4,9 +4,9 @@ import pytest
 from padel_analysis.geometry.court import Court
 from padel_analysis.geometry.projector import CourtProjector
 
-# Une vue plausible depuis une camera haute derriere le fond negatif :
-# le fond eloigne (y positif) apparait plus haut dans l'image, donc a un y image
-# plus petit, et plus resserre horizontalement.
+# A plausible view from a high camera behind the negative back wall: the far end
+# (positive y) appears higher in the picture, so at a smaller image y, and narrower
+# horizontally.
 NEAR_LEFT = (240.0, 940.0)
 NEAR_RIGHT = (1680.0, 940.0)
 FAR_RIGHT = (1180.0, 330.0)

@@ -29,7 +29,7 @@ def test_smoothing_brings_noisy_points_closer_to_the_truth():
 
 
 def test_a_cut_keeps_the_corner_of_a_bounce():
-    """Un lissage continu arrondirait le rebond ; coupe au contact, il le garde."""
+    """A continuous smoothing would round the bounce; cut at the contact, it keeps it."""
     path = {f: (10.0 * f, 0.0) for f in range(21)}
     path.update({f: (200.0 - 10.0 * (f - 20), 0.0) for f in range(21, 41)})
     cut = smooth_path(path, cuts=[20], max_gap=3)

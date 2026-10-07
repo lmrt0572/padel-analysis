@@ -1,18 +1,17 @@
-"""Banc d'essai du suivi d'identite, sur les minutes deja analysees.
+"""Test bench of the identity tracking, on the minutes already analysed.
 
-La campagne d'evaluation complete refait la detection des joueurs sur tout le match :
-des heures de carte graphique par essai. Les minutes analysees pour la demonstration
-portent deja les detections ; il suffit d'y ajouter les couleurs des torses, lues une
-fois dans la video, pour rejouer n'importe quel suivi en quelques secondes.
+The full evaluation campaign redoes the detection of the players over the whole match:
+hours of graphics card per trial. The minutes analysed for the demonstration already
+carry the detections; it is enough to add the colours of the torsos, read once from the
+video, to replay any tracking in a few seconds.
 
-Les vingt minutes analysees pour les contacts servent a regler. Huit minutes a part,
-quatre par finale, ne se notent qu'avec --juge, une seule fois, quand le suivi est
-fige : la verite d'identite couvre les deux matchs en entier, elles n'ont demande aucun
-pointage.
+The twenty minutes analysed for the contacts are used for tuning. Eight separate
+minutes, four per final, are only scored with --juge, a single time, when the tracking
+is frozen: the identity truth covers both matches in full, they required no marking.
 
 Usage:
-    python scripts/identity_bench.py            # construit le cache, note le reglage
-    python scripts/identity_bench.py --juge     # le verdict, une fois
+    python scripts/identity_bench.py            # builds the cache, scores the tuning
+    python scripts/identity_bench.py --juge     # the verdict, once
 """
 
 import argparse
@@ -92,8 +91,8 @@ def main() -> None:
     chosen = minutes.IDENTITY_JUDGE if args.juge else ALL
     result = score(chosen)
     title = "JUGE, huit minutes neuves" if args.juge else "reglage, vingt minutes"
-    print(f"{title} : {len(chosen)} minutes, {result['frames']} images notees")
-    print(f"  IDF1 {result['idf1']:.3f}   changements d'identite {result['switches']}")
+    print(f"{title}: {len(chosen)} minutes, {result['frames']} frames scored")
+    print(f"  IDF1 {result['idf1']:.3f}   identity changes {result['switches']}")
 
 
 if __name__ == "__main__":

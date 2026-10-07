@@ -1,12 +1,12 @@
-"""Entraine le modele de contacts sur les minutes pointees, jamais sur celles de juge.
+"""Trains the contact model on the marked minutes, never on the judge ones.
 
-Avec --cv, chaque minute est d'abord predite par un modele entraine sur les autres, et
-notee comme la demonstration : c'est ce chiffre qui dit si le modele vaut mieux que les
-regles. Le modele final est ensuite entraine sur toutes les minutes.
+With --cv, each minute is first predicted by a model trained on the others, and scored
+like the demonstration: it is this figure that says whether the model is better than
+the rules. The final model is then trained on all the minutes.
 
-Avec --curve, la courbe d'apprentissage : chaque minute predite par un modele entraine
-sur 2, 4, 6... autres minutes. Avec --results, ces chiffres sont ecrits en JSON, pour
-les figures du README.
+With --curve, the learning curve: each minute predicted by a model trained on 2, 4,
+6... other minutes. With --results, these figures are written as JSON, for the figures
+of the README.
 
 Usage:
     python scripts/train_contact_model.py --cv --out weights/contact_net.pt
@@ -56,15 +56,15 @@ def main() -> None:
     parser.add_argument("--tag", default="360")
     parser.add_argument("--threshold", type=float, default=0.7)
     parser.add_argument("--cv", action="store_true")
-    parser.add_argument("--curve", action="store_true", help="courbe d'apprentissage")
-    parser.add_argument("--results", type=Path, help="ecrire les chiffres en JSON")
+    parser.add_argument("--curve", action="store_true", help="learning curve")
+    parser.add_argument("--results", type=Path, help="write the figures as JSON")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     keys = minutes.CONTACT_TRAINING
     if set(keys) & set(minutes.PENDING_JUDGES):
-        raise SystemExit("une minute de juge est dans l'entrainement")
+        raise SystemExit("a judge minute is in the training set")
     data = {key: load(*key, args.tag) for key in keys}
     results: dict = {}
 
@@ -92,7 +92,7 @@ def main() -> None:
             print(line, flush=True)
         for name, (right, shown, real) in totals.items():
             print(
-                f"{name:7} justes {right}/{real} ({right / real:.1%})  affiches {shown}  "
+                f"{name:7} right {right}/{real} ({right / real:.1%})  shown {shown}  "
                 f"score {2 * right / (shown + real):.3f}"
             )
         results["cv"] = {
@@ -121,18 +121,18 @@ def main() -> None:
                 shown += len(answers)
                 real += len(item["marks"])
             curve.append({"minutes": size, "right": right, "shown": shown, "real": real})
-            print(f"  {size:2} minutes d'entrainement : justes {right / real:.1%}", flush=True)
+            print(f"  {size:2} training minutes: right {right / real:.1%}", flush=True)
         results["curve"] = curve
 
     if args.results is not None:
         args.results.parent.mkdir(parents=True, exist_ok=True)
         args.results.write_text(json.dumps(results, indent=1), encoding="utf-8")
-        print(f"chiffres ecrits : {args.results}")
+        print(f"figures written: {args.results}")
 
     model = train([(item["features"], item["labels"]) for item in data.values()], device=device)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     model.save(args.out)
-    print(f"modele ecrit : {args.out}")
+    print(f"model written: {args.out}")
 
 
 if __name__ == "__main__":

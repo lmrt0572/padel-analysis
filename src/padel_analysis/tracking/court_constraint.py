@@ -187,7 +187,7 @@ class CourtSlotTracker:
                     slot.position = None
                     slot.velocity = np.zeros(2)
         if cut:
-            # La vitesse mesuree a travers un raccord est celle d'une teleportation.
+            # The velocity measured across a cut is that of a teleportation.
             for slot in self.slots:
                 slot.velocity = np.zeros(2)
         return assignment

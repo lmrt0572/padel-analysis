@@ -39,8 +39,8 @@ class ContactEvent:
     label: str
     pixel: Point
     zone: "Zone | None" = None
-    box: np.ndarray | None = None  # la bbox du frappeur, pour une raquette
-    point: np.ndarray | None = None  # sur la surface touchee, en metres du court
+    box: np.ndarray | None = None  # the striker's bounding box, for a racket
+    point: np.ndarray | None = None  # on the surface touched, in court metres
 
 
 def contact_label(verdict: Verdict) -> str | None:

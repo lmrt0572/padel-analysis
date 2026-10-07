@@ -27,7 +27,7 @@ from padel_analysis.render import figures
 
 def read(path: Path) -> object | None:
     if not path.exists():
-        print(f"  saute : {path} introuvable")
+        print(f"  skipped: {path} not found")
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -36,10 +36,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verdicts", type=Path, default=Path("docs/figures/verdicts.json"))
     parser.add_argument("--measures", type=Path, default=Path("outputs/measures/cv.json"))
-    parser.add_argument("--cache", type=Path, help="cache de positions d'un match entier")
+    parser.add_argument("--cache", type=Path, help="position cache of a whole match")
     parser.add_argument("--fps", type=float, default=30.0)
     parser.add_argument("--bilans", type=Path, default=Path("outputs/match_stats"),
-                        help="dossier des bilans de match, par paire")
+                        help="folder of the match reports, by pair")
     parser.add_argument("--out", type=Path, default=Path("docs/figures"))
     args = parser.parse_args()
 
@@ -71,7 +71,7 @@ def main() -> None:
         figures.points_by_length_chart(reports, args.out / "points_longueur.png")
         figures.pair_occupancy_chart(reports, args.out / "occupation_paires.png")
 
-    print(f"figures ecrites dans {args.out}")
+    print(f"figures written to {args.out}")
 
 
 if __name__ == "__main__":

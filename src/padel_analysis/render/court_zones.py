@@ -37,7 +37,7 @@ class Zone:
     """A named part of the court: its corners in metres, and its footprint seen from above."""
 
     name: str
-    kind: str  # "area" au sol, "line" pour une paroi vue de dessus
+    kind: str  # "area" on the floor, "line" for a wall seen from above
     points: tuple[Point, ...]
     colour: tuple[int, int, int]
     corners: tuple[Corner, ...] = ()
@@ -78,9 +78,9 @@ def zone_of(verdict: Verdict, court: Court) -> Zone | None:
             if material == "grillage"
             else (0.0, court.back_wall_glass_height)
         )
-        # La camera est juste derriere le fond proche : la paroi entiere, projetee,
-        # couvre toute la moitie basse de l'image. Elle s'eclaire en entier, mais
-        # legerement, pour que les joueurs restent lisibles a travers.
+        # The camera is just behind the near back wall: the whole wall, projected,
+        # covers the entire lower half of the picture. It lights up in full, but
+        # lightly, so that the players stay readable through it.
         opacity = NEAR_WALL_OPACITY if sign < 0 else ZONE_OPACITY
         return Zone(f"fond_{half}_{material}", "line", ((-w, l_signed), (w, l_signed)), colour,
                     ((-w, l_signed, low), (w, l_signed, low),

@@ -28,8 +28,8 @@ def test_the_serves_vote_where_the_top_row_starts():
     readings = [(0, _state((0, 0), ("0", "0"), server=1)),
                 (100, _state((0, 0), ("15", "0"), server=1)),
                 (200, _state((1, 0), ("0", "0"), server=2))]
-    # Le service de la ligne du haut part du fond ; apres le premier jeu, on change de
-    # cote, et la ligne du bas sert depuis le fond, donc la ligne du haut est proche.
+    # The serve of the top row starts from the far end; after the first game, the pairs
+    # change ends, and the bottom row serves from the far end, so the top row is near.
     serves = {0: "far", 100: "far", 200: "far"}
     found = orient(readings, serves)
     assert found.changes == (200,)

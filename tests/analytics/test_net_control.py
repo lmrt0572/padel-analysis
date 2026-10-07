@@ -27,13 +27,13 @@ def _row(near_depth: float, far_depth: float) -> dict[str, tuple[float, float]]:
 
 
 def test_threshold_sits_in_the_measured_valley():
-    """3,5-4,5 m en attaque, 6,5-9 m en defense : le seuil doit separer les deux."""
+    """3.5-4.5 m in attack, 6.5-9 m in defence: the threshold must separate the two."""
     assert 4.5 < NET_THRESHOLD < 6.5
 
 
 def test_the_default_hysteresis_is_not_zero():
-    """Sans cette garde, mettre la constante a zero ne casserait aucun test :
-    les autres passent leur propre valeur en argument."""
+    """Without this guard, setting the constant to zero would break no test:
+    the others pass their own value as an argument."""
     assert 0.0 < HYSTERESIS < 1.0
 
 
@@ -48,7 +48,7 @@ def test_a_player_deeper_than_the_threshold_is_not():
 
 
 def test_hysteresis_prevents_flicker_around_the_line():
-    """Un joueur qui oscille sur le seuil ne doit pas changer d'etat a chaque frame."""
+    """A player oscillating on the threshold must not change state at every frame."""
     depths = np.array([3.0, 5.4, 5.6, 5.4, 5.6, 5.4])
     states = at_net_states(depths, hysteresis=0.4)
     assert states.tolist() == [True, True, True, True, True, True]

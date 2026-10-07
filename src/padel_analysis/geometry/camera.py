@@ -61,8 +61,8 @@ class Surface:
         """
         for value, (low, high) in zip(point, self.bounds):
             if low == high:
-                # L'axe plat du plan : l'equation du plan le garantit deja, et le
-                # verifier ici echouerait sur un arrondi flottant.
+                # The flat axis of the plane: the plane equation already guarantees it, and
+                # checking it here would fail on a floating-point rounding.
                 continue
             if not low - margin <= value <= high + margin:
                 return False
@@ -190,10 +190,10 @@ def court_surfaces(court: Court) -> list[Surface]:
                 glass_from_ends=glass_from_ends,
             )
         )
-    # Le filet en dernier : c'est la plus petite cible et la plus rare, donc celle
-    # dont un faux positif couterait le plus. Il ne l'emporte que s'il est seul.
-    # La hauteur retenue est celle des poteaux ; le filet s'affaisse de 4 cm en son
-    # milieu, bien sous l'erreur de pose.
+    # The net last: it is the smallest target and the rarest, so the one whose false
+    # positive would cost most. It only wins if it is alone. The height kept is that
+    # of the posts; the net sags by 4 cm in its middle, well below the pose
+    # error.
     surfaces.append(
         Surface(
             name="net",

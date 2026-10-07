@@ -18,7 +18,7 @@ def test_the_net_answers_at_the_input_resolution():
 
 
 def test_the_net_stays_within_its_measured_size():
-    """La largeur 16 tient dans 1,82 Go ; au-dela la sonde avait sature la carte."""
+    """Width 16 fits in 1.82 GB; beyond that the probe had saturated the card."""
     assert sum(p.numel() for p in BallHeatmapNet(width=16).parameters()) < 1_000_000
 
 
@@ -54,7 +54,7 @@ def test_a_peak_below_the_threshold_is_dropped():
 
 
 def test_one_blob_yields_one_candidate():
-    """Une tache large ne doit pas rendre trente candidats voisins."""
+    """A wide blob must not return thirty neighbouring candidates."""
     heatmap = np.zeros((32, 64), dtype=np.float32)
     heatmap[10:14, 20:24] = 0.8
     assert len(peaks_of(heatmap, threshold=0.1, suppression=6)) == 1
@@ -86,7 +86,7 @@ def test_the_best_weights_find_the_settings_of_their_run(tmp_path):
 
 
 def test_weights_are_read_at_the_resolution_they_were_trained(tmp_path):
-    """Un modele 720p relu en 360p rendrait des candidats faux sans rien dire."""
+    """A 720p model read at 360p would return wrong candidates without saying anything."""
     path = _weights(tmp_path, 8, {"size": [1280, 720], "width": 8, "spacing": 3})
     finder = NetCandidates(path, spacing=3, device="cpu")
     assert finder.size == (1280, 720)

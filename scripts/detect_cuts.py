@@ -1,15 +1,15 @@
-"""Ajoute les coupures de plan a une verite terrain d'identite existante.
+"""Adds the broadcast cuts to an existing identity ground truth.
 
-L'association au plus proche voisin suppose une image continue. Un changement de
-plan la brise : si deux partenaires ont echange leur poste pendant la coupure,
-l'association suit le mauvais, sans que rien ne paraisse ambigu.
+Nearest-neighbour association assumes a continuous picture. A change of shot breaks
+it: if two partners swapped positions during the cut, the association follows the
+wrong one, without anything looking ambiguous.
 
-Le fichier est enrichi sur place : les assignations et les arbitrages deja rendus
-sont conserves.
+The file is enriched in place: the assignments and the arbitrations already given are
+kept.
 
 Usage:
     python scripts/detect_cuts.py --annotations <pose.json> \
-        --calibration ground_truth/calibrations/<nom>.json --identity ground_truth/identity/<nom>.json
+        --calibration ground_truth/calibrations/<name>.json --identity ground_truth/identity/<name>.json
 """
 
 import argparse
@@ -31,7 +31,7 @@ def main() -> None:
     parser.add_argument("--threshold", type=float, default=1.0)
     args = parser.parse_args()
 
-    print("chargement des annotations...", flush=True)
+    print("loading the annotations...", flush=True)
     annotations = PoseAnnotations.load(args.annotations)
     truth = IdentityGroundTruth.load(args.identity)
     projector = Calibration.load(args.calibration).projector
@@ -48,8 +48,8 @@ def main() -> None:
     cuts = find_camera_cuts(positions, threshold=args.threshold)
     detected = {c.frame for c in cuts}
 
-    # Un arbitrage deja rendu sur une coupure toujours detectee est conserve ; s'il
-    # porte sur une coupure que le nouveau seuil ne retient plus, il tombe.
+    # An arbitration already given on a cut that is still detected is kept; if it is
+    # about a cut the new threshold no longer keeps, it is dropped.
     kept = [f for f in truth.resolved_cuts if f in detected]
     dropped = len(truth.resolved_cuts) - len(kept)
 
@@ -58,16 +58,16 @@ def main() -> None:
     truth.save(args.identity)
 
     both = sum(1 for c in cuts if len(c.sides) == 2)
-    print(f"frames exploitables : {len(positions)}")
-    print(f"coupures detectees ({args.threshold} m) : {len(cuts)}")
-    print(f"  dont les deux paires en risque : {both}")
-    print(f"  dont une seule paire : {len(cuts) - both}")
-    print(f"episodes de rapprochement conserves : {len(truth.resolved)}/"
-          f"{len(truth.episodes)} arbitres")
-    print(f"coupures deja arbitrees conservees : {len(kept)}")
+    print(f"usable frames: {len(positions)}")
+    print(f"cuts detected ({args.threshold} m): {len(cuts)}")
+    print(f"  of which both pairs at risk: {both}")
+    print(f"  of which a single pair: {len(cuts) - both}")
+    print(f"close-approach episodes kept: {len(truth.resolved)}/"
+          f"{len(truth.episodes)} arbitrated")
+    print(f"cuts already arbitrated and kept: {len(kept)}")
     if dropped:
-        print(f"arbitrages abandonnes (coupure non retenue) : {dropped}")
-    print(f"\necrit {args.identity}")
+        print(f"arbitrations dropped (cut no longer kept): {dropped}")
+    print(f"\nwrote {args.identity}")
 
 
 if __name__ == "__main__":

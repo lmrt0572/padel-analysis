@@ -7,7 +7,7 @@ from padel_analysis.geometry.court import Court
 
 def test_grid_covers_the_court_at_the_requested_resolution():
     grid, extent = occupancy_grid(np.zeros((0, 2)), Court(), cell_size=0.5)
-    assert grid.shape == (40, 20)  # 20 m sur 10 m, cellules de 0,5 m
+    assert grid.shape == (40, 20)  # 20 m by 10 m, cells of 0.5 m
     assert extent == pytest.approx((-5.0, 5.0, -10.0, 10.0))
 
 
@@ -30,7 +30,7 @@ def test_absent_positions_are_dropped():
 
 
 def test_positions_outside_the_court_are_dropped_not_clamped():
-    """Les sorties par les ouvertures laterales ne doivent pas s'empiler sur un bord."""
+    """Exits through the side openings must not pile up on an edge."""
     positions = np.array([[0.0, 0.0], [-8.0, -13.0]])
     grid, _ = occupancy_grid(positions, Court(), cell_size=0.5, normalise=False)
     assert grid.sum() == pytest.approx(1.0)

@@ -1,11 +1,11 @@
-"""Mesure le decoupage en echanges contre les services annotes dans le dataset.
+"""Measures the cutting into rallies against the serves annotated in the dataset.
 
-Le dataset marque les services sur les 20 100 premieres images de chaque finale. Un
-debut d'echange annonce est juste s'il tombe a deux secondes au plus d'un service : le
-raccord precede le service d'une seconde au plus, et le geste du service dure.
+The dataset marks the serves over the first 20,100 frames of each final. An announced
+start of a rally is right if it falls within two seconds of a serve: the cut precedes
+the serve by a second at most, and the service motion lasts.
 
-Les minutes qui ont servi a entrainer le modele de contacts reglent le decoupage ; les
-minutes qu'il n'a jamais vues ne se notent qu'avec --juge, une fois.
+The minutes that were used to train the contact model tune the cutting; the minutes it
+has never seen are only scored with --juge, once.
 
 Usage:
     python scripts/rally_bench.py --contact-model weights/contact_net.pt
@@ -32,8 +32,8 @@ TUNE = [("FinalF", 16000), ("FinalF", 17800), ("FinalM", 5000), ("FinalM", 8000)
 JUDGE = [("FinalF", 3000), ("FinalF", 8000), ("FinalF", 12000), ("FinalM", 1000),
          ("FinalM", 12000), ("FinalM", 14000)]
 CACHE = Path("outputs/segmentation")
-TOLERANCE = 60  # images
-EDGE = 30  # un service colle au bord de la minute ne peut pas etre juge
+TOLERANCE = 60  # frames
+EDGE = 30  # a serve stuck to the edge of the minute cannot be judged
 
 
 def serves(match: str) -> list[int]:
@@ -97,8 +97,8 @@ def main() -> None:
     keys = JUDGE if args.juge else TUNE
     found, announced, real = score(keys, ContactModel.load(args.contact_model))
     title = "JUGE" if args.juge else "reglage"
-    print(f"{title} : {found}/{real} services retrouves, {announced} debuts annonces, "
-          f"precision {found / max(announced, 1):.0%}, rappel {found / max(real, 1):.0%}")
+    print(f"{title}: {found}/{real} serves found, {announced} starts announced, "
+          f"precision {found / max(announced, 1):.0%}, recall {found / max(real, 1):.0%}")
 
 
 if __name__ == "__main__":

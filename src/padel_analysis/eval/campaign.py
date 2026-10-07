@@ -102,19 +102,19 @@ def run_campaign(
             totals.constrained_tracks.append(len(assignment))
             totals.bytetrack_tracks.append(len(tracked))
 
-            # MOTA et IDF1 : seulement sur les frames ou l'identite est connue.
+            # MOTA and IDF1: only on the frames where identity is known.
             identity_row = truth_identity.assignments.get(index)
             if identity_row:
-                # Les equipes changent de cote au cours du match, et les slots
-                # designent une moitie de court : au-dela d'une frontiere, `near_1`
-                # est quelqu'un d'autre. Le nom porte donc le segment, ce qui arrete
-                # l'identite au lieu de la prolonger a tort.
+                # The teams change ends during the match, and the slots stand for
+                # a half of the court: beyond a boundary, `near_1` is someone
+                # else. The name therefore carries the segment, which stops the
+                # identity instead of wrongly extending it.
                 #
-                # Des DEUX cotes. IDF1 apparie chaque reference a une seule
-                # hypothese, globalement : couper la reference seule laisserait des
-                # references sans partenaire possible, comptees comme manquees, et
-                # punirait les deux trackers pour une frontiere qu'aucune
-                # information de l'image ne permet de franchir.
+                # On BOTH sides. IDF1 matches each reference to a single
+                # hypothesis, globally: cutting the reference alone would leave
+                # references with no possible partner, counted as missed, and
+                # would punish both trackers for a boundary that no information
+                # in the picture allows to be crossed.
                 segment = truth_identity.segment_of(index)
                 reference = {
                     f"{slot}#{segment}": truth[annotation_index].bbox

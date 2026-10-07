@@ -35,8 +35,8 @@ def despike(path: dict[int, Point | None], max_deviation: float = 25.0) -> dict[
             return 0.0
         return math.dist(point, ((before[0] + after[0]) / 2, (before[1] + after[1]) / 2))
 
-    # Le pire d'abord : un point aberrant fausse aussi le jugement de ses deux voisins,
-    # qui ne doivent etre juges qu'une fois qu'il a disparu.
+    # The worst first: an outlier also skews the judgement of its two neighbours,
+    # which must only be judged once it has gone.
     suspects = {f for f in kept if deviation(f) > max_deviation}
     while suspects:
         worst = max(suspects, key=deviation)

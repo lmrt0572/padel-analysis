@@ -21,7 +21,7 @@ class RallySpan:
 
     start: int
     stop: int
-    contacts: tuple[tuple[int, str], ...]  # (image, surface) dans l'ordre
+    contacts: tuple[tuple[int, str], ...]  # (frame, surface) in order
 
     @property
     def strikes(self) -> int:

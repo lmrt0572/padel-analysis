@@ -25,7 +25,7 @@ MAX_MATCH_DISTANCE = 100.0
 
 
 def match_by_position(predicted: list, annotated: list) -> list[tuple[int, int]]:
-    """Apparie predictions et annotations par distance minimale entre chevilles."""
+    """Matches predictions and annotations by the smallest distance between ankles."""
     if not predicted or not annotated:
         return []
     cost = np.zeros((len(predicted), len(annotated)))
@@ -49,13 +49,13 @@ def main() -> None:
     parser.add_argument("--frames", type=int, default=200)
     args = parser.parse_args()
 
-    print("chargement des annotations...", flush=True)
+    print("loading the annotations...", flush=True)
     annotations = PoseAnnotations.load(args.annotations)
     projector = Calibration.load(args.calibration).projector
 
     print()
-    print(f"{'imgsz':>7} {'ms/frame':>9} {'err px':>8} {'cm proche':>11} "
-          f"{'cm fond':>9} {'appariees':>10}")
+    print(f"{'imgsz':>7} {'ms/frame':>9} {'err px':>8} {'cm near':>11} "
+          f"{'cm far':>9} {'matched':>10}")
     print("-" * 60)
 
     for size in SIZES:

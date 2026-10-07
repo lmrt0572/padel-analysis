@@ -82,7 +82,7 @@ class StatsPanel:
             "small": _font(round(14 * s), "Light"),
             "chip": _font(round(19 * s), "SemiBold"),
         }
-        # Bahnschrift n'a pas le signe environ egal.
+        # Bahnschrift has no approximately-equal sign.
         self.about = "~"
 
     def draw(self, stats: LiveStats) -> np.ndarray:
@@ -98,7 +98,7 @@ class StatsPanel:
                  fill=muted, anchor="ra")
         top = pad + round(56 * s)
 
-        # En haut : la minimap a gauche, l'echange en cours a droite.
+        # At the top: the minimap on the left, the rally in progress on the right.
         map_height = round(360 * s)
         map_width = map_height // 2
         self._minimap(pen, stats, x0, top, map_width, map_height)

@@ -11,7 +11,7 @@ def _person(wrist, box=(0.0, 0.0, 50.0, 100.0)):
 
 
 def _players(wrist_x_of_frame):
-    """Un seul joueur, emplacement near_1, dont le poignet se deplace le long de x."""
+    """A single player, slot near_1, whose wrist moves along x."""
     return {f: ([_person((x, 50.0))], {"near_1": 0}) for f, x in wrist_x_of_frame.items()}
 
 

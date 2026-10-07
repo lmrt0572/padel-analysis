@@ -22,7 +22,7 @@ import numpy as np
 ROWS = ((86, 126), (135, 175))
 BAND_X = (240, 520)
 CELL_WIDTH = 50
-FIRST_SET_RIGHT = 363  # bord droit de la case des points au premier set
+FIRST_SET_RIGHT = 363  # right edge of the points cell in the first set
 MATCH_DISTANCE = 0.08
 POINTS = ("0", "15", "30", "40")
 
@@ -34,14 +34,14 @@ class ScoreState:
     set_number: int
     games: tuple[int, int]
     points: tuple[str, str]
-    server: int | None  # 1 ou 2 : la ligne de la paire au service
+    server: int | None  # 1 or 2: the row of the serving pair
 
 
 def light_cell(image: np.ndarray) -> tuple[int, int] | None:
     """The x-range of the points cell, found by its light background, or None."""
     x0, x1 = BAND_X
     band = cv2.cvtColor(image[ROWS[0][0]:ROWS[1][1], x0:x1], cv2.COLOR_BGR2GRAY)
-    # La part de pixels clairs par colonne, que les chiffres sombres n'effacent pas.
+    # The share of light pixels per column, which the dark digits do not erase.
     light = list((band > 170).mean(axis=0) > 0.45) + [False]
     start = None
     for i, value in enumerate(light):

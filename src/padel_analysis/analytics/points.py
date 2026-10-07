@@ -16,7 +16,7 @@ Winner = int | None
 def point_winner(before: ScoreState, after: ScoreState) -> Winner:
     """1 or 2 for the pair that won the point between two readings, None if unclear."""
     if after.set_number != before.set_number:
-        # Un set gagne : le vainqueur est celui qui menait, les jeux repartent de zero.
+        # A set won: the winner is the one who was leading, the games start again from zero.
         if after.set_number == before.set_number + 1 and before.games[0] != before.games[1]:
             return 1 if before.games[0] > before.games[1] else 2
         return None

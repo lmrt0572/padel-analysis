@@ -173,27 +173,27 @@ def build_events(
     court = Court()
     frames = analysis["frames"]
     raw = {f: v["raw"] for f, v in frames.items()}
-    # Le chemin d'affichage lit les scores du reseau tels quels, et peut donc renoncer
-    # la ou la balle n'est pas. Mesure sur une minute annotee, avec le filtre de
-    # confiance : 1 374 positions justes, 87 fausses, 2 fantomes, contre 1 174, 199 et
-    # 27 avec le chemin relatif regle pour le rappel.
+    # The display path reads the scores of the network as they are, and can therefore
+    # give up where the ball is not. Measured on an annotated minute, with the
+    # confidence filter: 1,374 right positions, 87 wrong, 2 phantoms, against 1,174, 199
+    # and 27 with the relative path tuned for recall.
     path = best_path(
         raw, analysis["start"], analysis["stop"], weight=960.0, absent_cost=150.0,
         absolute=True,
     )
     scores = path_scores(path, raw)
-    # Pour l'affichage seulement : confiance, puis retrait des points isoles aberrants.
+    # For display only: confidence, then removal of isolated outliers.
     shown = despike(confident_path(path, scores, threshold, min_run))
 
     pose = pose_from_calibration(calibration_points, analysis["size"])
     surfaces = court_surfaces(court)
     events: list[ContactEvent] = []
-    # Les contacts se cherchent sur une trajectoire lissee : chaque zigzag du chemin brut
-    # passerait pour un virage. Mesure sur la minute annotee du match de reglage : 2 faux
-    # contacts et 3 non juges en moins, pour 1 vrai perdu. Un lissage plus fort en perd 7.
-    # Sur la trajectoire affichee, la vitesse se mesure sur 3 images et non 2, avec un
-    # seuil de nettete plus bas : balaye sur quatre minutes pointees (316 contacts),
-    # 177 -> 194 contacts justes ; sur une minute de l'autre match, 42 -> 47.
+    # Contacts are searched on a smoothed trajectory: every zigzag of the raw path would
+    # pass for a turn. Measured on the annotated minute of the tuning match: 2 false
+    # contacts and 3 unjudged ones fewer, for 1 true one lost. A stronger smoothing loses
+    # 7. On the displayed trajectory, speed is measured over 3 frames and not 2, with a
+    # lower sharpness threshold: swept over four marked minutes (316 contacts),
+    # 177 -> 194 right contacts; on a minute of the other match, 42 -> 47.
     players = {f: (v["people"], v["assignment"]) for f, v in frames.items()}
     turns = find_contacts(
         smooth_path(shown, cuts=[], process_noise=100.0), span=CONTACT_SPAN,
@@ -203,8 +203,8 @@ def build_events(
         ball = shown.get(contact.frame)
         if ball is None:
             continue
-        # Un poignet proche mais immobile ne fait pas une frappe : sans geste, la
-        # raquette est ecartee et la surface se decide par la geometrie seule.
+        # A wrist that is close but still does not make a stroke: without a gesture, the
+        # racket is ruled out and the surface is decided by geometry alone.
         gesture = max(
             gesture_near(players, f, shown.get(f)) for f in range(contact.frame - 3, contact.frame + 4)
         )
@@ -213,21 +213,21 @@ def build_events(
         label = contact_label(verdict)
         if label is None:
             continue
-        # Un rayon qui ne rencontre qu'une surface pointe hors du jeu. Mesure sur les
-        # deux matchs annotes : ces contacts portent 38 des 42 faux murs, pour 2 vrais
-        # murs sur 33. Filtre d'affichage, les chiffres mesures ne le connaissent pas.
+        # A ray that meets only one surface points outside the play. Measured on the two
+        # annotated matches: these contacts carry 38 of the 42 false walls, for 2 true
+        # walls out of 33. A display filter, the measured figures do not know it.
         if label != "RAQUETTE" and verdict.candidates == 1:
             continue
         box = hitter_box(ball, frames[contact.frame]["people"]) if label == "RAQUETTE" else None
         events.append(
             ContactEvent(contact.frame, label, ball, zone_of(verdict, court), box)
         )
-    # Les frappes que le virage ne voit pas - un coup dans l'axe de la camera plie a
-    # peine la trajectoire a l'image - se lisent au geste du frappeur. Mesure sur un
-    # pointage complet : +11 contacts justes sur le match de reglage, +9 sur le match
-    # tenu a l'ecart, reglage fige. Une frappe sans virage demande un geste plus franc
-    # que celle qui confirme un virage : 20 px/image contre 8, balaye sur 316 contacts,
-    # 19 contacts inventes en moins pour le meme nombre de justes.
+    # The strokes the turn does not see (a shot along the axis of the camera barely
+    # bends the trajectory in the picture) are read from the gesture of the striker.
+    # Measured on a complete marking: +11 right contacts on the tuning match, +9 on the
+    # held-out match, tuning frozen. A stroke without a turn needs a clearer gesture
+    # than one that confirms a turn: 20 px/frame against 8, swept over 316 contacts,
+    # 19 fewer invented contacts for the same number of right ones.
     found = [e.frame for e in events]
     for frame in strikes(players, shown, analysis["start"], analysis["stop"], STRIKE_SPEED,
                          taken=found):
@@ -387,37 +387,37 @@ def main() -> None:
         "--threshold",
         type=float,
         default=0.7,
-        help="score du reseau sous lequel la balle n'est pas affichee. Mesure sur une "
-        "minute de match annotee : a 0,7 et 8 images, les trajectoires affichees la ou "
-        "aucune balle n'est annotee passent de 222 a 36, pour 97,5 %% des positions "
-        "justes conservees",
+        help="score of the network below which the ball is not shown. Measured on an "
+        "annotated minute of match: at 0.7 and 8 frames, the trajectories shown where "
+        "no ball is annotated go from 222 to 36, for 97.5 %% of the right positions "
+        "kept",
     )
     parser.add_argument(
         "--min-run",
         type=int,
         default=8,
-        help="images consecutives sures pour afficher une trajectoire",
+        help="consecutive confident frames needed to show a trajectory",
     )
-    parser.add_argument("--glow", type=int, default=30, help="frames d'eclairage d'une zone")
+    parser.add_argument("--glow", type=int, default=30, help="frames a zone stays lit")
     parser.add_argument(
         "--hitter-glow",
         type=int,
         default=12,
-        help="frames d'eclairage du frappeur. Plus court qu'une zone : le geste dure moins "
-        "longtemps qu'un rebond ne se lit",
+        help="frames the striker stays lit. Shorter than a zone: the gesture lasts less "
+        "long than a bounce takes to read",
     )
-    parser.add_argument("--reuse", action="store_true", help="relire l'analyse sauvegardee")
+    parser.add_argument("--reuse", action="store_true", help="read the saved analysis again")
     parser.add_argument(
         "--contact-model",
         type=Path,
-        help="modele appris de contacts (scripts/train_contact_model.py) ; sans lui, les "
-        "contacts sont decides par les regles",
+        help="learned contact model (scripts/train_contact_model.py); without it, the "
+        "contacts are decided by the rules",
     )
     parser.add_argument(
         "--impact-patch",
         action="store_true",
-        help="eclairer seulement le point d'impact, sur environ 1,5 m, au lieu de toute "
-        "la zone touchee",
+        help="light only the point of impact, over about 1.5 m, instead of the whole "
+        "zone touched",
     )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -426,7 +426,7 @@ def main() -> None:
     if args.reuse:
         analysis = pickle.loads(saved.read_bytes())
     else:
-        print("passe 1 : analyse", flush=True)
+        print("pass 1: analysis", flush=True)
         analysis = analyse(args)
         saved.write_bytes(pickle.dumps(analysis))
 
@@ -443,15 +443,15 @@ def main() -> None:
     drawn = smooth_path(shown, cuts=[e.frame for e in events])
     hidden = sum(1 for f in path if path[f] is not None and shown[f] is None)
     print(
-        f"balle masquee sur {hidden} images par manque de confiance ; "
-        f"{len(events)} contacts affiches",
+        f"ball hidden on {hidden} frames for lack of confidence; "
+        f"{len(events)} contacts shown",
         flush=True,
     )
 
-    print("passe 2 : rendu", flush=True)
+    print("pass 2: rendering", flush=True)
     render(args.video, analysis, events, pose, drawn, args.out,
            analysis["start"], analysis["stop"], args.glow, args.hitter_glow)
-    print(f"ecrit {args.out}")
+    print(f"wrote {args.out}")
 
 
 def render(

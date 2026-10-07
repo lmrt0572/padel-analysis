@@ -137,13 +137,13 @@ class NetCandidates:
             raise ValueError(
                 f"these weights were trained with spacing {meta['spacing']}, not {spacing}"
             )
-        # Sans fichier d'accompagnement : les poids anterieurs, entraines en 640x360.
+        # Without a companion file: the earlier weights, trained at 640x360.
         size = size or tuple(meta.get("size", (640, 360)))
         width = width or meta.get("width", 16)
         if size[0] % 8 or size[1] % 8:
             raise ValueError("the network needs a size whose sides are multiples of 8")
-        # La suppression est en pixels de carte : a 1280 de large, une balle y est deux
-        # fois plus grosse qu'a 640, et la meme distance reelle vaut deux fois plus.
+        # Suppression is in map pixels: at 1280 wide, a ball is twice as big there as
+        # at 640, and the same real distance is worth twice as much.
         if suppression is None:
             suppression = round(6 * size[0] / 640)
         self.spacing = spacing

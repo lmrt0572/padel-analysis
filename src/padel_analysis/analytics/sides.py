@@ -27,9 +27,9 @@ def end_changes(readings: Sequence[Reading]) -> list[int]:
                 if len(crossed) % 2 == 1:
                     changes.append(frame)
             elif set_number > last_set:
-                # Le tableau garde le score du set fini jusqu'au premier point du suivant :
-                # son dernier jeu, impair ou non, a deja ete compte. Restent les jeux
-                # impairs du nouveau set ; deux changements s'annulent.
+                # The scoreboard keeps the score of the finished set until the first point of the
+                # next: its last game, odd or not, has already been counted. What is left are
+                # the odd games of the new set; two changes cancel out.
                 flips = sum(1 for k in range(1, games + 1) if k % 2 == 1)
                 if flips % 2 == 1:
                     changes.append(frame)

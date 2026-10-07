@@ -46,7 +46,7 @@ def test_the_annotated_frames_are_listed(tmp_path):
 
 
 def test_a_frame_carrying_two_balls_keeps_both(tmp_path):
-    """Le dataset en contient un cas : le lecteur ne doit pas en perdre un."""
+    """The dataset contains one such case: the reader must not lose one."""
     path = _write(
         tmp_path / "ball.json",
         {4: [(0.0, 0.0, 10.0, 10.0), (500.0, 500.0, 10.0, 10.0)]},
@@ -55,7 +55,7 @@ def test_a_frame_carrying_two_balls_keeps_both(tmp_path):
 
 
 def test_only_the_ball_category_is_read(tmp_path):
-    """Wall, shot-event et les autres sont declares dans le fichier mais inutilises."""
+    """Wall, shot-event and the others are declared in the file but unused."""
     path = tmp_path / "ball.json"
     path.write_text(
         json.dumps(

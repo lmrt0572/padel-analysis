@@ -46,8 +46,8 @@ def court_backdrop(pose: CameraPose, size: tuple[int, int], court: Court = COURT
         cv2.polylines(canvas, [shape], True, edge, 1, cv2.LINE_AA)
 
     def wall(far: bool):
-        # Les parois du fond eloigne et les cotes passent derriere le sol a l'image ;
-        # la paroi proche, devant : elle est dessinee en dernier, plus transparente.
+        # The far back wall and the sides go behind the floor in the picture; the near
+        # wall, in front: it is drawn last, more transparent.
         y = ln if far else -ln
         alpha, edge = (0.16, GLASS_EDGE) if far else (0.05, NEAR_EDGE)
         panel([(-w, y, 0), (w, y, 0), (w, y, court.back_wall_glass_height),

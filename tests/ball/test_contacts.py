@@ -22,7 +22,7 @@ def test_velocities_needs_all_three_points():
 
 
 def test_velocities_refuses_an_absent_neighbour():
-    """Une frame sans position ne peut pas porter une vitesse."""
+    """A frame without a position cannot carry a velocity."""
     path = {0: None, 2: (10.0, 0.0), 4: (30.0, 0.0)}
     assert velocities(path, 2, span=2) is None
 
@@ -56,11 +56,11 @@ def test_sharpness_refuses_to_divide_by_nothing():
 
 
 def _bounce():
-    """Une balle qui part a droite, rebondit a la frame 20, et revient.
+    """A ball that goes right, bounces at frame 20, and comes back.
 
-    Le pas de 30 px est choisi pour que les frames voisines du sommet passent elles
-    aussi le plancher ajoute a la tache 3 - sans quoi la suppression ne serait plus
-    testee par la suite.
+    The step of 30 px is chosen so that the frames next to the vertex also pass the
+    floor added in task 3, without which the suppression would no longer be tested
+    afterwards.
     """
     path = {f: (f * 30.0, 0.0) for f in range(21)}
     for f in range(21, 41):
@@ -69,7 +69,7 @@ def _bounce():
 
 
 def _two_bounces():
-    """La meme, qui rebondit une seconde fois a la frame 40."""
+    """The same one, bouncing a second time at frame 40."""
     path = _bounce()
     for f in range(41, 61):
         path[f] = ((f - 40) * 30.0, 0.0)
@@ -97,7 +97,7 @@ def test_a_contact_reports_the_size_of_its_bend():
 
 
 def test_only_the_strongest_of_a_burst_survives():
-    """Deux contacts reels ne peuvent pas etre a une frame d'ecart."""
+    """Two real contacts cannot be one frame apart."""
     assert len(find_contacts(_bounce(), suppression=5)) == 1
 
 
@@ -113,7 +113,7 @@ def test_a_gentler_bend_needs_a_lower_threshold():
 
 
 def test_a_microscopic_wobble_is_not_a_contact():
-    """Un virage de 2 px est du bruit, meme s'il retourne la vitesse."""
+    """A turn of 2 px is noise, even if it reverses the velocity."""
     path = {0: (0.0, 0.0), 2: (1.0, 0.0), 4: (0.0, 0.0)}
     assert find_contacts(path, floor=25.0) == []
 
@@ -124,7 +124,7 @@ def test_the_floor_can_be_lowered_to_accept_it():
 
 
 def test_an_impossible_jump_is_not_a_contact():
-    """Une balle ne saute pas de 600 px en deux frames : c'est le chemin qui a rate."""
+    """A ball does not jump 600 px in two frames: it is the path that failed."""
     path = {0: (0.0, 0.0), 2: (600.0, 0.0), 4: (0.0, 0.0)}
     assert find_contacts(path, ceiling=300.0) == []
 
@@ -148,10 +148,10 @@ def test_a_splice_only_shadows_its_own_window():
 
 
 def test_the_shadow_covers_the_velocity_window():
-    """Un raccord contamine les frames dont la fenetre de vitesse l'enjambe.
+    """A cut contaminates the frames whose velocity window straddles it.
 
-    Un raccord en 22 enjambe la fenetre de la frame 20, qui va de 18 a 22. Le sommet
-    du rebond disparait donc ; son flanc en 19, dont la fenetre s'arrete en 21, reste.
+    A cut at 22 straddles the window of frame 20, which goes from 18 to 22. The vertex
+    of the bounce therefore disappears; its flank at 19, whose window stops at 21, stays.
     """
     assert 20 not in [c.frame for c in find_contacts(_bounce(), span=2, cuts=[22])]
     assert [c.frame for c in find_contacts(_bounce(), span=2, cuts=[23])] == [20]

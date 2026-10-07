@@ -39,7 +39,7 @@ def test_bounces_of_a_single_shot_has_no_pair():
 
 
 def test_bounces_does_not_count_a_contact_inside_a_shot():
-    """Un contact dans l'intervalle annote est la frappe, pas un rebond."""
+    """A contact inside the annotated interval is the stroke, not a bounce."""
     assert bounces_between([12, 30], _events(), max_gap=120) == {1: 1}
 
 

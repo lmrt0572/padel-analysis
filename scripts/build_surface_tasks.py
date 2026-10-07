@@ -1,32 +1,32 @@
-"""Dresse la liste des contacts a soumettre au jugement humain.
+"""Draws up the list of contacts to submit to human judgement.
 
-Les contacts sont detectes sur la balle ANNOTEE, pas sur la trajectoire reconstruite.
-La question posee est "ce contact reel, quelle surface" : y meler des faux positifs de
-detection ferait juger des evenements inexistants, et melangerait deux erreurs
-distinctes - celle du jalon B.3, deja mesuree, et celle de C.
+The contacts are detected on the ANNOTATED ball, not on the reconstructed trajectory.
+The question asked is "this real contact, which surface": mixing in detection false
+positives would have non-existent events judged, and would blend two distinct errors,
+that of milestone B.3, already measured, and that of C.
 
-La strate enregistree dit si la regle a hesite, jamais ce qu'elle a conclu. Elle sert a
-decouper les resultats par difficulte, et l'outil d'arbitrage ne la montre pas.
+The stratum recorded says whether the rule hesitated, never what it concluded. It is
+used to split the results by difficulty, and the arbitration tool does not show it.
 
-Trois strates. "raquette" : un poignet est proche. "isole" : le rayon ne rencontre
-qu'une seule surface admissible - ce qui semblait un signe de confiance et s'est revele
-l'inverse, les 24 cas du match de reglage etant 24 non-evenements. Un contact reel se
-produit dans le volume de jeu, ou le fond proche est toujours admissible aussi puisque
-la camera est derriere lui ; un rayon qui ne rencontre qu'une surface pointe donc hors
-du jeu. "ambigu" : plusieurs surfaces restent possibles.
+Three strata. "raquette": a wrist is close. "isole": the ray meets a single admissible
+surface, which looked like a sign of confidence and turned out to be the opposite, the
+24 cases of the tuning match being 24 non-events. A real contact happens in the volume
+of play, where the near back wall is always admissible too since the camera is behind
+it; a ray that meets only one surface therefore points outside the play. "ambigu":
+several surfaces remain possible.
 
---sample tire au sort un sous-ensemble en conservant la proportion de chaque strate.
-Le match masculin compte 886 contacts, soit deux heures d'arbitrage ; un echantillon
-suffit a separer 0,83 de 0,75, et sa graine est enregistree.
+--sample draws a subset at random while keeping the proportion of each stratum. The
+men's match has 886 contacts, that is two hours of arbitration; a sample is enough to
+separate 0.83 from 0.75, and its seed is recorded.
 
---refresh recalcule les strates en conservant les reponses deja rendues. Les reponses
-portent sur des instants, que la regle ne change pas ; seule leur strate bouge.
+--refresh recomputes the strata while keeping the answers already given. The answers
+are about instants, which the rule does not change; only their stratum moves.
 
-Aucune video n'est decodee : balle, poses et calibration sont des fichiers JSON.
+No video is decoded: ball, poses and calibration are JSON files.
 
 Usage:
     python scripts/build_surface_tasks.py --annotations <ball.json> \
-        --poses <pose.json> --calibration ground_truth/calibrations/<nom>.json \
+        --poses <pose.json> --calibration ground_truth/calibrations/<name>.json \
         --start 16000 --stop 20099 --video FinalF \
         --out ground_truth/surfaces/FinalF.json
 """
@@ -65,11 +65,10 @@ def wrists_on(poses: PoseAnnotations, frame: int) -> list[tuple[float, float]]:
 
 
 def _stratified(tasks: list[SurfaceTask], size: int, seed: int) -> list[SurfaceTask]:
-    """Tire `size` taches en conservant la proportion de chaque strate.
+    """Draws `size` tasks while keeping the proportion of each stratum.
 
-    La taille et la graine sont enregistrees dans le fichier : sans elles le tirage
-    ne serait pas reproductible, et un resultat qu'on ne peut pas refaire n'est pas
-    une mesure.
+    The size and the seed are recorded in the file: without them the draw would not be
+    reproducible, and a result that cannot be redone is not a measurement.
     """
     by_stratum: dict[str, list[SurfaceTask]] = {}
     for task in tasks:
@@ -99,13 +98,13 @@ def main() -> None:
     parser.add_argument(
         "--sample",
         type=int,
-        help="ne retenir que N taches, tirees au sort a proportion de chaque strate",
+        help="keep only N tasks, drawn at random in proportion to each stratum",
     )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--refresh",
         action="store_true",
-        help="recalculer les strates en conservant les reponses deja rendues",
+        help="recompute the strata while keeping the answers already given",
     )
     args = parser.parse_args()
 
@@ -142,7 +141,7 @@ def main() -> None:
         strata[stratum] += 1
 
     if not tasks:
-        raise SystemExit("aucun contact detecte sur cette plage")
+        raise SystemExit("no contact detected on this range")
 
     if args.sample and args.sample < len(tasks):
         tasks = _stratified(tasks, args.sample, args.seed)
@@ -154,10 +153,10 @@ def main() -> None:
         frames = {t.frame for t in tasks}
         kept = {f: a for f, a in previous.answers.items() if f in frames}
         lost = len(previous.answers) - len(kept)
-        print(f"reprise : {len(kept)} reponses conservees, {lost} perdues")
+        print(f"resuming: {len(kept)} answers kept, {lost} lost")
     elif args.out.exists():
         raise SystemExit(
-            f"{args.out} existe deja - utiliser --refresh pour conserver ses reponses"
+            f"{args.out} already exists: use --refresh to keep its answers"
         )
 
     SurfaceGroundTruth(
@@ -173,7 +172,7 @@ def main() -> None:
         answers=kept,
     ).save(args.out)
 
-    print(f"{len(tasks)} contacts a juger, ecrits dans {args.out}")
+    print(f"{len(tasks)} contacts to judge, written to {args.out}")
     for stratum, count in strata.most_common():
         print(f"  {stratum:10} {count:4}  ({count / len(tasks):.0%})")
 

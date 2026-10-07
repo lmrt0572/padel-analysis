@@ -29,12 +29,12 @@ def test_a_ball_outside_the_frame_leaves_an_empty_target():
 
 
 def test_no_ball_leaves_an_empty_target():
-    """Une frame sans balle annotee n'est pas une frame sans balle : elle n'enseigne rien."""
+    """A frame without an annotated ball is not a frame without a ball: it teaches nothing."""
     assert gaussian_target((32, 64), None, sigma=2.0).max() == 0.0
 
 
 def test_the_target_is_not_a_binary_mask():
-    """Une cible gaussienne dit ou est le centre ; un masque binaire ne le dit pas."""
+    """A Gaussian target says where the centre is; a binary mask does not."""
     target = gaussian_target((32, 64), (10.0, 20.0), sigma=2.0)
     assert 0.0 < target[20, 12] < 1.0
 

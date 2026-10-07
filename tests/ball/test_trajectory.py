@@ -10,7 +10,7 @@ from padel_analysis.ball.trajectory import (
 
 
 def _straight(start_frame, count, x0=100.0, y0=100.0, dx=20.0, dy=0.0, noise=0.0):
-    """Une balle en ligne droite, un candidat par frame."""
+    """A ball in a straight line, one candidate per frame."""
     out = {}
     for i in range(count):
         x, y = x0 + dx * i + noise * (i % 2), y0 + dy * i
@@ -41,7 +41,7 @@ def test_growth_also_goes_backwards():
 
 
 def test_a_candidate_outside_the_gate_is_refused():
-    """Une balle qui saute ailleurs n'est pas la meme balle."""
+    """A ball that jumps elsewhere is not the same ball."""
     candidates = _straight(10, 5)
     candidates[15] = [Candidate(2000.0, 900.0, 100.0)]
     candidates[16] = [Candidate(2020.0, 900.0, 100.0)]
@@ -66,7 +66,7 @@ def test_a_long_hole_ends_the_segment():
 
 
 def test_the_trailing_predictions_are_trimmed():
-    """Un segment ne doit pas se terminer sur des positions que rien n'a confirmees."""
+    """A segment must not end on positions that nothing confirmed."""
     candidates = _straight(10, 6)
     segment = grow(candidates, first=10, second=11, gate=30.0, max_misses=2)
     assert segment.stop == 15
@@ -74,7 +74,7 @@ def test_the_trailing_predictions_are_trimmed():
 
 
 def test_the_nearest_candidate_wins_not_the_strongest():
-    """La trajectoire decide, pas le score de mouvement."""
+    """The trajectory decides, not the motion score."""
     candidates = _straight(10, 5)
     candidates[12] = [Candidate(300.0, 100.0, 900.0), Candidate(140.0, 100.0, 10.0)]
     segment = grow(candidates, first=10, second=11, gate=30.0)
@@ -91,10 +91,10 @@ def test_a_seed_whose_two_frames_are_too_far_apart_yields_nothing():
 
 
 def test_the_default_gate_absorbs_the_measured_wobble():
-    """L'ecart a la prediction vaut 28,5 px au p90 : la porte par defaut doit le passer.
+    """The gap from the prediction is 28.5 px at p90: the default gate must let it through.
 
-    Le va-et-vient de dix pixels construit ici produit vingt pixels d'ecart a chaque
-    pas. Une porte resserree a quinze le rejetterait, et ce test tomberait.
+    The back-and-forth of ten pixels built here produces twenty pixels of gap at each
+    step. A gate tightened to fifteen would reject it, and this test would fail.
     """
     candidates = _straight(10, 8, noise=10.0)
     segment = grow(candidates, first=10, second=11)
@@ -181,13 +181,13 @@ def test_a_segment_of_one_frame_has_no_speed():
 
 
 def test_a_track_too_slow_to_be_a_ball_is_refused():
-    """Un membre de joueur ou un panneau rampe ; la balle couvre 14,4 px par frame."""
+    """A player limb or a banner crawls; the ball covers 14.4 px per frame."""
     crawling = {f: [Candidate(100.0 + 2.0 * f, 100.0, 100.0)] for f in range(40)}
     assert build_segments(crawling, min_speed=6.0) == []
 
 
 def test_a_track_longer_than_any_real_arc_is_refused():
-    """Soixante-quatre frames est le plus long arc observe sur 814 mesures."""
+    """Sixty-four frames is the longest arc observed over 814 measurements."""
     endless = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(200)}
     assert build_segments(endless, max_length=60) == []
 
@@ -199,7 +199,7 @@ def test_the_default_bounds_accept_a_realistic_arc():
 
 
 def test_the_faster_segment_wins_an_overlap_not_the_longer():
-    """Le tri par longueur preferait les traces lentes : 31 frames contre 27."""
+    """Sorting by length preferred the slow tracks: 31 frames against 27."""
     candidates: dict[int, list[Candidate]] = {}
     for f in range(30):
         candidates[f] = [Candidate(100.0 + 4.0 * f, 500.0, 300.0)]
@@ -211,8 +211,8 @@ def test_the_faster_segment_wins_an_overlap_not_the_longer():
 
 
 def test_seeding_reaches_a_ball_that_is_not_the_top_candidate():
-    """La balle est le deuxieme candidat en mediane : n'amorcer que sur le premier
-    manquerait la moitie des arcs."""
+    """The ball is the second candidate in the median: seeding only on the first
+    would miss half the arcs."""
     candidates = {
         f: [Candidate(50.0, 900.0, 500.0), Candidate(100.0 + 20.0 * f, 100.0, 100.0)]
         for f in range(12)

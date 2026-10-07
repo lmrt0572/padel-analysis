@@ -1,14 +1,14 @@
-"""Video de demonstration avec un panneau de statistiques a droite de l'image.
+"""Demonstration video with a statistics panel to the right of the picture.
 
-Les statistiques - coups, vitres, frappes, distance et temps au filet par joueur et par
-paire - sont cumulees depuis le debut de l'extrait et avancent avec la video. L'image
-de diffusion n'est pas recouverte : le panneau s'ajoute a cote.
+The statistics (shots, glass contacts, strokes, distance and time at the net per player
+and per pair) are accumulated from the start of the clip and move with the video. The
+broadcast picture is not covered: the panel is added beside it.
 
-Les points viennent du tableau d'affichage, lu au debut de chaque echange et de celui
-qui suit : la paire gagnante, puis le dernier frappeur de l'echange, credite d'un point
-gagnant s'il est de cette paire, d'une faute sinon.
+The points come from the scoreboard, read at the start of each rally and of the one
+that follows: the winning pair, then the last striker of the rally, credited with a
+winner if they are of that pair, with an error otherwise.
 
-Demande l'analyse sauvegardee de la minute (scripts/analyse_minutes.py) et ffmpeg.
+Needs the saved analysis of the minute (scripts/analyse_minutes.py) and ffmpeg.
 
 Usage:
     python scripts/stats_video.py --match FinalF --minute 12000 --start 12888 \
@@ -46,17 +46,17 @@ from padel_analysis.render.stats_panel import StatsPanel
 
 FPS = 30.0
 PANEL_WIDTH = 480
-# Les couleurs des joueurs du panneau, en BGR pour OpenCV : une joueuse a la meme
-# couleur sur l'image et dans les chiffres.
+# The colours of the players of the panel, in BGR for OpenCV: a player has the same
+# colour in the picture and in the figures.
 PLAYER_BGR = {slot: tuple(int(c[i:i + 2], 16) for i in (5, 3, 1)) for slot, c in PLAYER.items()}
-AFTER = 900  # images lues apres l'extrait, pour le score qui suit son dernier echange
+AFTER = 900  # frames read after the clip, for the score that follows its last rally
 
 
 def to_h264(source: Path, target: Path) -> None:
     """Reencode for browsers: OpenCV writes MPEG-4 part 2, which they do not play."""
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg is None:
-        raise SystemExit("ffmpeg est introuvable dans le PATH")
+        raise SystemExit("ffmpeg was not found in the PATH")
     subprocess.run(
         [ffmpeg, "-y", "-loglevel", "error", "-i", str(source), "-c:v", "libx264",
          "-pix_fmt", "yuv420p", "-crf", "23", "-movflags", "+faststart", str(target)],
@@ -107,7 +107,7 @@ def point_outcomes(rally, cuts, readings, start, stop) -> list[PointOutcome]:
         if row is None or row not in sides:
             continue
         credited = credit(sides[row], strikes)
-        # Le point est compte a la fin de l'echange : une seconde apres le dernier contact.
+        # The point is counted at the end of the rally: one second after the last contact.
         end = min(span.stop, span.contacts[-1][0] + 30)
         outcomes.append(PointOutcome(end, sides[row], *(credited or (None, None))))
     return outcomes
@@ -139,13 +139,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--match", required=True)
     parser.add_argument("--minute", type=int, required=True)
-    parser.add_argument("--start", type=int, help="par defaut, le debut de la minute")
-    parser.add_argument("--stop", type=int, help="par defaut, la fin de la minute")
+    parser.add_argument("--start", type=int, help="by default, the start of the minute")
+    parser.add_argument("--stop", type=int, help="by default, the end of the minute")
     parser.add_argument("--contact-model", type=Path, required=True)
     parser.add_argument("--tag", default="360")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--replay", action="store_true",
-                        help="dessiner sur le court reconstruit, sans l'image de diffusion")
+                        help="draw on the rebuilt court, without the broadcast picture")
     args = parser.parse_args()
 
     analysis = pickle.loads(
@@ -154,22 +154,22 @@ def main() -> None:
     start = analysis["start"] if args.start is None else args.start
     stop = analysis["stop"] if args.stop is None else args.stop
     if not analysis["start"] <= start <= stop <= analysis["stop"]:
-        raise SystemExit("l'extrait deborde de la minute analysee")
+        raise SystemExit("the clip goes beyond the analysed minute")
 
     calibration = Calibration.load(minutes.calibration(args.match))
     _, shown, events, pose = learned_events(analysis, calibration.points,
                                             ContactModel.load(args.contact_model))
-    # Les contacts viennent de l'analyse telle qu'elle a ete mesuree ; les identites des
-    # joueurs, du suivi tel qu'il est aujourd'hui.
-    print("suivi des joueurs rejoue", flush=True)
+    # The contacts come from the analysis as it was measured; the identities of the
+    # players, from the tracking as it is today.
+    print("player tracking replayed", flush=True)
     analysis = retrack(analysis, Path(minutes.video(args.match)), calibration)
     spec = RallySpec("extrait", args.match, args.minute, start, stop, "")
-    print("tableau d'affichage lu", flush=True)
+    print("scoreboard read", flush=True)
     board = Scoreboard.from_examples(EXAMPLES, frame_of)
     cuts, readings = splices_and_scores(args.match, start, stop, board)
     rally = build_rally(analysis, events, spec, FPS)
     outcomes = point_outcomes(rally, cuts, readings, start, stop)
-    print(f"{len(outcomes)} points attribues", flush=True)
+    print(f"{len(outcomes)} points attributed", flush=True)
     timeline = LiveTimeline(rally, splices=cuts, points=outcomes)
     panel = StatsPanel(PANEL_WIDTH, analysis["size"][1], dict(DEFAULT_NAMES),
                        pair_names(args.match, rally, cuts, readings, start, stop))
@@ -183,7 +183,7 @@ def main() -> None:
                backdrop=court_backdrop(pose, analysis["size"]) if args.replay else None)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         to_h264(raw, args.out)
-    print(f"ecrit {args.out}")
+    print(f"wrote {args.out}")
 
 
 if __name__ == "__main__":

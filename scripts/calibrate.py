@@ -172,8 +172,8 @@ def collect_clicks(frame: np.ndarray, court: Court) -> list[CalibrationPoint]:
                         (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color,
                         max(1, thick - 2))
 
-        # Les encarts basculent du cote oppose au curseur, pour ne jamais masquer
-        # le point que l'on cherche a cliquer.
+        # The insets flip to the side opposite the cursor, so as never to hide the
+        # point one is trying to click.
         on_left = cursor[0] > canvas.shape[1] // 2
         paste_inset(canvas, court_schema(court, wanted, i), top=True, left=on_left)
         paste_inset(canvas, magnifier(frame, (cursor[0], cursor[1])),

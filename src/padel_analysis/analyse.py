@@ -44,15 +44,15 @@ def main() -> None:
     control = report["net_control"]
     print(f"frames            : {report['frames']} "
           f"({report['duration_s'] / 60:.1f} min)")
-    print(f"frames completes  : {report['complete_frames']}")
+    print(f"complete frames   : {report['complete_frames']}")
     print()
-    print(f"controle du filet (seuil {control['threshold_m']} m)")
-    print(f"  cote proche  : {control['near_percent']:5.1f} %")
-    print(f"  cote eloigne : {control['far_percent']:5.1f} %")
-    print(f"  dispute      : {control['contested_percent']:5.1f} %")
+    print(f"net control (threshold {control['threshold_m']} m)")
+    print(f"  near side    : {control['near_percent']:5.1f} %")
+    print(f"  far side     : {control['far_percent']:5.1f} %")
+    print(f"  contested    : {control['contested_percent']:5.1f} %")
     print()
-    print(f"{'joueur':>8} {'frames':>8} {'dist brute':>11} {'dist lissee':>12} "
-          f"{'bruit':>7} {'v p95':>7} {'prof moy':>9}")
+    print(f"{'player':>8} {'frames':>8} {'raw dist':>11} {'smooth dist':>12} "
+          f"{'noise':>7} {'v p95':>7} {'depth':>9}")
     for slot, player in report["players"].items():
         raw, smooth = player["distance_m"], player["distance_smoothed_m"]
         noise = 100.0 * (raw - smooth) / raw if raw > 0 else float("nan")
@@ -64,9 +64,9 @@ def main() -> None:
         court = Court()
         draw_heatmaps(trajectories, court, args.figures / "heatmaps.png")
         draw_net_control(trajectories, report["net_control"], args.figures / "net_control.png")
-        print(f"\nfigures ecrites dans {args.figures}")
+        print(f"\nfigures written to {args.figures}")
 
-    print(f"\nrapport : {args.out}")
+    print(f"\nreport: {args.out}")
 
 
 if __name__ == "__main__":

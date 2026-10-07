@@ -41,34 +41,34 @@ def main() -> None:
     ground = results["ablation_ground_point"]
     tracker = results["ablation_tracker"]
 
-    print(f"frames evaluees : {results['frames']}\n")
+    print(f"frames evaluated: {results['frames']}\n")
     print("DETECTION")
     print(f"  precision {detection['precision']:.3f}   "
-          f"rappel {detection['recall']:.3f}   F1 {detection['f1']:.3f}")
-    print(f"  {detection['predicted']} predites, {detection['annotated']} annotees, "
-          f"{detection['matched']} appariees\n")
+          f"recall {detection['recall']:.3f}   F1 {detection['f1']:.3f}")
+    print(f"  {detection['predicted']} predicted, {detection['annotated']} annotated, "
+          f"{detection['matched']} matched\n")
 
-    print(f"ABLATION 1 : point au sol   ({ground['samples']} echantillons)")
-    print(f"{'':>12} {'global':>9} {'proche':>9} {'eloigne':>9}")
-    print(f"{'chevilles':>12} {ground['ankles_median_px']:>8.2f}p "
+    print(f"ABLATION 1: ground point   ({ground['samples']} samples)")
+    print(f"{'':>12} {'overall':>9} {'near':>9} {'far':>9}")
+    print(f"{'ankles':>12} {ground['ankles_median_px']:>8.2f}p "
           f"{ground['ankles_median_px_near']:>8.2f}p "
           f"{ground['ankles_median_px_far']:>8.2f}p")
-    print(f"{'bas de bbox':>12} {ground['bbox_median_px']:>8.2f}p "
+    print(f"{'bbox bottom':>12} {ground['bbox_median_px']:>8.2f}p "
           f"{ground['bbox_median_px_near']:>8.2f}p "
           f"{ground['bbox_median_px_far']:>8.2f}p\n")
 
-    print(f"ABLATION 2 : tracker   ({tracker['scored_frames']} frames avec identite)")
-    print(f"{'':>14} {'pistes moy.':>12} {'frames > 4':>11} "
+    print(f"ABLATION 2: tracker   ({tracker['scored_frames']} frames with identity)")
+    print(f"{'':>14} {'mean tracks':>12} {'frames > 4':>11} "
           f"{'MOTA':>7} {'IDF1':>7} {'switches':>9}")
-    print(f"{'contraint':>14} {tracker['constrained_mean_tracks']:>12.2f} "
+    print(f"{'constrained':>14} {tracker['constrained_mean_tracks']:>12.2f} "
           f"{tracker['constrained_frames_over_four']:>11} "
           f"{tracker['constrained_mota']:>7.3f} {tracker['constrained_idf1']:>7.3f} "
           f"{tracker['constrained_id_switches']:>9}")
-    print(f"{'ByteTrack seul':>14} {tracker['bytetrack_mean_tracks']:>12.2f} "
+    print(f"{'ByteTrack only':>14} {tracker['bytetrack_mean_tracks']:>12.2f} "
           f"{tracker['bytetrack_frames_over_four']:>11} "
           f"{tracker['bytetrack_mota']:>7.3f} {tracker['bytetrack_idf1']:>7.3f} "
           f"{tracker['bytetrack_id_switches']:>9}")
-    print(f"\nresultats : {args.out}")
+    print(f"\nresults: {args.out}")
 
 
 if __name__ == "__main__":

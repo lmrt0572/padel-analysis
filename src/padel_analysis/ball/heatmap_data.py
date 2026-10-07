@@ -42,8 +42,8 @@ def gaussian_target(
 
     ys, xs = np.mgrid[0:height, 0:width]
     squared = (xs - ball[0]) ** 2 + (ys - ball[1]) ** 2
-    # Au-dela de cinq sigma la gaussienne vaut moins d'un millionieme : la couper la
-    # evite de peindre un fond bruite sur toute la carte.
+    # Beyond five sigma the Gaussian is worth less than a millionth: cutting it there
+    # avoids painting a noisy background over the whole map.
     reach = (5.0 * sigma) ** 2
     near = squared < reach
     target[near] = np.exp(-squared[near] / (2.0 * sigma**2))

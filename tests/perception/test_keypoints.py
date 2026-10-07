@@ -16,7 +16,7 @@ def test_both_orders_name_the_same_seventeen_joints():
 
 
 def test_the_two_orders_actually_differ():
-    """Si un jour ils coincident, le remapping devient inutile et ce test le dira."""
+    """If one day they coincide, the remapping becomes useless and this test will say so."""
     assert COCO_KEYPOINTS != DATASET_KEYPOINTS
 
 
@@ -26,7 +26,7 @@ def test_ankle_indices_follow_the_coco_convention():
 
 
 def test_remapping_puts_each_joint_at_its_coco_index():
-    # Un tableau ou chaque ligne porte l'indice de sa position dans l'ordre dataset.
+    # An array where each row carries the index of its position in dataset order.
     values = np.arange(17 * 3, dtype=np.float64).reshape(17, 3)
     remapped = dataset_to_coco_order(values)
     for coco_index, name in enumerate(COCO_KEYPOINTS):
@@ -35,7 +35,7 @@ def test_remapping_puts_each_joint_at_its_coco_index():
 
 
 def test_remapping_swaps_left_and_right_ankles():
-    """Le cas concret qui produirait un bug silencieux si on l'oubliait."""
+    """The concrete case that would produce a silent bug if it were forgotten."""
     values = np.zeros((17, 3))
     values[DATASET_KEYPOINTS.index("left_ankle")] = [100.0, 200.0, 1.0]
     values[DATASET_KEYPOINTS.index("right_ankle")] = [300.0, 400.0, 1.0]

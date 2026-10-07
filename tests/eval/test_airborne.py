@@ -11,14 +11,14 @@ def test_a_standing_player_is_never_airborne():
 
 def test_a_jump_is_detected_as_a_rise_above_the_local_baseline():
     heights = np.full(100, 80.0)
-    heights[50:55] = 55.0  # chevilles nettement plus hautes dans l'image
+    heights[50:55] = 55.0  # ankles clearly higher in the picture
     mask = airborne_mask(heights, window=31, tolerance=10.0)
     assert mask[50:55].all()
     assert not mask[:40].any()
 
 
 def test_a_slow_drift_is_not_mistaken_for_a_jump():
-    """Un joueur qui recule s'eloigne, donc parait plus haut : ce n'est pas un saut."""
+    """A player stepping back moves away, so looks higher: it is not a jump."""
     heights = np.linspace(80.0, 60.0, 200)
     mask = airborne_mask(heights, window=31, tolerance=10.0)
     assert mask.sum() < 10

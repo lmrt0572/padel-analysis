@@ -51,13 +51,13 @@ class IdentityGroundTruth:
     resolved: list[int] = field(default_factory=list)
     cuts: list[CameraCut] = field(default_factory=list)
     resolved_cuts: list[int] = field(default_factory=list)
-    # Frames ou les equipes ont change de cote. Les slots designent une moitie de
-    # court, pas une personne : apres un changement de cote, `near_1` est quelqu'un
-    # d'autre. Rien a echanger donc - l'identite du joueur s'arrete la et repart.
+    # Frames where the teams changed ends. The slots stand for a half of the court,
+    # not a person: after a change of ends, `near_1` is someone else. So there is
+    # nothing to swap: the identity of the player stops there and starts again.
     boundaries: list[int] = field(default_factory=list)
-    # Ce qui a ete repondu a chaque clip, sous "episode:<frame>" ou "cut:<frame>".
-    # Sans cette trace, une reponse ne peut pas etre defaite : rien dans les
-    # assignations ne distingue "pas de permutation" d'une permutation corrigee.
+    # What was answered at each clip, under "episode:<frame>" or "cut:<frame>".
+    # Without this trace, an answer cannot be undone: nothing in the assignments
+    # tells "no switch" from a corrected switch.
     decisions: dict[str, str] = field(default_factory=dict)
 
     def apply_swap(self, from_frame: int, slots: tuple[str, str]) -> None:
@@ -109,7 +109,7 @@ class IdentityGroundTruth:
             "boundaries": self.boundaries,
             "decisions": self.decisions,
         }
-        # Le fichier est reecrit apres chaque episode arbitre : jamais en place.
+        # The file is rewritten after each arbitrated episode: never in place.
         write_json_atomically(path, payload)
 
     @classmethod
@@ -130,8 +130,8 @@ class IdentityGroundTruth:
                 for e in payload["episodes"]
             ],
             resolved=[int(f) for f in payload["resolved"]],
-            # Les deux champs suivants sont apparus apres les premieres verites
-            # terrain : un fichier qui les ignore reste lisible.
+            # The next two fields appeared after the first ground truths: a file
+            # that does not have them stays readable.
             cuts=[
                 CameraCut(
                     frame=int(c["frame"]),

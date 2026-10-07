@@ -31,7 +31,7 @@ class RallySpec:
 
     id: str
     match: str
-    minute: int  # debut de la minute analysee qui contient l'echange
+    minute: int  # start of the analysed minute that contains the rally
     start: int
     stop: int
     title: str

@@ -42,8 +42,8 @@ def smooth_positions(positions: np.ndarray, window: int = 9) -> np.ndarray:
     the raw one says how much of the total was noise.
     """
     positions = np.asarray(positions, dtype=np.float64)
-    # Un troncon plus court que la fenetre - deux raccords tres proches - se lisse sur
-    # sa propre longueur.
+    # A stretch shorter than the window (two cuts very close together) is smoothed over
+    # its own length.
     window = min(window, len(positions))
     if window < 2:
         return positions.copy()

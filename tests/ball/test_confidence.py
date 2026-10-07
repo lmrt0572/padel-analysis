@@ -21,7 +21,7 @@ def test_weak_points_are_hidden():
 
 
 def test_a_confident_run_too_short_to_be_a_trajectory_is_hidden():
-    """Trois images sures au milieu du doute ne font pas une trajectoire."""
+    """Three confident frames in the middle of doubt do not make a trajectory."""
     path = {f: (float(f), 0.0) for f in range(12)}
     scores = {f: (0.9 if 4 <= f <= 6 else 0.1) for f in range(12)}
     kept = confident_path(path, scores, threshold=0.5, min_run=5)

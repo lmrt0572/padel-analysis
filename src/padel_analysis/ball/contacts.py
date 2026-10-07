@@ -112,8 +112,8 @@ def find_contacts(
         scored.append(Contact(frame, incoming, outgoing, bend, ratio))
 
     kept: list[Contact] = []
-    # Le plus net d'abord, et a nettete egale le plus ample : autour d'un rebond les
-    # deux flancs sont aussi nets que le sommet, seule l'amplitude les separe.
+    # The sharpest first, and at equal sharpness the widest: around a bounce both
+    # flanks are as sharp as the vertex, only the amplitude separates them.
     for contact in sorted(scored, key=lambda c: (c.sharpness, c.turn), reverse=True):
         if any(abs(contact.frame - k.frame) <= suppression for k in kept):
             continue
