@@ -1,11 +1,8 @@
-"""Mesure l'erreur de localisation des chevilles selon la resolution d'inference.
-
-Downscaler 1920 vers 640 signifie qu'un pixel du modele vaut trois pixels d'image.
-Au fond du court, ou un pixel vaut 6,47 cm, l'effet est brutal. On le chiffre.
+"""Measure the ankle localisation error against the inference resolution.
 
 Usage:
     python scripts/experiment_imgsz.py --video <video.mp4> --annotations <pose.json> \
-        --calibration ground_truth/calibrations/<nom>.json --start 5000 --frames 200
+        --calibration ground_truth/calibrations/<name>.json --start 5000 --frames 200
 """
 
 import argparse
@@ -25,7 +22,7 @@ MAX_MATCH_DISTANCE = 100.0
 
 
 def match_by_position(predicted: list, annotated: list) -> list[tuple[int, int]]:
-    """Matches predictions and annotations by the smallest distance between ankles."""
+    """Match predictions and annotations by the smallest distance between ankles."""
     if not predicted or not annotated:
         return []
     cost = np.zeros((len(predicted), len(annotated)))

@@ -1,8 +1,6 @@
 """Pairing predicted boxes with annotated ones, so they can be compared.
 
-Overlap decides the pairing, and the assignment is global rather than greedy: two
-players standing close would otherwise be matched to whichever annotation came
-first in the list.
+The assignment is global rather than greedy.
 """
 
 import numpy as np
@@ -10,7 +8,7 @@ from scipy.optimize import linear_sum_assignment
 
 
 def iou(first: np.ndarray, second: np.ndarray) -> float:
-    """Intersection over union of two xyxy boxes."""
+    """Return the intersection over union of two xyxy boxes."""
     x1 = max(float(first[0]), float(second[0]))
     y1 = max(float(first[1]), float(second[1]))
     x2 = min(float(first[2]), float(second[2]))
@@ -34,11 +32,7 @@ def iou(first: np.ndarray, second: np.ndarray) -> float:
 def match_by_iou(
     predicted: list[np.ndarray], annotated: list[np.ndarray], threshold: float = 0.5
 ) -> list[tuple[int, int]]:
-    """Pair predictions with annotations, best overlap first.
-
-    Returns (prediction index, annotation index) for every pair whose overlap
-    reaches `threshold`.
-    """
+    """Return (prediction index, annotation index) for every pair reaching `threshold`."""
     if not predicted or not annotated:
         return []
 

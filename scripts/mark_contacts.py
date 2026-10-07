@@ -1,9 +1,7 @@
-"""Marking by hand of ALL the contacts of a range of match.
+"""Mark by hand every contact of a stretch of match.
 
-Judging the contacts a chain proposes only measures its precision: a contact it never
-proposed is never judged, and a missed wall costs nothing. Here the whole range is
-watched and each real contact is marked, without seeing anything of what the system
-detected. Any variant is then scored in precision AND in recall.
+The whole stretch is watched without seeing what the system detected, so any variant
+can then be scored in precision and in recall.
 
     space   play / pause
     j  l    step back / forward one frame
@@ -11,17 +9,11 @@ detected. Any variant is then scored in precision AND in recall.
     +  -    faster / slower playback
 
     s  the FLOOR      v  a GLASS panel      g  the MESH      t  the NET      f  a STROKE
-       mark a contact on the frame shown: pause and move to the frame of the contact
-       before typing. Two contacts can follow each other from one frame to the next (a
-       ball in a corner touches two glass panels) and the screen says so; typing again
-       on the same frame only changes its kind.
+       mark a contact on the frame shown; typing again on that frame changes its kind
 
     r  cancel the last mark
     n  p    with --revoir, go to the next / previous moment to review
     q  quit (everything is already saved)
-
-The file is rewritten atomically at each mark, and so is the playback position: one
-resumes where one had stopped.
 
 Usage:
     python scripts/mark_contacts.py --video <video.mp4> --start 16000 --frames 1800 \
@@ -49,7 +41,7 @@ LEAD = 20  # frames shown before a moment to review
 
 
 class Frames:
-    """Fast sequential reading, with a buffer to go back without seeking."""
+    """Fast sequential reader, with a buffer to go back without seeking."""
 
     def __init__(self, source: VideoSource) -> None:
         self.source = source
@@ -93,7 +85,7 @@ def draw(frame, marks: ContactMarks, index: int, playing: bool, delay: int, flas
         cv2.putText(canvas, text, (16, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 5)
         cv2.putText(canvas, text, (16, y), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 2)
 
-    # Timeline of the range: its own marks only, never the detections of the system.
+    # timeline of the range: its own marks only, never the detections of the system
     width, height = DISPLAY
     top = height - 26
     cv2.rectangle(canvas, (16, top), (width - 16, top + 12), (40, 40, 40), -1)
@@ -110,7 +102,7 @@ def draw(frame, marks: ContactMarks, index: int, playing: bool, delay: int, flas
 
 
 def mark_message(marks: ContactMarks, index: int, answer: str) -> str:
-    """What the screen says after a mark, including any contact a frame or two away."""
+    """Return what the screen says after a mark, including any contact a frame or two away."""
     close = sorted(f for f in marks.marks if f != index and abs(f - index) <= CLOSE)
     message = f"MARQUE : {answer} a l'image {index}"
     if close:

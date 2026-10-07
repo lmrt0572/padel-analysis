@@ -193,7 +193,7 @@ def test_a_track_longer_than_any_real_arc_is_refused():
 
 
 def test_the_default_bounds_accept_a_realistic_arc():
-    """Quinze frames a 20 px par frame : un arc de balle ordinaire."""
+    """Fifteen frames at 20 px per frame: an ordinary ball arc."""
     arc = {f: [Candidate(100.0 + 20.0 * f, 100.0, 100.0)] for f in range(15)}
     assert len(build_segments(arc)) == 1
 

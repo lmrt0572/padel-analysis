@@ -1,18 +1,8 @@
-"""Contacts and their surface, read by a small temporal network instead of thresholds.
+"""Contacts and their surface, read by a small temporal network.
 
-The rule chain decides each cue on its own: a turn sharp enough, a wrist fast enough,
-a ray that meets one surface. Each threshold was swept, and the chain still plateaued,
-because the cues are only conclusive together - a soft turn next to a swinging wrist
-is a shot, the same turn with the ball at a player's feet is a bounce. A network that
-sees every cue over a few dozen frames learns those combinations from the hand-marked
-minutes.
-
-Every frame gets a vector of cues: the path and its turns, what else the detector
-proposed there, the nearest player's limbs and apparent size, and the surfaces the ray
-can meet. A dilated 1D convolution labels each frame as no
-contact, racket, floor, wall or net. Contacts are the local peaks of the contact
-probability. Glass or mesh is then read from the geometry, as the rule chain does:
-the three mesh contacts in the marked minutes are too few to learn from.
+Every frame gets a vector of cues (path, turns, detector candidates, nearest player,
+surfaces the ray can meet) and a dilated 1D convolution labels it as no contact,
+racket, floor, wall or net. Glass or mesh is then read from the geometry.
 """
 
 import math
@@ -35,16 +25,13 @@ RULE_LABELS = ("RAQUETTE", "SOL", "VITRE", "GRILLAGE", "FILET")
 NO_WALL, GLASS_WALL, MESH_WALL = 0, 1, 2
 IGNORED = -100
 SEEDS = tuple(range(18))
-"""One network per seed, their probabilities averaged. Over the eleven training
-minutes, each predicted by an ensemble that never saw it, 3 networks scored 0.844 on
-average over six sets of seeds, 9 networks 0.847 and 0.856, 18 networks 0.855, with
-fewer invented contacts: 67 on average, then 57."""
+"""One network per seed, their probabilities averaged."""
 
 Point = tuple[float, float]
 
 try:
     from numpy._core.multiarray import _reconstruct as _rebuild_array
-except ImportError:  # NumPy 1.x
+except ImportError:  # numpy 1.x
     from numpy.core.multiarray import _reconstruct as _rebuild_array
 _NUMPY_ARRAYS = [_rebuild_array, np.ndarray, np.dtype, type(np.dtype(np.float32))]
 """What a model file may hold besides tensors: an array of 32-bit floats."""
@@ -58,7 +45,7 @@ def frame_features(
     pose: CameraPose,
     surfaces: Sequence[Surface],
 ) -> tuple[np.ndarray, np.ndarray]:
-    """One row of cues per frame of the analysed range, and the wall material there.
+    """Return one row of cues per frame of the analysed range, and the wall material there.
 
     Args:
         analysis: the saved first pass of the demonstration.
@@ -111,11 +98,7 @@ ELBOWS, WRISTS, HIPS, ANKLES = (7, 8), (9, 10), (11, 12), (15, 16)
 
 
 def _candidates(ball: Point | None, raw: Sequence, previous: Point | None) -> list[float]:
-    """What the detector proposed at this frame, beyond the point the path kept.
-
-    A frame where the path sits far from the detector's own best peak is a frame where
-    the ball was hidden or confused, which is where contacts get lost.
-    """
+    """Return what the detector proposed at this frame beyond the point the path kept."""
     best = sorted(raw, key=lambda c: -c.score)
     row = [len(best) / 10]
     row += [best[index].score if index < len(best) else 0.0 for index in range(3)]
@@ -126,10 +109,9 @@ def _candidates(ball: Point | None, raw: Sequence, previous: Point | None) -> li
 
 
 def _skeleton(ball: Point | None, people: Sequence, height: int) -> list[float]:
-    """The nearest player's limbs around the ball, and how far the next player stands.
+    """Return the nearest player's limbs around the ball, and how far the next player stands.
 
-    A shot is taken with the arm, a bounce happens near the feet. The apparent size of
-    the player stands in for depth, which one camera cannot measure.
+    The apparent size of the player stands in for depth.
     """
     if ball is None or not people:
         return [0.0, *[3.0] * 4, 0.0, 3.0]
@@ -143,8 +125,7 @@ def _skeleton(ball: Point | None, people: Sequence, height: int) -> list[float]:
         row += [min(min(gaps, default=3.0), 3.0)]
     ankles = [near.keypoints[j][1] for j in ANKLES if near.keypoints[j][2] > 0.3]
     foot = max(ankles, default=bottom)
-    # Height of the ball above the feet, in player heights: unlike pixels, it does
-    # not depend on depth.
+    # height above the feet in player heights, which does not depend on depth
     row += [max(min((foot - ball[1]) / max(bottom - top, 1.0), 3.0), -3.0)]
     other = min((math.dist(ball, _centre(p)) for p in ordered[1:]), default=1500.0)
     row += [min(other / 500, 3.0)]
@@ -157,10 +138,9 @@ def _centre(person) -> Point:
 
 
 def _height_by_player(ball: Point | None, people: Sequence) -> list[float]:
-    """How far the ball is sideways from the nearest player, and how high along them.
+    """Return how far the ball is sideways from the nearest player, and how high along them.
 
-    Height is 0 at the top of the box and 1 at the feet: a bounce sits near 1, a shot
-    higher up.
+    Height is 0 at the top of the box and 1 at the feet.
     """
     if ball is None:
         return [3.0, 0.0]
@@ -176,7 +156,7 @@ def _height_by_player(ball: Point | None, people: Sequence) -> list[float]:
 def _geometry(
     ball: Point | None, pose: CameraPose, surfaces: Sequence[Surface]
 ) -> tuple[int, list[float]]:
-    """Which surfaces the ray through the ball may meet, and where."""
+    """Return which surfaces the ray through the ball may meet, and where."""
     if ball is None:
         return NO_WALL, [0.0] * (2 * len(surfaces) + 1)
     origin, direction = pose.ray(ball)
@@ -189,7 +169,7 @@ def _geometry(
         admissible += inside
         where = 0.0
         if inside:
-            # Depth for the floor, height for a wall or the net.
+            # depth for the floor, height for a wall or the net
             where = meeting[1] / 10 if surface.name == "floor" else meeting[2] / 4
             if wall == NO_WALL and surface.name not in ("floor", "net"):
                 wall = MESH_WALL if surface.material_at(meeting) == MESH else GLASS_WALL
@@ -198,10 +178,9 @@ def _geometry(
 
 
 def frame_labels(marks: Mapping[int, str], start: int, count: int) -> np.ndarray:
-    """The training target: each marked contact labels its frame and both neighbours.
+    """Return the training target: each marked contact labels its frame and both neighbours.
 
-    Marks are placed by hand and can be a frame off, so the frames two away from a
-    contact are ignored rather than taught as "no contact".
+    Frames two away from a contact are ignored rather than taught as "no contact".
     """
     labels = np.zeros(count, dtype=np.int64)
     for frame in marks:
@@ -236,7 +215,7 @@ class ContactNet(nn.Module):
         self.head = nn.Conv1d(width, len(CLASSES), 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """(batch, cues, frames) -> (batch, classes, frames) logits."""
+        """Return (batch, classes, frames) logits from (batch, cues, frames)."""
         return self.head(self.body(x))
 
 
@@ -249,16 +228,11 @@ def decode(
     other_radius: int = 3,
     other_threshold: float = 0.85,
 ) -> dict[int, str]:
-    """Contact frame -> answer, from per-frame class probabilities.
+    """Return contact frame -> answer, from per-frame class probabilities.
 
-    A contact is a frame whose contact probability reaches `threshold` and where its
-    own class is the likeliest within `radius` frames. A contact of another kind may
-    stand closer, down to `other_radius` frames, when surer than `other_threshold`: a
-    bounce is often followed by the back glass five or six frames later, and one peak
-    used to hide the other. 0.7 was chosen by cross-validation over the marked minutes,
-    each predicted by a model that never saw it; letting another kind stand closer
-    brought 708 to 713 contacts of 863 right instead of 697 to 703, over three sets of
-    seeds, and 72 to 75 glass contacts of 128 instead of 70 to 73.
+    A contact is a frame whose probability reaches `threshold` and whose class is the
+    likeliest within `radius` frames. A contact of another kind may stand as close as
+    `other_radius` frames when surer than `other_threshold`.
     """
     contact = 1.0 - probabilities[:, 0]
     kinds = probabilities[:, 1:].argmax(axis=1) + 1
@@ -297,7 +271,7 @@ class ContactModel:
         self.std = std.astype(np.float32)
 
     def probabilities(self, features: np.ndarray) -> np.ndarray:
-        """(frames, cues) -> (frames, classes), averaged over the ensemble."""
+        """Return (frames, classes) probabilities averaged over the ensemble."""
         x = torch.from_numpy((features - self.mean) / self.std).T[None]
         total = np.zeros((features.shape[0], len(CLASSES)), dtype=np.float64)
         with torch.no_grad():
@@ -322,8 +296,7 @@ class ContactModel:
     def load(cls, path: str | Path) -> "ContactModel":
         """Read a saved ensemble without letting the file run code.
 
-        Files written before this version hold the normalisation as NumPy arrays:
-        those, and nothing else, are allowed besides tensors.
+        Older files hold the normalisation as NumPy arrays, which are allowed too.
         """
         with torch.serialization.safe_globals(_NUMPY_ARRAYS):
             saved = torch.load(path, map_location="cpu", weights_only=True)
@@ -348,8 +321,7 @@ def train(
 
     Args:
         sequences: (features, labels) per marked minute.
-        contact_weight: loss weight of every contact class against "no contact",
-            which covers about 95 % of frames.
+        contact_weight: loss weight of every contact class against "no contact".
     """
     stacked = np.concatenate([features for features, _ in sequences])
     mean, std = stacked.mean(0), stacked.std(0) + 1e-6

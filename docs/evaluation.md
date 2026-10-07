@@ -1496,6 +1496,74 @@ statistics video, outside the report.
 
 ![Court occupancy by pair](figures/occupation_paires.png)
 
+## Parameter notes
+
+The measurements behind individual parameters, where the sections above do not already
+give them.
+
+**Ball candidates.** The annotated balls run from 4 to 29 px a side: a blob area capped
+at 900 px² keeps the largest and refuses a limb.
+
+**Greedy trajectory.** Over free play, the distance between the real position and the
+constant-velocity prediction has a median of 5.4 px and a 90th percentile of 28.5 px: a
+gate of 30 px covers 91 % of it. The 95th percentile of the real displacement between
+two frames is 52.7 px, which bounds the step between the two seed frames. Over 814
+annotated arcs, the ball touches something every 15 frames in median and never goes more
+than 64 without: a cap of 60 frames keeps 99.8 % of the real arcs. It travels 14.4 px a
+frame in median, and a floor of 6 keeps 85 % of them. The ball being the second of its
+list in median, each seed frame offers several candidates.
+
+**Global path.** Once the candidates inside player boxes are demoted, the ball sits in
+the top ten 96 % of the time, which sets the width. The ceiling on the acceleration
+cost, swept from 40 px to infinity, moves the recall by a thousandth. The weight of the
+candidate score has an interior optimum: the recall runs 0.739, 0.764, 0.748 and 0.712
+at 120, 240, 480 and 960. Above an absence cost of about a thousand the recall
+saturates: the path no longer gives up at all.
+
+**Displayed trajectory.** On an annotated minute, the path read with the network's
+scores as they are, then filtered by confidence, gives 1,374 right positions, 87 wrong
+and 2 phantoms, against 1,174, 199 and 27 for the relative path tuned for recall.
+Bridging three missing frames while smoothing raises the wrong positions from 194 to
+261, so no gap is bridged. A process noise of 100 takes the displayed jerk from 6.0 to
+4.5 px with no loss of accuracy; at 4 it falls to 1.8 px, but the wrong positions rise
+from 199 to 280, every undetected bend being rounded off.
+
+**Contacts of the rule chain.** Searching the contacts on a smoothed trajectory removes
+2 false contacts and 3 unjudged ones for 1 true one lost, on the annotated minute of the
+tuning match; a stronger smoothing loses 7. The contacts whose ray meets a single
+surface carry 38 of the 42 false walls of the two annotated matches, for 2 true walls
+out of 33. The wrist nearest the ball moves at 26 px per frame in median at a marked
+stroke and at 5 px where nothing happens; the strokes the turn criterion missed move
+just as fast, at 29. Reading them from the gesture adds 11 right contacts on the tuning
+match and 9 on the held-out one, tuning frozen.
+
+**Top speed.** A speed held for one second. Any shorter, a small jump or an identity
+swap between partners passes for a sprint: on two rallies, 21 and 50 km/h with a median
+over 5 frames, 15 and 19 over 31.
+
+**Tracker bounds.** Without a bound on the court extent, about one position in a hundred
+landed several metres past the glass. The person held for twenty seconds on the women's
+final sat 1.7 m behind the far glass. The jump that marks a splice gives the same result
+between 0.6 and 1 m per frame; at 1.5 m some splices go unseen.
+
+**Cuts in the identity truth.** A player covering more than a metre between two frames
+marks a cut, where the 99th percentile of the movement between two frames is 0.43 m. One
+player is enough, since two partners who exchange places across a splice barely move in
+the measurement, at the price of clips raised by a lone annotation glitch: nine in the
+women's match, twenty-nine in the men's. Across a hole in the annotations the allowance
+grows with the time elapsed, at 6 m/s where the measured peaks sit near 3.9.
+
+**Splices.** The mean grey-level difference between two frames stays under about 2.3
+during play; the threshold is 4.
+
+**Surface sample.** Arbitrating the 886 contacts of the men's match would take two
+hours. A stratified sample is enough to separate 0.83 from 0.75, and its seed is
+recorded.
+
+**Training throughput.** The training reads 10.7 frames/s against 15.1 in synthetic:
+JPEG decoding is the bottleneck, each frame being read three times, once per position in
+the stack.
+
 ## Known limitations
 
 **A slot could follow someone behind the back glass.** The tracking tolerated four

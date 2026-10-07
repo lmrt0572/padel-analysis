@@ -1,15 +1,8 @@
 """Wall contacts the picture does not show, inferred from how long the ball took.
 
-A ball struck from one half bounces in the other, and the player there strikes it
-back. It reached the bounce at a speed the strike and the bounce give, and a bounce
-keeps well over half of it. When the player then stood so close to the bounce that the
-ball, at that pace, would have reached them several times over, it went somewhere
-first: to the wall along its heading. That wall is often invisible from a broadcast
-camera, the rebound moving the ball by a few pixels.
-
-Where the contact happened is left to the network: the frame, between the bounce and
-the strike, where it found a wall most likely, even below its own threshold. When that
-frame is the bounce itself, the bounce was the wall.
+When a player strikes so close to a bounce that the ball, at its pace, would have
+reached them several times over, it went to the wall along its heading first. The
+instant is the frame where the network found a wall most likely.
 """
 
 import math
@@ -22,13 +15,9 @@ from ..geometry.court import Court
 
 FPS = 30.0
 SLOWEST = 0.35
-"""The pace at which the ball would have reached the player straight from the bounce,
-as a share of its speed on arrival, below which it cannot have gone straight. Measured
-over 151 bounces followed by a strike on the same side: straight shots sit from about
-0.4 to 0.9, detours below 0.35."""
+"""Share of its arrival speed below which the ball cannot have gone straight to the player."""
 DETOUR = 0.9
-"""The same share for the path by the wall, above which that path is too long to have
-been flown in the time: the ball did not go by the wall either."""
+"""The same share for the path by the wall, above which that path is too long."""
 HORIZON = 90
 """Strike, bounce and strike more than three seconds apart are not one exchange."""
 COURT = Court()
@@ -49,8 +38,7 @@ class Touch:
 
 @dataclass(frozen=True)
 class InferredWall:
-    """A wall contact to add at `frame`, or, when `replaces_bounce`, the bounce at
-    `bounce` to read as a wall."""
+    """A wall contact to add at `frame`, or the bounce at `bounce` to read as a wall."""
 
     frame: int
     bounce: int
@@ -59,7 +47,7 @@ class InferredWall:
 
 def wall_ahead(point: tuple[float, float], heading: tuple[float, float],
                court: Court = COURT) -> tuple[float, tuple[float, float]]:
-    """How far the first wall is from `point` along the unit `heading`, and where."""
+    """Return how far the first wall is from `point` along the unit `heading`, and where."""
     reach = math.inf
     if abs(heading[0]) > 1e-9:
         wall = court.half_width if heading[0] > 0 else -court.half_width
@@ -73,7 +61,7 @@ def wall_ahead(point: tuple[float, float], heading: tuple[float, float],
 
 def inferred_walls(touches: Sequence[Touch], wall_probability: np.ndarray,
                    start: int) -> list[InferredWall]:
-    """The wall contacts implied by the pace of each bounce followed by a strike.
+    """Return the wall contacts implied by the pace of each bounce followed by a strike.
 
     Args:
         touches: the contacts found, in time order.

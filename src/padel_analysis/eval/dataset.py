@@ -1,8 +1,6 @@
 """Reader for the PadelTracker100 pose annotations.
 
-The annotations are COCO-formatted and expressed in image pixels. They carry no
-court coordinates and no track identity, so this module exposes per-frame people
-only; identity has to be built separately.
+COCO-formatted, in image pixels, with no court coordinates and no track identity.
 """
 
 import json
@@ -22,10 +20,10 @@ class AnnotatedPerson:
     """One annotated person on one frame, in image pixels."""
 
     bbox: np.ndarray  # (4,) x1 y1 x2 y2
-    keypoints: np.ndarray  # (17, 3) x, y, visibility - in COCO order
+    keypoints: np.ndarray  # (17, 3) x, y, visibility, in COCO order
 
     def ankle_midpoint(self) -> np.ndarray:
-        """Midpoint of the two ankles, in image pixels."""
+        """Return the midpoint of the two ankles, in image pixels."""
         return (self.keypoints[LEFT_ANKLE, :2] + self.keypoints[RIGHT_ANKLE, :2]) / 2
 
 

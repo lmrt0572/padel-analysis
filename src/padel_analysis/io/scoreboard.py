@@ -1,15 +1,8 @@
 """Reading the broadcast scoreboard: games, points, set and serving pair.
 
-The scoreboard sits at a fixed place in the top-left corner, one row per pair: the
-names, one column per set played, and last a light cell with the points. The light
-cell is the landmark - it is the only light one, white or gold at the golden point - and
-it moves right by one column at each new set, which tells which set is being played.
-The games of the current set are in the dark cell just left of it.
-
-No OCR engine is needed: the font never changes, and eleven values cover every cell,
-so each cell is compared with templates of known values. The templates come from
-frames listed with their values in `ground_truth/scoreboard/templates.json`, and are
-rebuilt from the video rather than stored, since the repository holds no footage.
+The points cell is the only light one, and it moves right by one column at each new
+set. No OCR: the font never changes, so each cell is compared with templates of known
+values, rebuilt from the frames listed in `ground_truth/scoreboard/templates.json`.
 """
 
 import json
@@ -38,10 +31,10 @@ class ScoreState:
 
 
 def light_cell(image: np.ndarray) -> tuple[int, int] | None:
-    """The x-range of the points cell, found by its light background, or None."""
+    """Return the x-range of the points cell, found by its light background, or None."""
     x0, x1 = BAND_X
     band = cv2.cvtColor(image[ROWS[0][0]:ROWS[1][1], x0:x1], cv2.COLOR_BGR2GRAY)
-    # The share of light pixels per column, which the dark digits do not erase.
+    # share of light pixels per column, which the dark digits do not erase
     light = list((band > 170).mean(axis=0) > 0.45) + [False]
     start = None
     for i, value in enumerate(light):
@@ -56,7 +49,7 @@ def light_cell(image: np.ndarray) -> tuple[int, int] | None:
 
 
 def glyph(cell: np.ndarray, dark_text: bool) -> np.ndarray:
-    """A cell reduced to a 30x24 contrast-normalised picture of its characters."""
+    """Return a cell as a 30x24 contrast-normalised picture of its characters."""
     grey = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
     grey = cv2.resize(grey, (30, 24), interpolation=cv2.INTER_AREA).astype(np.float32)
     if dark_text:
@@ -66,7 +59,7 @@ def glyph(cell: np.ndarray, dark_text: bool) -> np.ndarray:
 
 
 def cells(image: np.ndarray) -> dict[str, np.ndarray] | None:
-    """The four cells of the current set - points and games of each row - as glyphs."""
+    """Return the four cells of the current set, points and games of each row, as glyphs."""
     found = light_cell(image)
     if found is None:
         return None
@@ -79,7 +72,7 @@ def cells(image: np.ndarray) -> dict[str, np.ndarray] | None:
 
 
 def serving_row(image: np.ndarray, light: tuple[int, int]) -> int | None:
-    """Which row carries the yellow serve marker, in the names part of the scoreboard."""
+    """Return which row carries the yellow serve marker, in the names part."""
     scores = []
     for y0, y1 in ROWS:
         names = cv2.cvtColor(image[y0:y1, 60:light[0] - 60], cv2.COLOR_BGR2HSV)
@@ -92,14 +85,14 @@ def serving_row(image: np.ndarray, light: tuple[int, int]) -> int | None:
 
 
 class Scoreboard:
-    """Reads a frame's score by comparing each cell with templates of known values."""
+    """Reader of a frame's score, comparing each cell with templates of known values."""
 
     def __init__(self, templates: dict[str, list[tuple[str, np.ndarray]]]) -> None:
-        self.templates = templates  # "points" / "jeux" -> [(valeur, glyphe)]
+        self.templates = templates  # "points" / "jeux" -> [(value, glyph)]
 
     @classmethod
     def from_examples(cls, examples_path: Path, video_of) -> "Scoreboard":
-        """Templates cut from the listed frames; `video_of(match)` opens that match."""
+        """Cut the templates from the listed frames; `video_of(match)` opens that match."""
         examples = json.loads(Path(examples_path).read_text(encoding="utf-8"))["examples"]
         templates: dict[str, list[tuple[str, np.ndarray]]] = {"points": [], "jeux": []}
         for example in examples:
@@ -120,7 +113,7 @@ class Scoreboard:
         return best
 
     def read(self, image: np.ndarray) -> ScoreState | None:
-        """The score on this frame, or None where the scoreboard is hidden or unclear."""
+        """Return the score on this frame, or None where the scoreboard is hidden or unclear."""
         light = light_cell(image)
         found = cells(image)
         if light is None or found is None:

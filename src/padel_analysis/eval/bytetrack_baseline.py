@@ -1,15 +1,6 @@
-"""A plain ByteTrack, kept only as the baseline the constrained tracker is measured
-against.
+"""A plain ByteTrack, kept only as the baseline the constrained tracker is measured against.
 
-The production pipeline does not use it. What the comparison is meant to show is not
-that ByteTrack loses players when partners cross - they hardly ever do, three times
-in twenty-five minutes - but that nothing stops it from handing an identity to a
-spectator, and the detector returns more than four people in 63 % of frames.
-
-`supervision` is pinned below 0.31 because `sv.ByteTrack` is removed there, in favour
-of a class in a separate `trackers` package. Pulling in a whole dependency for a
-baseline that exists only to be compared against is not worth it; the pin keeps this
-working and the deprecation warning keeps the situation visible.
+`supervision` is pinned below 0.31, where `sv.ByteTrack` is removed.
 """
 
 from dataclasses import dataclass
@@ -28,7 +19,7 @@ class TrackedBox:
 
 
 class ByteTrackBaseline:
-    """Wraps supervision's ByteTrack behind the same kind of plain interface."""
+    """Wrap supervision's ByteTrack behind a plain interface."""
 
     def __init__(self) -> None:
         import supervision as sv

@@ -1,8 +1,6 @@
 """Bidirectional mapping between image pixels and court coordinates.
 
-The mapping is a plane-to-plane homography: it is only valid for points lying on
-the court surface. Projecting an airborne point through it places that point
-further from the camera than it really is.
+A plane-to-plane homography: only valid for points on the court surface.
 """
 
 from dataclasses import dataclass
@@ -22,7 +20,7 @@ class ReprojectionError:
 
 
 class CourtProjector:
-    """Maps points between the image plane and the court plane."""
+    """Map points between the image plane and the court plane."""
 
     def __init__(self, court_to_image_matrix: np.ndarray) -> None:
         self._forward = np.asarray(court_to_image_matrix, dtype=np.float64)

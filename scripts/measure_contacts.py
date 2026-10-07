@@ -1,11 +1,7 @@
-"""Measures the contacts on a range, reconstructed path and annotated ball.
+"""Measure the contacts on a range, on the reconstructed path and on the annotated ball.
 
-Both sources go through the same detector: the gap between them is therefore
-attributable to the trajectory, and to nothing else.
-
-Precision is printed with what a random draw would get. The two being equal on this
-dataset, it is the distribution of bounces per exchange that carries the measurement:
-padel expects zero, one or two between two strokes.
+Both sources go through the same detector. Precision is printed beside what a random
+draw would get; the distribution of bounces per exchange carries the measurement.
 
 Usage:
     python scripts/measure_contacts.py --video <video.mp4> \

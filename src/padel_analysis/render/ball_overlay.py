@@ -1,8 +1,7 @@
 """Drawing the ball, its recent trail, and what each contact hit.
 
 The ball is drawn from the path chosen over the whole sequence, never from a
-per-frame detection: that path is what the measurements describe, so the video shows
-the same thing the numbers do.
+per-frame detection, so the video shows what the numbers describe.
 """
 
 import itertools
@@ -44,10 +43,9 @@ class ContactEvent:
 
 
 def contact_label(verdict: Verdict) -> str | None:
-    """What to write on screen for a verdict, or None when no surface was admissible.
+    """Return what to write on screen for a verdict, or None when no surface was admissible.
 
-    An undecided contact is left unlabelled rather than given a guess: the rule
-    reports that it could not decide, and the video must not claim otherwise.
+    An undecided contact is left unlabelled rather than given a guess.
     """
     if verdict.surface is None:
         return None
@@ -61,7 +59,7 @@ def contact_label(verdict: Verdict) -> str | None:
 
 
 def trail(path: dict[int, Point | None], frame: int, length: int = 12) -> list[Point]:
-    """The ball's last positions up to and including `frame`, oldest first."""
+    """Return the ball's last positions up to and including `frame`, oldest first."""
     return [
         point
         for f in range(frame - length + 1, frame + 1)
@@ -72,18 +70,14 @@ def trail(path: dict[int, Point | None], frame: int, length: int = 12) -> list[P
 def visible_events(
     events: Sequence[ContactEvent], frame: int, hold: int = 20
 ) -> list[ContactEvent]:
-    """Contacts that happened in the last `hold` frames, the only ones still labelled."""
+    """Return the contacts of the last `hold` frames, the only ones still labelled."""
     return [e for e in events if e.frame <= frame < e.frame + hold]
 
 
 def draw_ball(
     frame: np.ndarray, points: Sequence[Point], events: Sequence[ContactEvent]
 ) -> np.ndarray:
-    """A copy of `frame` with the trail and the ball.
-
-    Contacts are not marked on the ball: a surface contact lights its zone of the
-    court, and a racket contact lights the player who struck.
-    """
+    """Return a copy of `frame` with the trail and the ball."""
     canvas = frame.copy()
     for older, newer in itertools.pairwise(points):
         cv2.line(canvas, _pixel(older), _pixel(newer), TRAIL, 2)
@@ -93,7 +87,7 @@ def draw_ball(
 
 
 def hitter_box(ball: Point, people: Sequence) -> np.ndarray | None:
-    """The box of the player whose visible wrist is nearest the ball, if any has one."""
+    """Return the box of the player whose visible wrist is nearest the ball, if any."""
     best, nearest = None, float("inf")
     for person in people:
         for wrist in (person.keypoints[9], person.keypoints[10]):
@@ -106,12 +100,10 @@ def hitter_box(ball: Point, people: Sequence) -> np.ndarray | None:
 
 
 def following_box(box: np.ndarray, people: Sequence, jump: float = 120.0) -> np.ndarray:
-    """The same player's box on a later frame, found by the nearest centre.
+    """Return the same player's box on a later frame, found by the nearest centre.
 
-    A strike lasts a few frames and the striker keeps moving. Lighting the box of the
-    contact frame would leave a bright rectangle behind them; this follows them. `jump`
-    caps how far the box may move, so a missed detection falls back on the last known
-    box rather than jumping to somebody else.
+    Args:
+        jump: how far the box may move; beyond it the last known box is kept.
     """
     centre = ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
     best, nearest = box, jump
@@ -126,7 +118,7 @@ def following_box(box: np.ndarray, people: Sequence, jump: float = 120.0) -> np.
 def draw_hitter(
     frame: np.ndarray, box: np.ndarray, strength: float, colour=(255, 255, 255)
 ) -> np.ndarray:
-    """A copy of `frame` with the striking player's box lit, fading with `strength`."""
+    """Return a copy of `frame` with the striker's box lit, fading with `strength`."""
     x1, y1, x2, y2 = (round(float(v)) for v in box)
     overlay = frame.copy()
     cv2.rectangle(overlay, (x1, y1), (x2, y2), colour, -1)

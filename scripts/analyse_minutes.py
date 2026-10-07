@@ -1,12 +1,11 @@
-"""Analyses every marked minute with one set of weights, without producing a video.
+"""Analyse every marked minute with one set of weights, without producing a video.
 
-It is the expensive pass (pose detector and ball network on every frame) and the only
-one that needs the graphics card. Its result is saved: every measurement afterwards is
-redone without it.
+The expensive pass, and the only one that needs the graphics card. Its result is saved.
 
 Usage:
     python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
-    python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360         --match FinalF --minute 8000
+    python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360 \
+        --match FinalF --minute 8000
 """
 
 import argparse

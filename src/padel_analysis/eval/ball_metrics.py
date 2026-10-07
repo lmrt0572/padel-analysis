@@ -1,13 +1,7 @@
 """Scores for the ball, reported at several tolerances.
 
-A single tolerance would hide whether the errors are two pixels or fifteen, so
-recall and precision are given at each of them - the same reasoning that put four
-inference resolutions in the sub-project A table rather than one.
-
-Frames carrying no annotation are the delicate part. Seventeen percent of the
-women's final has none, and nothing says whether the ball is invisible there or
-merely unlabelled. A detection on such a frame therefore cannot be called wrong:
-those frames are counted apart, as `unscorable`, and left out of precision.
+Frames carrying no annotation cannot be called wrong: they are counted apart, as
+`unscorable`, and left out of precision.
 """
 
 import math
@@ -74,8 +68,7 @@ def ball_score(
 class CandidateScore:
     """How often the ball is in the list at all, and how far down it sits.
 
-    This is a ceiling, not a performance: it says the ball is available to be
-    picked, never that anything picked it.
+    A ceiling, not a performance: nothing here says the ball was picked.
     """
 
     recall: dict[int, float]
@@ -142,9 +135,7 @@ def candidate_score(
 class EventScore:
     """Detected contacts against the annotated shot intervals.
 
-    The annotation gives an interval, so a contact is credited when it falls
-    inside one. How close it lands to the true impact cannot be measured, and is
-    therefore not claimed.
+    A contact is credited when it falls inside an interval.
     """
 
     recall: float
@@ -155,7 +146,9 @@ class EventScore:
 
 
 def event_score(contacts: Sequence[int], events: Sequence["ShotEvent"]) -> EventScore:
-    """Args:
+    """Score detected contacts against the annotated shots.
+
+    Args:
         contacts: frames at which a contact was detected.
         events: the annotated shot intervals to find.
     """

@@ -1,21 +1,13 @@
 """Demonstration video: players, minimap, ball, and the court zone each contact lit.
 
-Two passes, and they cannot be one. The ball is chosen over the whole sequence at
-once, so nothing can be drawn while frames are still being read. The first pass
-analyses every frame and saves what the drawing needs; the second reads the video
-again and draws. `--reuse` skips the first pass, so the display can be tuned without
-paying for the analysis again.
-
-What is shown is filtered, and the filter is for display only. The path answers on
-every frame, so when the ball leaves the picture or rests in a server's hand it still
-invents a trajectory. Points the detector was not confident about are hidden, lone
-aberrant points are dropped, and each piece between two contacts is smoothed so the
-trail reads fluidly without rounding the bounces. The figures in the evaluation report are computed without
-this filter and are not affected by it.
+Two passes: the ball is chosen over the whole sequence at once, so the first pass
+analyses every frame and saves what the drawing needs, and the second draws. `--reuse`
+skips the first. What is shown is filtered for display only; the figures of the
+evaluation report are computed without that filter.
 
 Usage:
     python -m padel_analysis.demo --video <video.mp4> \
-        --calibration ground_truth/calibrations/<nom>.json \
+        --calibration ground_truth/calibrations/<name>.json \
         --weights weights/ball_net.pt --start 16000 --frames 1800 --out outputs/demo.mp4
 """
 
@@ -66,7 +58,7 @@ LEFT_WRIST, RIGHT_WRIST = 9, 10
 
 
 def analyse(args: argparse.Namespace) -> dict:
-    """First pass: everything the drawing needs, frame by frame, then the ball path."""
+    """Run the first pass: what the drawing needs, frame by frame, then the ball path."""
     from .ball.heatmap_net import NetCandidates
 
     calibration = Calibration.load(args.calibration)
@@ -121,7 +113,7 @@ def analyse(args: argparse.Namespace) -> dict:
 
 
 def observe(detections, image, calibration, strategy) -> list[CourtObservation]:
-    """Each detected person placed on the court, with the colours of their torso."""
+    """Return each detected person placed on the court, with the colours of their torso."""
     observations = []
     for detection in detections:
         point, confidence = strategy(detection)
@@ -135,12 +127,10 @@ def observe(detections, image, calibration, strategy) -> list[CourtObservation]:
 
 
 def retrack(analysis: dict, video: Path, calibration: Calibration) -> dict:
-    """The same analysis with the players' identities tracked again.
+    """Return the same analysis with the players' identities tracked again.
 
-    Detections are kept; only the assignment to the four slots is redone, with the
-    tracker as it stands now. Reading the video again is needed for the torso colours,
-    running the pose detector again is not. The saved analysis is left untouched: the
-    measured figures were made on it.
+    Detections are kept; the video is read again only for the torso colours. The saved
+    analysis is left untouched.
     """
     tracker = CourtSlotTracker()
     strategy = AnkleMidpoint()
@@ -165,35 +155,28 @@ def retrack(analysis: dict, video: Path, calibration: Calibration) -> dict:
 def build_events(
     analysis: dict, calibration_points: list, threshold: float = 0.7, min_run: int = 8
 ) -> tuple[dict, dict, list[ContactEvent], object]:
-    """The displayed ball path and the contacts shown on it, from a saved analysis.
+    """Return the displayed ball path and the contacts shown on it, from a saved analysis.
 
-    Kept apart from the drawing so the measurement scripts score exactly what the
-    video shows, and not a copy of it that could drift.
+    Kept apart from the drawing so the measurement scripts score what the video shows.
     """
     court = Court()
     frames = analysis["frames"]
     raw = {f: v["raw"] for f, v in frames.items()}
-    # The display path reads the scores of the network as they are, and can therefore
-    # give up where the ball is not. Measured on an annotated minute, with the
-    # confidence filter: 1,374 right positions, 87 wrong, 2 phantoms, against 1,174, 199
-    # and 27 with the relative path tuned for recall.
+    # the display path reads the network scores as they are, so it can give up
+    # where the ball is not
     path = best_path(
         raw, analysis["start"], analysis["stop"], weight=960.0, absent_cost=150.0,
         absolute=True,
     )
     scores = path_scores(path, raw)
-    # For display only: confidence, then removal of isolated outliers.
+    # for display only: confidence, then removal of isolated outliers
     shown = despike(confident_path(path, scores, threshold, min_run))
 
     pose = pose_from_calibration(calibration_points, analysis["size"])
     surfaces = court_surfaces(court)
     events: list[ContactEvent] = []
-    # Contacts are searched on a smoothed trajectory: every zigzag of the raw path would
-    # pass for a turn. Measured on the annotated minute of the tuning match: 2 false
-    # contacts and 3 unjudged ones fewer, for 1 true one lost. A stronger smoothing loses
-    # 7. On the displayed trajectory, speed is measured over 3 frames and not 2, with a
-    # lower sharpness threshold: swept over four marked minutes (316 contacts),
-    # 177 -> 194 right contacts; on a minute of the other match, 42 -> 47.
+    # contacts are searched on a smoothed trajectory: every zigzag of the raw path
+    # would pass for a turn
     players = {f: (v["people"], v["assignment"]) for f, v in frames.items()}
     turns = find_contacts(
         smooth_path(shown, cuts=[], process_noise=100.0), span=CONTACT_SPAN,
@@ -203,8 +186,8 @@ def build_events(
         ball = shown.get(contact.frame)
         if ball is None:
             continue
-        # A wrist that is close but still does not make a stroke: without a gesture, the
-        # racket is ruled out and the surface is decided by geometry alone.
+        # a close wrist without a gesture is not a stroke: the racket is ruled out and
+        # the surface is decided by geometry alone
         gesture = max(
             gesture_near(players, f, shown.get(f)) for f in range(contact.frame - 3, contact.frame + 4)
         )
@@ -213,21 +196,15 @@ def build_events(
         label = contact_label(verdict)
         if label is None:
             continue
-        # A ray that meets only one surface points outside the play. Measured on the two
-        # annotated matches: these contacts carry 38 of the 42 false walls, for 2 true
-        # walls out of 33. A display filter, the measured figures do not know it.
+        # a ray that meets only one surface points outside the play; a display filter
         if label != "RAQUETTE" and verdict.candidates == 1:
             continue
         box = hitter_box(ball, frames[contact.frame]["people"]) if label == "RAQUETTE" else None
         events.append(
             ContactEvent(contact.frame, label, ball, zone_of(verdict, court), box)
         )
-    # The strokes the turn does not see (a shot along the axis of the camera barely
-    # bends the trajectory in the picture) are read from the gesture of the striker.
-    # Measured on a complete marking: +11 right contacts on the tuning match, +9 on the
-    # held-out match, tuning frozen. A stroke without a turn needs a clearer gesture
-    # than one that confirms a turn: 20 px/frame against 8, swept over 316 contacts,
-    # 19 fewer invented contacts for the same number of right ones.
+    # strokes along the camera axis barely bend the trajectory: they are read from
+    # the striker's gesture, which must be clearer without a turn than with one
     found = [e.frame for e in events]
     for frame in strikes(players, shown, analysis["start"], analysis["stop"], STRIKE_SPEED,
                          taken=found):
@@ -246,12 +223,9 @@ def learned_events(
     analysis: dict, calibration_points: list, model, threshold: float = 0.7,
     whole_zone: bool = True, infer_walls: bool = True,
 ) -> tuple[dict, dict, list[ContactEvent], object]:
-    """The same as `build_events`, with the contacts decided by a trained model.
+    """Return the same as `build_events`, with the contacts decided by a trained model.
 
     The rule chain still runs: its decisions are one of the cues the model reads.
-    Validated minute by minute over nine hand-marked minutes, each predicted by a
-    model that never saw it: 556 contacts of 703 given the right surface, against 411
-    for the rules.
     """
     from .contact.learned import decode, frame_features
 
@@ -286,12 +260,10 @@ def learned_events(
 
 def with_inferred_walls(answers: dict[int, str], probabilities: np.ndarray, material: np.ndarray,
                         analysis: dict, shown: dict, path: dict, pose, surfaces) -> dict[int, str]:
-    """The model's contacts, with the walls that the pace of the ball implies.
+    """Return the model's contacts, with the walls that the pace of the ball implies.
 
     Each bounce is placed on the floor by the ray through the ball, each strike at the
-    striker's feet; `inferred_walls` does the rest. Measured over the eleven training
-    minutes, each predicted by a model that never saw it: 64 to 70 glass contacts of
-    128 found at the right frame, the other contacts unchanged.
+    striker's feet.
     """
     from .contact.glass_inference import Touch, inferred_walls
     from .contact.learned import CLASS_OF_ANSWER, MESH_WALL
@@ -331,11 +303,9 @@ def with_inferred_walls(answers: dict[int, str], probabilities: np.ndarray, mate
 
 
 def ball_near(frame: int, shown: dict, path: dict, reach: int) -> tuple | None:
-    """The ball at a contact, or at the nearest frame that has it, up to `reach` away.
+    """Return the ball at a contact, or at the nearest frame that has it within `reach`.
 
-    The ball is often missing at the very frame of a contact: the display filter drops
-    the vertex of a sharp turn as a spike, and a strike hides the ball behind the
-    racket. The contact itself is decided on every frame, ball or not.
+    The ball is often missing at the very frame of a contact.
     """
     for gap in range(reach + 1):
         for candidate in (frame - gap, frame + gap):
@@ -346,11 +316,9 @@ def ball_near(frame: int, shown: dict, path: dict, reach: int) -> tuple | None:
 
 
 def _verdict_on(label: str, ball, pose, surfaces) -> Verdict | None:
-    """Where the ray through the ball meets the surface the model chose, for drawing.
+    """Return where the ray through the ball meets the surface the model chose.
 
-    Several walls can be admissible at once, and the list order used to decide, which
-    lit a back wall for a contact on a side one. The ball is on the first surface the
-    ray reaches: anything behind it would be hidden by it.
+    The ball is on the first surface the ray reaches.
     """
     origin, direction = pose.ray(ball)
     reached = []
@@ -460,17 +428,15 @@ def render(
     minimap: bool = True, labels: dict | None = None, colours: dict | None = None,
     backdrop: np.ndarray | None = None, tracked_only: bool = False,
 ) -> None:
-    """Second pass: draw players, minimap, ball trail and lit contacts on each frame.
+    """Run the second pass: draw players, minimap, ball trail and lit contacts.
 
     Args:
-        side: optional panel drawn to the right of the picture, as `side(frame)` returning
-            an image of the video's height. The picture itself is left whole.
+        side: optional panel drawn to the right of the picture, as `side(frame)`
+            returning an image of the video's height.
         minimap: paste the minimap in the picture's top-right corner.
         labels, colours: names and BGR colours of the players' boxes, by slot.
-        backdrop: a picture drawn on instead of the broadcast, for a replay that shows
-            only what the analysis reconstructed.
-        tracked_only: draw only the four players the tracker holds, not the people
-            around the court; always so on a backdrop.
+        backdrop: a picture drawn on instead of the broadcast.
+        tracked_only: draw only the four tracked players; always so on a backdrop.
     """
     frames = analysis["frames"]
     court_map = Minimap(Court()) if minimap else None

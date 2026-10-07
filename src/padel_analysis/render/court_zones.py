@@ -1,13 +1,8 @@
 """The parts of the court a contact lights up, drawn on the court itself.
 
-A contact position is known to within 13 cm near the camera and 56 cm at the far
-baseline. Drawn as a point, an error of that size is plain to see; lighting the zone
-it falls in tolerates it - and in padel what matters is which wall panel or which part
-of the floor was hit, not the centimetre.
-
-Each zone carries its corners in three dimensions, so the camera pose can draw it in
-perspective on the video: a glass panel stands up from the ground, it does not lie on
-it. Its two-dimensional footprint is kept for the minimap.
+A contact position carries the pose error, so a zone is lit rather than a point.
+Each zone holds its corners in three dimensions, to be drawn in perspective, and its
+footprint for the minimap.
 """
 
 from dataclasses import dataclass
@@ -34,7 +29,7 @@ PATCH_SIZE = 1.5
 
 @dataclass(frozen=True)
 class Zone:
-    """A named part of the court: its corners in metres, and its footprint seen from above."""
+    """A named part of the court: its corners in metres, and its footprint from above."""
 
     name: str
     kind: str  # "area" on the floor, "line" for a wall seen from above
@@ -45,7 +40,7 @@ class Zone:
 
 
 def zone_of(verdict: Verdict, court: Court) -> Zone | None:
-    """The zone a contact lights, or None for a racket or an undecided contact."""
+    """Return the zone a contact lights, or None for a racket or an undecided contact."""
     if verdict.surface in (None, RACKET) or verdict.point is None:
         return None
     x, y = float(verdict.point[0]), float(verdict.point[1])
@@ -78,9 +73,8 @@ def zone_of(verdict: Verdict, court: Court) -> Zone | None:
             if material == "grillage"
             else (0.0, court.back_wall_glass_height)
         )
-        # The camera is just behind the near back wall: the whole wall, projected,
-        # covers the entire lower half of the picture. It lights up in full, but
-        # lightly, so that the players stay readable through it.
+        # the near back wall covers the whole lower half of the picture: it lights up
+        # in full but lightly, so the players stay readable through it
         opacity = NEAR_WALL_OPACITY if sign < 0 else ZONE_OPACITY
         return Zone(f"fond_{half}_{material}", "line", ((-w, l_signed), (w, l_signed)), colour,
                     ((-w, l_signed, low), (w, l_signed, low),
@@ -101,12 +95,9 @@ def zone_of(verdict: Verdict, court: Court) -> Zone | None:
 
 
 def impact_patch(verdict: Verdict, court: Court, size: float = PATCH_SIZE) -> Zone | None:
-    """A square of the surface itself, centred on where the ball hit it.
+    """Return a square of the surface itself, centred on where the ball hit it.
 
-    Lighting a whole zone turns the position error into a change of zone: a bounce ten
-    centimetres from the service line lights the entire back of the court, and the pose
-    error reaches 56 cm at the far baseline. A patch moves with the error instead, and
-    says where the ball landed rather than which box it belongs to.
+    A patch moves with the position error instead of turning it into a change of zone.
     """
     if verdict.surface in (None, RACKET) or verdict.point is None:
         return None
@@ -149,7 +140,7 @@ def impact_patch(verdict: Verdict, court: Court, size: float = PATCH_SIZE) -> Zo
 
 
 def _clamp_line(centre: float, half: float, limit: float) -> tuple[float, float]:
-    """The segment of `2 * half` around `centre`, kept inside the surface."""
+    """Return the segment of `2 * half` around `centre`, kept inside the surface."""
     low = max(-limit, min(centre, limit) - half)
     high = min(limit, max(centre, -limit) + half)
     return low, high
@@ -164,11 +155,10 @@ def _clamp_square(centre: Point, half: float, x_limits, y_limits) -> tuple[Corne
 def draw_zone(
     frame: np.ndarray, zone: Zone, pose: CameraPose, strength: float
 ) -> np.ndarray:
-    """A copy of `frame` with the zone lit in perspective, as bright as `strength` allows.
+    """Return a copy of `frame` with the zone lit in perspective.
 
     Args:
-        strength: from 1 just after the contact down to 0, so the zone fades out
-            rather than switching off.
+        strength: from 1 just after the contact down to 0, so the zone fades out.
     """
     corners = pose.project(np.array(zone.corners, dtype=np.float64))
     polygon = np.round(corners).astype(np.int32)

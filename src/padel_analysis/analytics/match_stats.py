@@ -1,14 +1,7 @@
 """The statistics of a whole match, by pair.
 
-Two things make a whole match harder than a rally. The pairs change ends, so the
-tracker's halves must be tied to the scoreboard's rows, change after change. And the
-tracker confuses partners - on the identity ground truth, one player's distance over a
-stretch is off by more than 12 % once in ten - while a pair's total stays within 1 %,
-the confusions cancelling out between partners. The statistics are therefore given by
-pair, the row of the pair on the scoreboard naming it.
-
-Everything starts at the first scoreboard reading: before it, which pair plays where
-is not known.
+Given by pair because the tracker confuses partners: a pair's total stays right when
+a single player's does not. Everything starts at the first scoreboard reading.
 """
 
 from collections import Counter
@@ -71,11 +64,11 @@ class Orientation:
 
 def orient(readings: Sequence[tuple[int, ScoreState]],
            first_strikes: Mapping[int, str]) -> Orientation | None:
-    """The changes of ends, and where the top row starts, voted by the serves.
+    """Return the changes of ends and where the top row starts, voted by the serves.
 
     Args:
         readings: (frame, state) at the start of each stretch read.
-        first_strikes: per stretch start, the half of its first strike - the serve.
+        first_strikes: per stretch start, the half of its first strike, the serve.
     """
     changes = end_changes([(f, s.set_number, *s.games) for f, s in readings])
     votes = Counter()
@@ -94,7 +87,7 @@ def orient(readings: Sequence[tuple[int, ScoreState]],
 
 
 def stretch_points(readings: Sequence[tuple[int, ScoreState]]) -> dict[int, int]:
-    """The pair that won the point played from each stretch start, when the board says so."""
+    """Return the pair that won the point played from each stretch start, when known."""
     winners = {}
     ordered = sorted(readings, key=lambda r: r[0])
     for (start, before), (_, after) in pairwise(ordered):
@@ -107,7 +100,7 @@ def stretch_points(readings: Sequence[tuple[int, ScoreState]]) -> dict[int, int]
 
 
 def point_stats(winners: Mapping[int, int], pairs: Mapping[int, PairStats]) -> None:
-    """The points each pair won, from every stretch whose point the board settles."""
+    """Return the points each pair won, from every stretch the board settles."""
     for row in winners.values():
         pairs[row].points_won += 1
 
@@ -115,7 +108,7 @@ def point_stats(winners: Mapping[int, int], pairs: Mapping[int, PairStats]) -> N
 def contact_stats(rallies: Sequence[RallySpan], strikers: Mapping[int, str],
                   orientation: Orientation, winners: Mapping[int, int],
                   pairs: Mapping[int, PairStats]) -> None:
-    """Strikes, volleys, shots after a bounce or off the glass, and points by length."""
+    """Return strikes, volleys, shots after a bounce or the glass, and points by length."""
     for rally in rallies:
         bounced = glass = seen = False
         for frame, kind in rally.contacts:
@@ -144,11 +137,7 @@ def contact_stats(rallies: Sequence[RallySpan], strikers: Mapping[int, str],
 
 def pair_positions(positions: Mapping[int, Mapping[str, tuple[float, float]]],
                    orientation: Orientation) -> dict[int, np.ndarray]:
-    """Every position of each pair's two players, folded onto the near half.
-
-    A pair plays half the match at each end; folded, its occupancy reads the same way
-    whichever end it played: the net at the top, its back wall at the bottom.
-    """
+    """Return every position of each pair's players, folded onto the near half."""
     folded: dict[int, list] = {1: [], 2: []}
     for frame, slots in positions.items():
         for slot, (x, y) in slots.items():
@@ -161,11 +150,9 @@ def pair_positions(positions: Mapping[int, Mapping[str, tuple[float, float]]],
 def movement_stats(positions: Mapping[int, Mapping[str, tuple[float, float]]],
                    breaks: Sequence[int], orientation: Orientation,
                    pairs: Mapping[int, PairStats], window: int = 9) -> None:
-    """Distance and time at the net, per pair, stretch by stretch.
+    """Return distance and time at the net per pair, stretch by stretch.
 
-    A stretch ends at every splice of the broadcast and every change of ends: a
-    position is never joined to one on the other side of a cut, and a half is never
-    credited to the pair that left it.
+    A stretch ends at every broadcast splice and every change of ends.
     """
     frames = sorted(positions)
     if not frames:

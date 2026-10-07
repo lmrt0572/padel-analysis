@@ -1,4 +1,4 @@
-"""Turns a position cache into statistics and figures.
+"""Turn a position cache into statistics and figures.
 
 Usage:
     python -m padel_analysis.analyse --cache cache/<name>.json \
@@ -19,12 +19,12 @@ from .render.figures import heatmaps_chart, net_control_chart
 
 
 def draw_heatmaps(trajectories: MatchTrajectories, court: Court, path: Path) -> None:
-    """One occupancy map per player, on a single figure."""
+    """Draw one occupancy map per player, on a single figure."""
     heatmaps_chart({slot: trajectories.positions[slot] for slot in SLOTS}, court, path)
 
 
 def draw_net_control(trajectories: MatchTrajectories, control: dict, path: Path) -> None:
-    """The depth distribution the net threshold was chosen from, and who held the net."""
+    """Draw the depth distribution the net threshold comes from, and who held the net."""
     depths = np.concatenate([trajectories.depth(slot) for slot in SLOTS])
     net_control_chart(depths, NET_THRESHOLD, control, path)
 

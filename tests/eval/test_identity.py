@@ -40,7 +40,7 @@ def test_slots_follow_a_player_who_moves():
     for step in range(5):
         rows.append([(-2.0 + step, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)])
     assignments = assign_by_proximity(_court_positions(rows))
-    # Annotation 0 moves but stays the same person: same slot from start to finish.
+    # annotation 0 moves but stays the same person: same slot from start to finish
     assert assignments[0] == assignments[4]
 
 

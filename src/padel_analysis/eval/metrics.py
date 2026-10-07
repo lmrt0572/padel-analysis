@@ -1,8 +1,7 @@
 """Detection and localisation scores.
 
-Errors are reported separately for each half of the court. A pixel is worth 1.51 cm
-at the near baseline and 6.47 cm at the far one, so a single aggregated figure in
-centimetres would hide which half it came from.
+Errors are reported separately for each half of the court, a pixel being worth four
+times more at the far end.
 """
 
 from dataclasses import dataclass
@@ -28,7 +27,7 @@ class LocalisationError:
 
 
 def detection_score(matched: int, predicted: int, annotated: int) -> DetectionScore:
-    """Precision, recall and F1 from raw counts."""
+    """Return precision, recall and F1 from raw counts."""
     precision = matched / predicted if predicted else 0.0
     recall = matched / annotated if annotated else 0.0
     f1 = (
@@ -42,13 +41,13 @@ def detection_score(matched: int, predicted: int, annotated: int) -> DetectionSc
 def localisation_error(
     predicted: np.ndarray, annotated: np.ndarray, court_depths: np.ndarray
 ) -> LocalisationError:
-    """Pixel distance between matched points, split by half of the court.
+    """Return the pixel distance between matched points, split by half of the court.
 
     Args:
         predicted: (N, 2) image points.
         annotated: (N, 2) the matching annotated points.
-        court_depths: (N,) the signed `y` of each annotated point, in metres.
-            Negative is the near half.
+        court_depths: (N,) the signed `y` of each annotated point, in metres;
+            negative is the near half.
     """
     predicted = np.asarray(predicted, dtype=np.float64).reshape(-1, 2)
     annotated = np.asarray(annotated, dtype=np.float64).reshape(-1, 2)

@@ -1,8 +1,6 @@
 """Court calibration: turning clicked correspondences into a validated projector.
 
-A calibration is built from named point correspondences. Points flagged as control
-points are excluded from the homography fit and used solely to measure accuracy, so
-that the reported error is never optimistic.
+Control points are excluded from the fit and only measure its accuracy.
 """
 
 import json
@@ -24,13 +22,11 @@ class CalibrationPoint:
     image_xy: tuple[float, float]
     is_control: bool = False
     height: float = 0.0
-    """Metres above the ground. Zero for the court markings, non-zero for the wall
-    and net references that make a camera pose solvable - a set of coplanar points
-    leaves the vertical direction unconstrained, so a pose needs points off it."""
+    """Metres above the ground; non-zero for the wall and net references a pose needs."""
 
     @property
     def court_xyz(self) -> tuple[float, float, float]:
-        """The point in three dimensions, which a camera pose needs."""
+        """The point in three dimensions."""
         return (self.court_xy[0], self.court_xy[1], self.height)
 
 
@@ -75,12 +71,7 @@ class Calibration:
 
 
 class Calibrator(Protocol):
-    """Produces a calibration from a single video frame.
-
-    Only manual clicking exists today. The protocol is what allows a line-refinement
-    calibrator to be added later as a new implementation rather than a rewrite, if
-    the measured reprojection error justifies it.
-    """
+    """Produce a calibration from a single video frame."""
 
     def calibrate(self, frame: np.ndarray) -> Calibration: ...
 
@@ -88,9 +79,7 @@ class Calibrator(Protocol):
 def calibration_from_points(points: list[CalibrationPoint]) -> Calibration:
     """Fit a projector on the non-control points and measure it on the control ones.
 
-    Points above the ground take no part in either. A homography maps one plane to
-    another, so feeding it a point at height would not merely ignore it - it would
-    bend the fit towards a correspondence that cannot hold.
+    Points above the ground take no part in either: a homography maps one plane only.
     """
     ground = [p for p in points if p.height == 0.0]
     fit = [p for p in ground if not p.is_control]

@@ -1,8 +1,6 @@
 """Random and sequential access to the frames of a video file.
 
-Frames are always read from the video by index. The annotation files name frames
-as `frame_000000.PNG`, but extracting fifty thousand full-HD frames to disk would
-cost around a hundred gigabytes, so nothing is ever written out.
+Frames are read from the video by index; nothing is extracted to disk.
 """
 
 from collections.abc import Iterator
@@ -23,7 +21,7 @@ class VideoMetadata:
 
 
 class VideoSource:
-    """Reads frames of a video by index, or sequentially."""
+    """Reader of the frames of a video, by index or sequentially."""
 
     def __init__(self, path: Path) -> None:
         self._path = Path(path)
@@ -60,7 +58,7 @@ class VideoSource:
         )
 
     def read(self, index: int) -> np.ndarray:
-        """Return the frame at `index`. Seeking is slower than iterating."""
+        """Return the frame at `index`; seeking is slower than iterating."""
         capture = self._require_open()
         if index < 0 or index >= self.metadata.frame_count:
             raise IndexError(f"frame {index} out of range")
@@ -73,7 +71,7 @@ class VideoSource:
     def iter_frames(
         self, start: int = 0, stop: int | None = None, step: int = 1
     ) -> Iterator[tuple[int, np.ndarray]]:
-        """Yield (index, frame) sequentially. Much faster than repeated seeking."""
+        """Yield (index, frame) sequentially."""
         capture = self._require_open()
         end = self.metadata.frame_count if stop is None else stop
         capture.set(cv2.CAP_PROP_POS_FRAMES, start)

@@ -1,16 +1,8 @@
 """Deciding what a ball bounced off, at the instant it did.
 
-Two questions in order. Was it a racket - which a wrist nearby answers, the ball
-sitting 50 px from one in median when a shot is annotated, against 168 px otherwise.
-Otherwise, which of the five surfaces of the court - answered by casting the ray
-through the ball and keeping the intersections that are physically possible. For a
-wall, glass or mesh then follows from the impact height, with no heuristic.
-
-The middle step is what a ground homography could not do. It projects onto the floor,
-so it misplaces anything above it: measured on real contacts, a third of them land
-outside the court rectangle, some as far as 23 m down a 20 m court. A ray and a plane
-do not have that problem, because at a contact - and only then - the ball is known to
-be on a surface.
+A racket if a wrist is nearby. Otherwise the ray through the ball is intersected
+with the surfaces of the court and the physically possible ones are kept; glass or
+mesh follows from the impact height.
 """
 
 import math
@@ -32,9 +24,8 @@ class Verdict:
     point: np.ndarray | None
     material: str | None
     candidates: int
-    """How many surfaces the ray could admissibly have met. More than one means the
-    geometry alone did not settle it, which is reported rather than hidden - it is
-    the quantity the annotation campaign exists to check."""
+    """How many surfaces the ray could admissibly have met; more than one means the
+    geometry alone did not settle it."""
 
 
 def classify(
@@ -46,28 +37,17 @@ def classify(
     margin: float = 0.30,
     depth_cut: float | None = -7.5,
 ) -> Verdict:
-    """What the ball hit at this contact.
+    """Return what the ball hit at this contact.
 
     Args:
         ball: the ball's pixel on the contact frame.
-        wrists: every visible wrist pixel on that frame, all players together.
+        wrists: every visible wrist pixel on that frame.
         pose: the camera pose for this video.
-        surfaces: the court's surfaces, floor first - the order breaks ties.
+        surfaces: the court's surfaces, floor first; the order breaks ties.
         wrist_distance: how close a wrist must be for the contact to be a racket.
-        margin: slack in metres on each surface's extent, absorbing the pose error -
-            8.6 px in median on the elevated control points, which is 13 cm near the
-            camera and 56 cm at the far baseline. Metres and never pixels: the two
-            are not comparable across a 4.3x depth asymmetry.
-        depth_cut: how deep a floor candidate may sit, in metres of court `y`, before
-            another admissible surface is preferred. The camera stands at y = -26.18
-            and z = 7.86, so a contact on the near glass at height h projects onto
-            the floor at -9.4 m for h = 0.3, -7.6 m for h = 1.0 and -4.5 m for
-            h = 2.0. A floor point deeper than this cut is therefore more likely a
-            low wall contact than a bounce. Measured on the tuning match: wall recall
-            goes from 0.412 to 0.882, for 0.789 precision instead of 1.000. Above
-            roughly 1.05 m the two become indistinguishable, which is why wall recall
-            stops at 0.882 rather than reaching one - that is a limit of the geometry,
-            not of the threshold.
+        margin: slack in metres on each surface's extent, absorbing the pose error.
+        depth_cut: court `y` beyond which a floor candidate is more likely a low
+            contact on the near glass, so another admissible surface is preferred.
     """
     if wrists:
         nearest = min(math.dist(ball, wrist) for wrist in wrists)

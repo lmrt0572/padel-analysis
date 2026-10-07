@@ -1,14 +1,12 @@
 """Keypoint orders, and the conversion between them.
 
-PadelTracker100 does not use the standard COCO keypoint order: left and right are
-swapped for every paired joint except the ears. Comparing predictions to annotations
-without remapping pairs the wrong joints together, and does so silently - the ankle
-midpoint is unaffected, so a naive check would pass.
+PadelTracker100 swaps left and right for every paired joint except the ears. The
+ankle midpoint is unaffected, so a naive check would not catch it.
 """
 
 import numpy as np
 
-# Order used by Ultralytics and by the COCO convention.
+# order used by Ultralytics and the COCO convention
 COCO_KEYPOINTS: tuple[str, ...] = (
     "nose",
     "left_eye",
@@ -29,7 +27,7 @@ COCO_KEYPOINTS: tuple[str, ...] = (
     "right_ankle",
 )
 
-# Order actually found in the `*_pose.json` files of PadelTracker100.
+# order found in the `*_pose.json` files of PadelTracker100
 DATASET_KEYPOINTS: tuple[str, ...] = (
     "nose",
     "right_eye",

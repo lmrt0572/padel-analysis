@@ -1,8 +1,6 @@
 """On-disk store of per-frame player positions, in court metres.
 
-Inference over a half-hour match takes minutes on a 4 GB card. Caching the court
-positions lets rendering and analytics be iterated on without paying that cost
-again, which is what makes the offline design practical.
+Rendering and analytics are iterated on without paying for inference again.
 """
 
 import json

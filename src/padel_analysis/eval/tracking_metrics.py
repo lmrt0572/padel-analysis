@@ -1,15 +1,7 @@
 """MOTA and IDF1, the standard measures of a multi-object tracker.
 
-They need a ground truth identity on every frame, which PadelTracker100 does not
-carry - hence the reconstruction in `identity.py`. MOTA charges false positives,
-misses and identity switches against the number of ground truth objects; IDF1 asks
-how well each ground truth identity is covered by a single hypothesis identity.
-
-The distance matrix is built here rather than with `motmetrics.distances.iou_matrix`,
-which calls `np.asfarray` - removed in NumPy 2.0, and motmetrics has not been
-released since. Only that helper is affected; the accumulator and the metrics
-themselves are fine, and the matrix is two lines of the IoU already written for
-`matching.py`.
+The distance matrix is built here: `motmetrics.distances.iou_matrix` calls
+`np.asfarray`, removed in NumPy 2.0.
 """
 
 from dataclasses import dataclass
@@ -28,7 +20,7 @@ class TrackingScore:
 
 
 class TrackingAccumulator:
-    """Collects per-frame correspondences, then scores them."""
+    """Collect per-frame correspondences, then score them."""
 
     def __init__(self, max_iou_distance: float = 0.5) -> None:
         import motmetrics as mm
@@ -37,9 +29,8 @@ class TrackingAccumulator:
         self._accumulator = mm.MOTAccumulator(auto_id=True)
         self._max_distance = max_iou_distance
         self._frames = 0
-        # motmetrics stores unmatched entries as NaN alongside the identifiers, and
-        # pandas will not hold text and NaN in the same column. Names are therefore
-        # mapped to integers, stably, so an identity keeps its number across frames.
+        # pandas will not hold text and NaN in one column, so names are mapped to
+        # stable integers
         self._truth_numbers: dict[str, int] = {}
         self._hypothesis_numbers: dict[str, int] = {}
 
@@ -53,7 +44,7 @@ class TrackingAccumulator:
     def _distance_matrix(
         self, truth: list[np.ndarray], hypothesis: list[np.ndarray]
     ) -> np.ndarray:
-        """1 - IoU for each pair, with NaN where the pair is too far to match."""
+        """Return 1 - IoU for each pair, NaN where the pair is too far to match."""
         if not truth or not hypothesis:
             return np.zeros((len(truth), len(hypothesis)))
         distances = np.array(
@@ -65,7 +56,7 @@ class TrackingAccumulator:
     def add(
         self, truth: dict[str, np.ndarray], hypothesis: dict[str, np.ndarray]
     ) -> None:
-        """Record one frame. Boxes are xyxy; the dictionary keys are the identities."""
+        """Record one frame; boxes are xyxy and the keys are the identities."""
         truth_names = list(truth)
         hypothesis_names = list(hypothesis)
         distances = self._distance_matrix(

@@ -40,7 +40,7 @@ def test_a_full_reversal_turns_by_both_speeds():
 
 
 def test_sharpness_is_scale_free():
-    """Le meme demi-tour vaut pareil a vitesse lente et rapide."""
+    """The same reversal scores the same at slow and fast speed."""
     slow = sharpness_of((5.0, 0.0), (-5.0, 0.0))
     fast = sharpness_of((50.0, 0.0), (-50.0, 0.0))
     assert slow == pytest.approx(fast)

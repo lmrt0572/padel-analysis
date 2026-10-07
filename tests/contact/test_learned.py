@@ -129,7 +129,7 @@ def test_training_learns_a_cue_that_marks_the_contacts():
         sequences.append((features, frame_labels(marks, 0, 300)))
     model = train(sequences, seeds=(0,), steps=150, crop=64, batch=8)
     found = decode(model.probabilities(sequences[0][0]), np.zeros(300), start=0, threshold=0.5)
-    # Each mark also teaches its two neighbours: the peak can fall one frame off.
+    # each mark also teaches its two neighbours: the peak can fall one frame off
     assert len(found) == len(range(20, 300, 40))
     assert all(min(abs(f - m) for m in range(20, 300, 40)) <= 1 for f in found)
     assert set(found.values()) == {"sol"}
@@ -155,8 +155,8 @@ def test_features_give_one_row_per_frame_and_mark_a_missing_ball(synthetic_pose)
     )
     assert features.shape[0] == 20 and material.shape == (20,)
     assert features[3, 0] == 1.0 and features[15, 0] == 0.0
-    # A frame without a ball is described the same way every time, and differently
-    # from a frame where the ball is there.
+    # a frame without a ball is described the same way every time, and differently
+    # from a frame where the ball is there
     np.testing.assert_array_equal(features[15], features[16])
     assert (features[3] != features[15]).any()
     assert features[5, -5:].tolist() == [0.0, 1.0, 0.0, 0.0, 0.0]

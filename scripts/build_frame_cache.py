@@ -1,12 +1,7 @@
-"""Extracts the training frames as reduced JPEGs, with the ball scaled to match.
+"""Extract the training frames as reduced JPEGs, with the ball scaled to match.
 
-One frame in three. At 30 frames per second two consecutive frames carry almost the
-same information: subsampling costs little and divides the epoch time by three. The
-stacked frames being spaced 3 apart too, the neighbours of a centre fall on the same
-grid and a single cache is enough for the three channels.
-
-The evaluation slice is excluded. It must stay intact: a network that had seen it would
-no longer measure anything.
+One frame in three, the spacing of the stacked frames, so a single cache serves the
+three channels. The evaluation slice is excluded.
 
 Usage:
     python scripts/build_frame_cache.py --video <video.mp4> --annotations <ball.json> \

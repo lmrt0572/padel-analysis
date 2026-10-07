@@ -15,7 +15,7 @@ def synthetic_pose() -> tuple[CameraPose, np.ndarray, np.ndarray]:
     intrinsics = np.array(
         [[focal, 0.0, image_size[0] / 2], [0.0, focal, image_size[1] / 2], [0.0, 0.0, 1.0]]
     )
-    # 3D points: the 4 corners on the ground, plus the 2 top corners of the far back wall.
+    # 3D points: the 4 corners on the ground, plus the 2 top corners of the far back wall
     h = court.back_wall_total_height
     corners = court.corners()
     object_points = np.array(
@@ -28,7 +28,7 @@ def synthetic_pose() -> tuple[CameraPose, np.ndarray, np.ndarray]:
             [corners[3][0], corners[3][1], h],
         ]
     )
-    # Rotation: camera looking towards positive y, tilted downwards.
+    # rotation: camera looking towards positive y, tilted downwards
     tilt = np.deg2rad(20.0)
     rotation = np.array(
         [

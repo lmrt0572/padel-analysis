@@ -1,19 +1,8 @@
 """Scoring surface predictions without letting the easy cases carry the figure.
 
-The annotation campaign oversamples the hard contacts on purpose - they are where a
-human judgement is worth having, two agreeing indices already settling seventy percent
-of the rest. That makes any raw overall rate meaningless, the sample no longer looking
-like the population it is drawn from.
-
-So every rate is reported per class and per stratum, and the single overall figure is
-reweighted to the real mix with the weights declared. A weighted figure whose weights
-are not stated is a figure whose sampling has been hidden.
-
-Two answers name no surface and are both excluded from these rates, for opposite
-reasons. `x` is a non-measurement - the annotator could not tell - and scoring it
-either way would assert something the data does not support. `aucun` is a measurement
-of a different thing: the trajectory ran straight through, so stage B.3 invented that
-event. Both rates are reported, and never added together.
+The annotation campaign oversamples the hard contacts, so every rate is given per
+class and per stratum, and the overall figure is reweighted with declared weights.
+`x` (unreadable) and `aucun` (no contact) are reported apart and never added together.
 """
 
 import math
@@ -29,8 +18,7 @@ class ClassScore:
     precision: float
     recall: float
     support: int
-    """How many truths carried this class. A rate without it invites over-reading -
-    mesh contacts are expected to be few, and three of them cannot carry a figure."""
+    """How many truths carried this class."""
 
     @property
     def f1(self) -> float:
@@ -48,7 +36,7 @@ def _readable(predicted: list[str], truth: list[str]) -> list[tuple[str, str]]:
 
 
 def per_class(predicted: list[str], truth: list[str]) -> dict[str, ClassScore]:
-    """One score per class present in the truth, unreadable contacts dropped."""
+    """Return one score per class present in the truth, unreadable contacts dropped."""
     pairs = _readable(predicted, truth)
     scores: dict[str, ClassScore] = {}
     for label in sorted({t for _, t in pairs}):
@@ -64,12 +52,7 @@ def per_class(predicted: list[str], truth: list[str]) -> dict[str, ClassScore]:
 
 
 def share_of(truth: list[str], marker: str) -> float:
-    """Share of answers equal to `marker`.
-
-    Used for the two answers that name no surface, which are reported apart and
-    never added together: `x` is what the eye could not settle, `aucun` is what the
-    contact stage should not have flagged at all.
-    """
+    """Return the share of answers equal to `marker`."""
     if not truth:
         return math.nan
     return sum(1 for t in truth if t == marker) / len(truth)
@@ -78,15 +61,14 @@ def share_of(truth: list[str], marker: str) -> float:
 def weighted_accuracy(
     strata: dict[str, tuple[list[str], list[str]]], weights: dict[str, float]
 ) -> float:
-    """Accuracy of each stratum, recombined at the population's real proportions.
+    """Return the accuracy of each stratum, recombined at the population's proportions.
 
     Args:
         strata: name -> (predicted, truth) for that stratum.
-        weights: name -> share of the real population. Must sum to one, since a
-            weighted figure whose weights do not is an average of nothing.
+        weights: name -> share of the real population; must sum to one.
 
     Raises:
-        KeyError: a stratum carries no weight, which would silently drop it.
+        KeyError: a stratum carries no weight.
     """
     if abs(sum(weights.values()) - 1.0) > 1e-9:
         raise ValueError("weights must sum to one")

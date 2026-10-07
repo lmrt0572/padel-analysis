@@ -1,9 +1,8 @@
-"""Note les contacts de la chaine de demonstration contre le pointage complet d'une plage.
+"""Score the contacts of the demonstration chain against the full marking of a range.
 
-Precision, rappel et justesse de surface, pour plusieurs variantes de la chaine, sur les
-memes marques. Pour les contacts rates, dit aussi a quel etage ils se sont perdus : le
-chemin n'etait pas sur la balle, le chemin y etait mais sans virage detecte, ou le
-contact a ete trouve puis masque par un filtre d'affichage.
+Precision, recall and surface accuracy for several variants of the chain, on the same
+marks. For missed contacts, also says where they were lost: the path was not on the
+ball, the path had no detected turn, or a display filter hid the contact.
 
 Usage:
     python scripts/measure_demo_contacts.py --analysis outputs/demo_FinalF_analysis.pkl \
@@ -35,7 +34,7 @@ ANSWER_OF_LABEL = {"SOL": "sol", "VITRE": "verre", "GRILLAGE": "grillage", "FILE
 
 
 def labelled(contacts, positions, frames, pose, surfaces, isolated_filter):
-    """Contact frame -> answer shown, for the contacts a variant would display."""
+    """Return contact frame -> answer shown, for the contacts a variant would display."""
     shown: dict[int, str] = {}
     for contact in contacts:
         ball = positions.get(contact.frame)

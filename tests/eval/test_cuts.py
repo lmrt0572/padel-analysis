@@ -4,7 +4,7 @@ from padel_analysis.eval.cuts import CameraCut, find_camera_cuts
 
 
 def _positions(rows: dict[int, list[tuple[float, float]]]) -> dict[int, dict]:
-    """near_1, near_2, far_1, far_2 - dans cet ordre."""
+    """near_1, near_2, far_1, far_2, in that order."""
     names = ("near_1", "near_2", "far_1", "far_2")
     return {
         frame: {
@@ -97,7 +97,7 @@ def test_a_side_with_no_annotated_player_is_left_out():
 
 
 def test_a_teleport_across_a_short_hole_is_a_cut():
-    """Huit metres en trois frames absentes : personne ne court aussi vite."""
+    """Eight metres over three missing frames: nobody runs that fast."""
     rows = {0: [(-2.0, -5.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)],
             3: [(-2.0, 3.0), (2.0, -5.0), (-2.0, 5.0), (2.0, 5.0)]}
     assert find_camera_cuts(_positions(rows))[0].frame == 3

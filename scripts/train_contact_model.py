@@ -1,12 +1,8 @@
-"""Trains the contact model on the marked minutes, never on the judge ones.
+"""Train the contact model on the marked minutes, never on the judge ones.
 
-With --cv, each minute is first predicted by a model trained on the others, and scored
-like the demonstration: it is this figure that says whether the model is better than
-the rules. The final model is then trained on all the minutes.
-
-With --curve, the learning curve: each minute predicted by a model trained on 2, 4,
-6... other minutes. With --results, these figures are written as JSON, for the figures
-of the README.
+With --cv, each minute is first predicted by a model trained on the others, then the
+final model is trained on all the minutes. With --curve, the learning curve. With
+--results, these figures are written as JSON, for the figures of the README.
 
 Usage:
     python scripts/train_contact_model.py --cv --out weights/contact_net.pt

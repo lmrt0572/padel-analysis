@@ -1,11 +1,7 @@
-"""Measures the cutting into rallies against the serves annotated in the dataset.
+"""Measure the cutting into rallies against the serves annotated in the dataset.
 
-The dataset marks the serves over the first 20,100 frames of each final. An announced
-start of a rally is right if it falls within two seconds of a serve: the cut precedes
-the serve by a second at most, and the service motion lasts.
-
-The minutes that were used to train the contact model tune the cutting; the minutes it
-has never seen are only scored with --juge, once.
+An announced rally start is right if it falls within two seconds of a serve. The
+minutes the contact model has never seen are only scored with --juge, once.
 
 Usage:
     python scripts/rally_bench.py --contact-model weights/contact_net.pt
@@ -37,7 +33,7 @@ EDGE = 30  # a serve stuck to the edge of the minute cannot be judged
 
 
 def serves(match: str) -> list[int]:
-    """The first frame of each annotated serve; a serve split in two runs counts once."""
+    """Return the first frame of each annotated serve; a serve split in two counts once."""
     path = Path(f"data/padeltracker100/extracted/labels/2022_BCN_{match}_1_shots.csv")
     starts, previous, last = [], None, -1000
     with path.open(encoding="utf-8") as handle:
@@ -52,7 +48,7 @@ def serves(match: str) -> list[int]:
 
 
 def minute(match: str, start: int, model: ContactModel) -> dict:
-    """The contacts and the frame-to-frame changes of an analysed minute; cached."""
+    """Return the contacts and the frame-to-frame changes of an analysed minute; cached."""
     path = CACHE / f"{match}_{start}.pkl"
     if path.exists():
         return pickle.loads(path.read_bytes())
@@ -70,7 +66,7 @@ def minute(match: str, start: int, model: ContactModel) -> dict:
 
 
 def score(keys, model: ContactModel) -> tuple[int, int, int]:
-    """Serves found, rally starts announced, serves annotated."""
+    """Return serves found, rally starts announced, serves annotated."""
     found = announced = real = 0
     for match, start in keys:
         data = minute(match, start, model)

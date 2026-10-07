@@ -42,7 +42,7 @@ def test_the_back_walls_are_vertical_and_at_the_baselines():
     assert len(walls) == 2
     for wall in walls:
         assert isinstance(wall, Surface)
-        # Horizontal normal: a vertical wall has a normal with no z component.
+        # horizontal normal: a vertical wall has a normal with no z component
         assert wall.normal[2] == pytest.approx(0.0)
         assert abs(wall.offset) == pytest.approx(court.half_length)
 

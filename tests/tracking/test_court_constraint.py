@@ -53,14 +53,14 @@ def test_partners_crossing_do_not_swap_identities():
     tracker = CourtSlotTracker()
     first = tracker.update([_observation(-3, -5), _observation(3, -5),
                             _observation(-3, 5), _observation(3, 5)])
-    # The two partners on the negative side converge then cross.
+    # the two partners on the negative side converge then cross
     for left_x, right_x in ((-1.5, 1.5), (-0.5, 0.5), (0.5, -0.5), (1.5, -1.5)):
         assignment = tracker.update(
             [_observation(left_x, -5), _observation(right_x, -5),
              _observation(-3, 5), _observation(3, 5)]
         )
-    # Observations 0 and 1 have swapped positions. Each slot must keep following
-    # the same observation as at the start.
+    # observations 0 and 1 have swapped positions; each slot must keep following
+    # the same observation as at the start
     assert assignment["near_1"] == first["near_1"]
     assert assignment["near_2"] == first["near_2"]
 
@@ -105,8 +105,8 @@ def test_appearance_breaks_a_positional_tie():
         _observation(-2, -5, appearance=red), _observation(2, -5, appearance=black),
         _observation(-2, 5, appearance=red), _observation(2, 5, appearance=black),
     ])
-    # The two partners swap their exact positions, without changing outfit. Without
-    # appearance, position alone would make the identities jump.
+    # the two partners swap their exact positions, without changing outfit; without
+    # appearance, position alone would make the identities jump
     assignment = tracker.update([
         _observation(2, -5, appearance=red), _observation(-2, -5, appearance=black),
         _observation(-2, 5, appearance=red), _observation(2, 5, appearance=black),
@@ -161,7 +161,7 @@ def test_nobody_can_be_playing_behind_the_back_glass():
 
 def test_someone_on_the_court_is_preferred_to_someone_beside_it():
     tracker = CourtSlotTracker()
-    # The real player is not detected at the start: a seated umpire takes the slot.
+    # the real player is not detected at the start: a seated umpire takes the slot
     for _ in range(5):
         tracker.update([_observation(-2, -5), _observation(2, -5),
                         _observation(2, 5), _observation(6.5, 2.0)])
@@ -177,7 +177,7 @@ def _four(far_1, far_2, near=((-2, -5), (2, -5))):
 
 
 def test_a_splice_does_not_leave_a_teleportation_speed_behind():
-    """Au raccord, la vitesse mesuree serait celle d'un saut de plusieurs metres."""
+    """At a splice, the measured velocity would be that of a jump of several metres."""
     tracker = CourtSlotTracker()
     for _ in range(10):
         tracker.update(_four((-3, 5), (3, 5)))

@@ -1,28 +1,12 @@
-"""Draws up the list of contacts to submit to human judgement.
+"""List the contacts to submit to human judgement.
 
-The contacts are detected on the ANNOTATED ball, not on the reconstructed trajectory.
-The question asked is "this real contact, which surface": mixing in detection false
-positives would have non-existent events judged, and would blend two distinct errors,
-that of milestone B.3, already measured, and that of C.
+Contacts are detected on the annotated ball, not on the reconstructed trajectory. The
+stratum recorded says whether the rule hesitated, never what it concluded: "raquette"
+when a wrist is close, "isole" when the ray meets a single admissible surface, "ambigu"
+when several remain possible.
 
-The stratum recorded says whether the rule hesitated, never what it concluded. It is
-used to split the results by difficulty, and the arbitration tool does not show it.
-
-Three strata. "raquette": a wrist is close. "isole": the ray meets a single admissible
-surface, which looked like a sign of confidence and turned out to be the opposite, the
-24 cases of the tuning match being 24 non-events. A real contact happens in the volume
-of play, where the near back wall is always admissible too since the camera is behind
-it; a ray that meets only one surface therefore points outside the play. "ambigu":
-several surfaces remain possible.
-
---sample draws a subset at random while keeping the proportion of each stratum. The
-men's match has 886 contacts, that is two hours of arbitration; a sample is enough to
-separate 0.83 from 0.75, and its seed is recorded.
-
---refresh recomputes the strata while keeping the answers already given. The answers
-are about instants, which the rule does not change; only their stratum moves.
-
-No video is decoded: ball, poses and calibration are JSON files.
+--sample draws a subset at random while keeping the proportion of each stratum.
+--refresh recomputes the strata while keeping the answers already given.
 
 Usage:
     python scripts/build_surface_tasks.py --annotations <ball.json> \
@@ -55,7 +39,7 @@ LEFT_WRIST, RIGHT_WRIST = 9, 10
 
 
 def wrists_on(poses: PoseAnnotations, frame: int) -> list[tuple[float, float]]:
-    """Every visible wrist on that frame, all players together."""
+    """Return every visible wrist on that frame, all players together."""
     return [
         (float(k[0]), float(k[1]))
         for person in poses.for_frame(frame)
@@ -65,11 +49,7 @@ def wrists_on(poses: PoseAnnotations, frame: int) -> list[tuple[float, float]]:
 
 
 def _stratified(tasks: list[SurfaceTask], size: int, seed: int) -> list[SurfaceTask]:
-    """Draws `size` tasks while keeping the proportion of each stratum.
-
-    The size and the seed are recorded in the file: without them the draw would not be
-    reproducible, and a result that cannot be redone is not a measurement.
-    """
+    """Draw `size` tasks while keeping the proportion of each stratum."""
     by_stratum: dict[str, list[SurfaceTask]] = {}
     for task in tasks:
         by_stratum.setdefault(task.stratum, []).append(task)

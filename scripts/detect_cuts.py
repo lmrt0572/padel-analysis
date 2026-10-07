@@ -1,15 +1,11 @@
-"""Adds the broadcast cuts to an existing identity ground truth.
+"""Add the broadcast cuts to an existing identity ground truth.
 
-Nearest-neighbour association assumes a continuous picture. A change of shot breaks
-it: if two partners swapped positions during the cut, the association follows the
-wrong one, without anything looking ambiguous.
-
-The file is enriched in place: the assignments and the arbitrations already given are
-kept.
+The file is enriched in place: assignments and arbitrations already given are kept.
 
 Usage:
     python scripts/detect_cuts.py --annotations <pose.json> \
-        --calibration ground_truth/calibrations/<name>.json --identity ground_truth/identity/<name>.json
+        --calibration ground_truth/calibrations/<name>.json \
+        --identity ground_truth/identity/<name>.json
 """
 
 import argparse
@@ -48,8 +44,8 @@ def main() -> None:
     cuts = find_camera_cuts(positions, threshold=args.threshold)
     detected = {c.frame for c in cuts}
 
-    # An arbitration already given on a cut that is still detected is kept; if it is
-    # about a cut the new threshold no longer keeps, it is dropped.
+    # an arbitration on a cut that is still detected is kept; one on a cut the new
+    # threshold drops is discarded
     kept = [f for f in truth.resolved_cuts if f in detected]
     dropped = len(truth.resolved_cuts) - len(kept)
 

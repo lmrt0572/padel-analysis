@@ -1,13 +1,7 @@
 """Which frames are used for what, declared once.
 
-Three annotations cover three different ranges and the split has to satisfy all
-three at once. Shots exist only on frames 0 to 20099, so an evaluation slice taken
-outside that range would allow no contact metric at all - which is why the women's
-evaluation slice sits inside the shot range and training happens on either side of
-it. The men's ball annotation stops at 21472; evaluating past it would count every
-correct detection as a false positive.
-
-Bounds are inclusive.
+Shots exist only on frames 0 to 20099 and the men's ball annotation stops at 21472,
+so the evaluation slices sit inside both. Bounds are inclusive.
 """
 
 from dataclasses import dataclass

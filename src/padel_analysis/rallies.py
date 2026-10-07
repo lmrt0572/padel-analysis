@@ -1,9 +1,6 @@
-"""The rallies chosen for the statistics page, and how each becomes a `Rally`.
+"""How a stretch of a saved analysis becomes a `Rally`, and who struck each shot.
 
-Rallies are picked by hand in a small file: which match, which analysed minute, and
-the first and last frame. Player names are optional - without them each player keeps
-a neutral name, which is always right, whereas a real name is only as right as whoever
-typed it.
+Player names are optional: without them each player keeps a neutral name.
 """
 
 from collections.abc import Sequence
@@ -45,12 +42,13 @@ def striker_slot(
     box: np.ndarray | None, people: Sequence, assignment: dict, ball=None,
     side: str | None = None,
 ) -> str | None:
-    """The slot of the player who struck.
+    """Return the slot of the player who struck.
 
-    The player whose box was lit, when the tracker holds them. The lit box can belong to
-    a detection the tracker left out - a player half hidden, or a figure beside the
-    court - and a strike still has a striker: then it is the tracked player whose box
-    is nearest the ball. With `side`, only a player of that half can be the striker.
+    The player whose box was lit when the tracker holds them, otherwise the tracked
+    player nearest the ball.
+
+    Args:
+        side: only a player of that half can be the striker.
     """
     slot_of_index = {index: slot for slot, index in assignment.items()
                      if side is None or slot.startswith(side)}
@@ -71,13 +69,10 @@ def striker_slot(
 
 def strikers(frames: dict, strikes: Sequence[tuple[int, np.ndarray | None, tuple]],
              ) -> dict[int, str | None]:
-    """The striker of each (frame, lit box, ball) strike, the halves made to alternate.
+    """Return the striker of each (frame, lit box, ball) strike, the halves alternating.
 
     Three strikes in a row from one half cannot happen within an exchange: the middle
-    one went to the wrong half, most often a lob or a smash near the camera, which rises
-    in the picture beside the far players. It is given to the nearest player of the
-    other half. Measured on the eleven training minutes, against the alternation of the
-    hand-marked strikes: 12 of 403 strikes on the wrong half before, 6 after.
+    one is given to the nearest player of the other half.
     """
     slots = {}
     for frame, box, ball in strikes:
@@ -102,7 +97,7 @@ def strikers(frames: dict, strikes: Sequence[tuple[int, np.ndarray | None, tuple
 
 
 def build_rally(analysis: dict, events: Sequence, spec: RallySpec, fps: float) -> Rally:
-    """The rally's contacts and player positions, from a saved analysis and its events."""
+    """Return the rally's contacts and player positions, from a saved analysis."""
     frames = analysis["frames"]
     chosen = [e for e in events if spec.start <= e.frame <= spec.stop]
     players = strikers(frames, [(e.frame, e.box, e.pixel) for e in chosen

@@ -1,11 +1,9 @@
-"""Mesure le plafond de rappel des candidats de balle, pour plusieurs ecarts.
-
-L'ecart temporel n'est pas choisi : il est balaye et le tableau tranche.
+"""Measure the recall ceiling of the ball candidates, for several frame spacings.
 
 Usage:
     python scripts/measure_candidates.py --video <video.mp4> \
         --annotations <ball.json> --start 16000 --stop 20099 \
-        --spacings 1 2 3 4 --out outputs/<nom>_candidates.json
+        --spacings 1 2 3 4 --out outputs/<name>_candidates.json
 """
 
 import argparse

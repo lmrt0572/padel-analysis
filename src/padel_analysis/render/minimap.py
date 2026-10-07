@@ -1,7 +1,6 @@
 """Top-down view of the court with the tracked players on it.
 
-Positive `y` is drawn towards the top of the image, matching the broadcast camera,
-where the far end of the court appears above the near one.
+Positive `y` is drawn towards the top of the image, matching the broadcast camera.
 """
 
 from collections.abc import Sequence
@@ -27,7 +26,7 @@ NET = (80, 220, 255)
 
 
 class Minimap:
-    """Draws player positions on a schematic court."""
+    """Schematic court with the player positions drawn on it."""
 
     def __init__(self, court: Court, width: int = 300, margin: int = 18) -> None:
         self._court = court
@@ -51,10 +50,10 @@ class Minimap:
         positions: dict[str, tuple[float, float]],
         lit: Sequence[tuple["Zone", float]] = (),
     ) -> np.ndarray:
-        """Players as filled discs, over the zones recent contacts have lit.
+        """Draw the players as filled discs, over the zones recent contacts have lit.
 
-        Each lit zone comes with a strength in [0, 1], so that a zone can fade out
-        after its contact instead of switching off at once.
+        Args:
+            lit: zones with a strength in [0, 1], so that a zone can fade out.
         """
         court = self._court
         image = np.full((self._height, self._width, 3), 35, dtype=np.uint8)

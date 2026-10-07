@@ -1,10 +1,7 @@
-"""Analyses a whole match, minute by minute, for the match statistics.
+"""Analyse a whole match, minute by minute, for the match statistics.
 
-It is the expensive pass (pose detector and ball network on every frame), cut into
-slices of 1,800 contiguous frames, from the first frame to the last. Each slice is
-saved as soon as it is finished: an interruption only loses the slice in progress, and
-running the command again resumes at the next one. The player tracking of each slice
-starts from zero; it is then replayed in one go over the match.
+The expensive pass, cut into slices of 1,800 frames. Each slice is saved as soon as it
+is finished, so running the command again resumes at the next one.
 
 Usage:
     python scripts/analyse_match.py --weights weights/ball_net.pt

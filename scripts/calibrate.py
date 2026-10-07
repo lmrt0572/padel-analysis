@@ -1,15 +1,11 @@
 """Interactive court calibration: click known court locations on a video frame.
 
+A schematic of the court shows which point to click. Press 'u' to undo the last click,
+'q' to abort. The last four points are control points, excluded from the fit.
+
 Usage:
     python scripts/calibrate.py --video data/clips/match.mp4 --frame 500 \
         --out ground_truth/calibrations/match.json
-
-A schematic of the court is drawn in the corner of the window with the point being
-asked for highlighted, so there is no ambiguity about which intersection to click.
-Press 'u' to undo the last click, 'q' to abort.
-
-The last four points are control points: they are excluded from the homography fit
-and used only to measure its accuracy, so the reported error is never optimistic.
 """
 
 import argparse
@@ -31,10 +27,10 @@ HILITE = (0, 255, 255)
 
 
 def requested_points(court: Court) -> list[tuple[str, tuple[float, float]]]:
-    """Court locations to click, in order. The last N_CONTROL become control points."""
+    """Return the court locations to click, in order; the last N_CONTROL are controls."""
     w, ln, s = court.half_width, court.half_length, court.service_line_distance
     return [
-        # --- ajustement ---
+        # fit
         ("corner_near_left", (-w, -ln)),
         ("corner_near_right", (w, -ln)),
         ("corner_far_right", (w, ln)),
@@ -44,7 +40,7 @@ def requested_points(court: Court) -> list[tuple[str, tuple[float, float]]]:
         ("service_far_left", (-w, s)),
         ("service_far_right", (w, s)),
         ("net_left", (-w, 0.0)),
-        # --- controle ---
+        # control
         ("net_right", (w, 0.0)),
         ("service_near_centre", (0.0, -s)),
         ("service_far_centre", (0.0, s)),
@@ -53,7 +49,7 @@ def requested_points(court: Court) -> list[tuple[str, tuple[float, float]]]:
 
 
 def court_schema(court: Court, wanted, current: int, width: int = 300) -> np.ndarray:
-    """Top-down schematic of the court with the requested point highlighted."""
+    """Return a top-down schematic of the court with the requested point highlighted."""
     w, ln, s = court.half_width, court.half_length, court.service_line_distance
     margin = 34
     scale = (width - 2 * margin) / (2 * w)
@@ -61,7 +57,7 @@ def court_schema(court: Court, wanted, current: int, width: int = 300) -> np.nda
     img = np.full((height, width, 3), 35, dtype=np.uint8)
 
     def px(x: float, y: float) -> tuple[int, int]:
-        # y court positif = fond eloigne = haut de l'image
+        # positive court y = far end = top of the picture
         return (int(margin + (x + w) * scale), int(margin + (ln - y) * scale))
 
     cv2.rectangle(img, px(-w, ln), px(w, -ln), (110, 55, 28), -1)
@@ -96,12 +92,7 @@ def court_schema(court: Court, wanted, current: int, width: int = 300) -> np.nda
 
 def magnifier(frame: np.ndarray, cursor: tuple[int, int], half: int = 44,
               zoom: int = 5) -> np.ndarray:
-    """A zoomed view around the cursor, with a crosshair on the exact pixel.
-
-    The far end of the court is heavily foreshortened - the far baseline and the far
-    service line sit about thirty pixels apart - so clicking there unaided would
-    dominate the calibration error.
-    """
+    """Return a zoomed view around the cursor, with a crosshair on the exact pixel."""
     h, w = frame.shape[:2]
     cx = int(np.clip(cursor[0], half, w - half - 1))
     cy = int(np.clip(cursor[1], half, h - half - 1))
@@ -172,8 +163,7 @@ def collect_clicks(frame: np.ndarray, court: Court) -> list[CalibrationPoint]:
                         (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color,
                         max(1, thick - 2))
 
-        # The insets flip to the side opposite the cursor, so as never to hide the
-        # point one is trying to click.
+        # the insets flip to the side opposite the cursor, so the point stays visible
         on_left = cursor[0] > canvas.shape[1] // 2
         paste_inset(canvas, court_schema(court, wanted, i), top=True, left=on_left)
         paste_inset(canvas, magnifier(frame, (cursor[0], cursor[1])),

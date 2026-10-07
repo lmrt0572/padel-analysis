@@ -1,13 +1,8 @@
 """Test bench of the identity tracking, on the minutes already analysed.
 
-The full evaluation campaign redoes the detection of the players over the whole match:
-hours of graphics card per trial. The minutes analysed for the demonstration already
-carry the detections; it is enough to add the colours of the torsos, read once from the
-video, to replay any tracking in a few seconds.
-
-The twenty minutes analysed for the contacts are used for tuning. Eight separate
-minutes, four per final, are only scored with --juge, a single time, when the tracking
-is frozen: the identity truth covers both matches in full, they required no marking.
+The analysed minutes already carry the detections; with the torso colours cached, any
+tracking is replayed in a few seconds. The judge minutes are only scored with --juge,
+once, when the tracking is frozen.
 
 Usage:
     python scripts/identity_bench.py            # builds the cache, scores the tuning
@@ -35,7 +30,7 @@ ALL = (minutes.TUNING + minutes.USED + minutes.EXTRA + minutes.JUDGE + minutes.J
 
 
 def observations(match: str, start: int) -> dict:
-    """Every frame's detections placed on the court, with torso colours; cached."""
+    """Return every frame's detections placed on the court, with torso colours; cached."""
     path = CACHE / f"{match}_{start}.pkl"
     if path.exists():
         return pickle.loads(path.read_bytes())
@@ -57,7 +52,7 @@ def observations(match: str, start: int) -> dict:
 
 
 def score(chosen, make_tracker=CourtSlotTracker) -> dict:
-    """IDF1 and identity switches of a tracker over the chosen minutes."""
+    """Return IDF1 and identity switches of a tracker over the chosen minutes."""
     accumulator = TrackingAccumulator()
     truths, poses = {}, {}
     for match, start in chosen:

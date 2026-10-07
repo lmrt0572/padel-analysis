@@ -1,12 +1,7 @@
-"""Measures the surface rule against the human judgements.
+"""Measure the surface rule against the human judgements.
 
-Reported by class, by stratum, and with the count next to each rate: a rate on two
-examples is not a rate.
-
-The two answers that name no surface are counted separately and never added together.
-"x" is a non-measurement; "aucun" is a false positive of the contact stage, and its
-complement is the precision of that stage, the only one this project can produce, the
-stroke annotation covering half the frames.
+Reported by class and by stratum, with the count next to each rate. "x" (unreadable)
+and "aucun" (no contact) are counted separately and never added together.
 
 Usage:
     python scripts/measure_surfaces.py --truth ground_truth/surfaces/<name>.json \
@@ -45,7 +40,7 @@ CLASS_OF_SURFACE = {RACKET: "raquette", "floor": "sol", "net": "filet"}
 
 
 def predicted_class(name: str | None) -> str:
-    """The class the rule announces, 'rien' if it found no surface."""
+    """Return the class the rule announces, 'rien' if it found no surface."""
     if name is None:
         return "rien"
     return CLASS_OF_SURFACE.get(name, "mur")
@@ -92,9 +87,8 @@ def main() -> None:
 
     truths = [class_of(a) or a for a in actual]
     scores = per_class(predicted, truths)
-    # The filter is on the ANSWER, not on the class: class_of translates an answer
-    # and so does not know "mur", which is already one. Filtering on the class would
-    # silently discard the seventeen walls.
+    # filter on the answer, not on the class: `class_of` translates an answer and
+    # does not know "mur", which is already a class
     real = [
         (p, t)
         for p, t, a in zip(predicted, truths, actual)

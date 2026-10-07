@@ -1,11 +1,8 @@
-"""Scores the demonstration chain on every marked minute of a set.
+"""Score the demonstration chain on every marked minute of a set.
 
-The counts are added up over the minutes, not the rates: a minute with 90 contacts
-weighs more than one with 70.
-
-The judge minutes are only scored with --juge, so that the final verdict cannot be
-looked at by mistake while tuning is still going on. The first four judges now train
-the model: scoring them with the shipped model no longer measures anything.
+Counts are added up over the minutes, not rates. The judge minutes are only scored with
+--juge; the first four judges now train the model, so scoring them with the shipped
+model no longer measures anything.
 
 Usage:
     python scripts/score_minutes.py --tag 360

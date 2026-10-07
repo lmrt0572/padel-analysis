@@ -1,33 +1,20 @@
 """Human arbitration of the moments where identity may have slipped.
 
-Two kinds of doubt, arbitrated one after the other.
+CLOSE APPROACHES: two partners pass close enough for the association to hesitate.
 
-CLOSE APPROACHES: two partners pass close enough for the association to hesitate. The
-video is replayed in a loop with the two players concerned circled in the colour of
-their slot.
-
-    n  they have NOT switched, the automatic association was right
+    n  they have NOT switched
     s  they HAVE switched: the two slots are swapped from this episode on
 
-BROADCAST CUTS: the camera changes, the players reappear elsewhere, and the association
-ties them to the nearest to their position before. If two partners swapped positions
-during the cut, it follows the wrong one. The two pairs can switch independently, hence
-four answers.
+BROADCAST CUTS: the players reappear elsewhere, and each pair can switch independently.
 
     n  no switch
     p  the NEAR pair has switched
     e  the FAR pair has switched
     b  BOTH pairs have switched
-    c  the TEAMS HAVE CHANGED ENDS
+    c  the TEAMS HAVE CHANGED ENDS: identity stops there and starts again
 
-The change of ends is apart. The slots stand for a half of the court, not a person:
-after a change of ends, `near_1` is someone else, and no swap of labels can express it.
-The identity of the player stops there and starts again from zero: it is a boundary,
-not a correction.
-
-Do not judge the bodies but the colours: does the same player wear the same colour
-before and after? A stable detail (cap, shoes, sleeves) is worth more than a general
-impression.
+Judge the colours, not the bodies: a stable detail (cap, shoes, sleeves) is worth more
+than a general impression.
 
     r  go back to the previous clip and cancel its answer
     q  give up (the arbitrations already given are kept)
@@ -96,7 +83,7 @@ def ask(
     keys: str,
     allowed: str,
 ) -> str:
-    """Replays the sequence in a loop until a valid key is pressed."""
+    """Replay the sequence in a loop until a valid key is pressed."""
     accepted = set(allowed) | {"q"}
     while True:
         for index, frame in source.iter_frames(start=max(0, start), stop=stop):
@@ -111,7 +98,7 @@ def ask(
 
 
 def undo_episode(truth: IdentityGroundTruth, episode) -> str | None:
-    """Undoes the answer given on a close approach. The swap is its own inverse."""
+    """Undo the answer given on a close approach; the swap is its own inverse."""
     key = truth.decisions.pop(f"episode:{episode.start_frame}", None)
     if key == "s":
         truth.apply_swap(episode.start_frame, episode.slots)
@@ -136,7 +123,7 @@ def undo_cut(truth: IdentityGroundTruth, cut) -> str | None:
 
 
 def review_episodes(source, annotations, truth, path) -> bool:
-    """Retourne False si l'utilisateur a demande a quitter."""
+    """Return False if the user asked to quit."""
     pending = [e for e in truth.episodes if e.start_frame not in truth.resolved]
     print(f"close approaches to arbitrate: {len(pending)}/{len(truth.episodes)}")
 
@@ -197,10 +184,8 @@ def review_cuts(source, annotations, truth, path) -> bool:
     position = 0
     while position < len(pending):
         cut = pending[position]
-        # All five answers are always offered. The detector is used to find the clips to
-        # watch; what is seen in them does not belong to it. Two close partners who swap
-        # places travel less than the threshold, and the pair is therefore not announced,
-        # without having any less switched.
+        # all five answers are always offered: two close partners who swap places travel
+        # less than the threshold, so the detector does not announce their pair
         keys = ("n = aucune    p = proche    e = eloignee    b = les deux    "
                 "c = CHANGEMENT DE COTE    r = retour    q = quitter")
         caption = (f"[coupure {position + 1}/{len(pending)}] frame {cut.frame}  "
@@ -215,8 +200,8 @@ def review_cuts(source, annotations, truth, path) -> bool:
             return False
 
         if decision == "r":
-            # At the first clip of the queue, the previous one was answered in an earlier
-            # session: it is no longer pending, it has to be taken back from the record.
+            # at the first clip of the queue, the previous answer comes from an earlier
+            # session: it is taken back from the record
             if position > 0:
                 position -= 1
                 previous = pending[position]

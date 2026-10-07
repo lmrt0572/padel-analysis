@@ -1,7 +1,6 @@
 """Court occupancy, as a grid of time spent per cell.
 
-Row 0 is the negative-y baseline, so the grid is indexed the way the court is
-described rather than the way an image is drawn; the renderer flips it.
+Row 0 is the negative-y baseline; the renderer flips it.
 """
 
 import numpy as np
@@ -15,15 +14,11 @@ def occupancy_grid(
     cell_size: float = 0.5,
     normalise: bool = True,
 ) -> tuple[np.ndarray, tuple[float, float, float, float]]:
-    """Histogram of court positions.
+    """Return the histogram of court positions and its extent in metres.
 
-    Positions outside the court are dropped rather than clamped: padel players do
-    leave through the side openings, and piling those frames onto an edge cell
-    would invent an occupancy that never happened.
-
-    Returns:
-        The grid, shaped (rows along y, columns along x), and its extent as
-        (x_min, x_max, y_min, y_max) in metres.
+    Positions outside the court are dropped rather than clamped onto an edge cell.
+    The grid is shaped (rows along y, columns along x); the extent is
+    (x_min, x_max, y_min, y_max).
     """
     extent = (
         -court.half_width,

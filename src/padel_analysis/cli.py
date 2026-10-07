@@ -1,4 +1,4 @@
-"""End-to-end pipeline: video in, annotated video and cached court positions out.
+"""Run the pipeline end to end: video in, annotated video and cached positions out.
 
 Usage:
     python -m padel_analysis.cli --video <video.mp4> \

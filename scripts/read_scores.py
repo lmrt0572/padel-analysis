@@ -1,11 +1,9 @@
-"""Reads the score off the scoreboard at each rally of a match, and deduces the points.
+"""Read the score off the scoreboard at each rally of a match, and deduce the points.
 
-The match is gone through once: the cuts split the rallies, and the scoreboard is read
-on a few frames at the start of each; the most frequent reading is kept. Between two
-successive rallies, the grammar of the score says who won the point, or that a reading
-is doubtful. The file written also keeps each reading, serving pair included, and the
-start of each sequence. With --mosaique, scoreboards drawn at random are written with
-their reading, to check it by eye.
+The scoreboard is read on a few frames at the start of each rally and the most frequent
+reading is kept. Between two successive rallies, the grammar of the score says who won
+the point, or that a reading is doubtful. With --mosaique, scoreboards drawn at random
+are written with their reading, to check it by eye.
 
 Usage:
     python scripts/read_scores.py --match FinalF --out outputs/scores/FinalF.json
@@ -88,8 +86,7 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "points": points,
-        # Every reading, one per sequence read: the start of the sequence, the score and the
-        # row of the serving pair, which the match report crosses with the serve.
+        # one reading per sequence: its start, the score and the row of the serving pair
         "readings": [{"start": start, "set": state.set_number, "games": list(state.games),
                       "points": list(state.points), "server": state.server}
                      for start, state in readings],

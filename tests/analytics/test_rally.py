@@ -87,7 +87,7 @@ def test_a_still_player_travels_nothing():
 def test_a_player_walking_one_metre_per_second_travels_that_far():
     positions = {"near_1": {f: (f / FPS, -5.0) for f in range(61)}}
     move = movements(_rally([], positions, stop=60))["near_1"]
-    # Smoothing over 9 frames trims about four frames of travel at each end.
+    # smoothing over 9 frames trims about four frames of travel at each end
     assert move.distance == pytest.approx(2.0, abs=0.15)
 
 

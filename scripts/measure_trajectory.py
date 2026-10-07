@@ -1,14 +1,7 @@
-"""Compares greedy growth and global optimisation, on the same candidates.
+"""Compare greedy growth and global optimisation, on the same candidates.
 
---weights swaps the motion detector for the trained network of milestone B.4. It is
-the ablation: a single part changes, the trajectory stage does not know where its
-candidates come from.
-
-A single pass over the video feeds both: no difference of sample can skew the gap.
-
-The player boxes come from the detector, not from the annotations: the penalty
-measured on the annotated boxes was a ceiling, this one is what the pipeline will
-produce.
+--weights swaps the motion detector for the trained network; nothing else changes. A
+single pass over the video feeds both, and the player boxes come from the detector.
 
 Usage:
     python scripts/measure_trajectory.py --video <video.mp4> \
@@ -30,11 +23,9 @@ from padel_analysis.perception.pose_detector import PoseDetector
 
 
 def collect(video, start, stop, spacing, factor, weights=None):
-    """The candidates of each frame, penalised by the boxes of the detector.
+    """Return the candidates of each frame, penalised by the boxes of the detector.
 
-    `weights` swaps the motion detector for the trained network. Nothing else changes
-    (same `best_path`, same costs, same tolerances), so the measured gap is
-    attributable to the detector and to nothing else.
+    `weights` swaps the motion detector for the trained network.
     """
     if weights is None:
         finder = MotionCandidates(spacing=spacing)

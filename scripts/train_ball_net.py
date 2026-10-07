@@ -1,33 +1,11 @@
-"""Trains the heat-map network on the frame cache.
+"""Train the heat-map network on the frame cache.
 
-FP32 only. Mixed precision was measured three times slower on this card: the TU117 has
-no tensor cores, so the half format gains nothing and the conversions cost everything.
-Do not go back to it.
+FP32 only: mixed precision is slower on a card without tensor cores. Only the frames
+carrying an annotated ball are used, and the positive pixels are weighted. Weights are
+written atomically after each epoch, as the last state and the best validation.
 
-Batch of 4, width 16, 360x640: 1.82 GB measured out of the 3.45 free.
-
-Only the frames carrying an annotated ball are used. A frame without an annotation is
-not a frame without a ball: 17.5 % of the annotated frames carry none, and nothing says
-whether the ball was absent or only unlabelled.
-
-The target being zero almost everywhere, a bare cross-entropy would learn to answer
-zero. The positive pixels are therefore weighted.
-
-The weights are written after each epoch, atomically: two hours of computation must not
-depend on the end of the script, and one can stop as soon as the validation stops
-falling without losing anything. Two files: the last state, and that of the best
-validation. A passing peak, like that of epoch 8 of the first training, must not be
-able to lose the best model.
-
-The measured throughput is 10.7 frames/s, against 15.1 in synthetic: JPEG decoding has
-become the bottleneck, each frame being read three times, once per position in the
-stack. Increasing the number of loading processes did not help.
-
-An interrupted session can be resumed: --resume starts again from the written weights,
---first-epoch numbers what follows, and the initial best validation is recomputed on
-the resumed weights rather than assumed. The state of the optimiser is written next to
-the weights since this option; an older training therefore starts again with zero Adam
-moments, and the script says so.
+--resume starts again from written weights, --first-epoch numbers what follows, and the
+best validation is recomputed on the resumed weights.
 
 Usage:
     python scripts/train_ball_net.py --cache cache/FinalF --epochs 10 --out weights/ball_net
@@ -80,7 +58,7 @@ class CachedBalls(Dataset):
 
 
 def usable(cache: Path, spacing: int) -> list[int]:
-    """The annotated frames whose two neighbours are in the cache."""
+    """Return the annotated frames whose two neighbours are in the cache."""
     meta = json.loads((cache / "balls.json").read_text(encoding="utf-8"))
     present = {int(p.stem) for p in cache.glob("*.jpg")}
     return sorted(
@@ -105,12 +83,12 @@ def save_atomically(state: dict, target: Path) -> None:
 
 
 def optimiser_path(weights: Path) -> Path:
-    """Where the state of the optimiser that goes with these weights lives."""
+    """Return where the optimiser state that goes with these weights lives."""
     return weights.with_name(weights.stem + "_optimiser.pt")
 
 
 def validate(net: nn.Module, loader: DataLoader, weight: torch.Tensor, device: str) -> float:
-    """Perte moyenne sur les frames de validation, ponderee comme a l'entrainement."""
+    """Return the mean loss over the validation frames, weighted as in training."""
     net.eval()
     checked, total = 0, 0.0
     with torch.no_grad():

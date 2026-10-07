@@ -1,8 +1,6 @@
 """Player trajectories in court metres, loaded from the pipeline cache.
 
-Frames where a player was not located carry NaN rather than an interpolated
-position. Bridging those gaps would turn a thirty-frame dropout into a metre of
-travelled distance, and the error would be invisible in the output.
+Frames where a player was not located carry NaN rather than an interpolated position.
 """
 
 from dataclasses import dataclass
@@ -36,20 +34,20 @@ class MatchTrajectories:
         return cls(frames=frames, positions=positions, fps=float(fps))
 
     def present(self, slot: str) -> np.ndarray:
-        """Boolean mask of the frames where `slot` was located."""
+        """Return the mask of the frames where `slot` was located."""
         return ~np.isnan(self.positions[slot][:, 0])
 
     def complete_mask(self) -> np.ndarray:
-        """Boolean mask of the frames where all four players were located."""
+        """Return the mask of the frames where all four players were located."""
         return np.logical_and.reduce([self.present(slot) for slot in SLOTS])
 
     def depth(self, slot: str) -> np.ndarray:
-        """Distance to the net, in metres. NaN where the player was absent."""
+        """Return the distance to the net in metres, NaN where the player was absent."""
         return np.abs(self.positions[slot][:, 1])
 
     @staticmethod
     def side(slot: str) -> int:
-        """-1 for the negative-y half, +1 for the positive-y half."""
+        """Return -1 for the negative-y half, +1 for the positive-y half."""
         return -1 if slot.startswith("near") else +1
 
     def duration_seconds(self) -> float:

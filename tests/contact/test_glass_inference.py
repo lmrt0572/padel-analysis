@@ -3,7 +3,7 @@ import pytest
 
 from padel_analysis.contact.glass_inference import Touch, inferred_walls, wall_ahead
 
-# Stroke from the near side, bounce at the far end at 30 m/s, taken by the far player.
+# stroke from the near side, bounce at the far end at 30 m/s, taken by the far player
 STRIKE = Touch(0, "raquette", "near", (0.0, -8.0))
 BOUNCE = Touch(15, "sol", "far", (0.0, 7.0))
 

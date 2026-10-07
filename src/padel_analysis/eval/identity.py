@@ -1,12 +1,7 @@
 """Identity ground truth, which PadelTracker100 does not provide.
 
-The annotations give four people per frame but never say which is which. Rebuilding
-that is mostly free: over the whole match, two partners never come within half a
-metre of each other, and only fourteen episodes bring them within a metre and a
-half. Everywhere else, nearest-neighbour association is unambiguous.
-
-So the machine assigns identity across the match, and a human arbitrates only those
-fourteen moments.
+The machine assigns identity by nearest neighbour across the match, and a human
+arbitrates only the moments where two partners come close or the broadcast cuts.
 """
 
 import json
@@ -51,21 +46,14 @@ class IdentityGroundTruth:
     resolved: list[int] = field(default_factory=list)
     cuts: list[CameraCut] = field(default_factory=list)
     resolved_cuts: list[int] = field(default_factory=list)
-    # Frames where the teams changed ends. The slots stand for a half of the court,
-    # not a person: after a change of ends, `near_1` is someone else. So there is
-    # nothing to swap: the identity of the player stops there and starts again.
+    # frames where the teams changed ends: identity stops there and starts again
     boundaries: list[int] = field(default_factory=list)
-    # What was answered at each clip, under "episode:<frame>" or "cut:<frame>".
-    # Without this trace, an answer cannot be undone: nothing in the assignments
-    # tells "no switch" from a corrected switch.
+    # what was answered at each clip, under "episode:<frame>" or "cut:<frame>",
+    # so that an answer can be undone
     decisions: dict[str, str] = field(default_factory=dict)
 
     def apply_swap(self, from_frame: int, slots: tuple[str, str]) -> None:
-        """Exchange two slots from `from_frame` onward.
-
-        Used when a human decides that two partners did cross, and the automatic
-        association followed the wrong one afterwards.
-        """
+        """Exchange two slots from `from_frame` onward."""
         first, second = slots
         for frame in sorted(self.assignments):
             if frame < from_frame:
@@ -75,10 +63,9 @@ class IdentityGroundTruth:
                 row[first], row[second] = row[second], row[first]
 
     def segment_of(self, frame: int) -> int:
-        """Index of the stretch `frame` belongs to, counting from zero.
+        """Return the index of the stretch `frame` belongs to, counting from zero.
 
-        Player identity holds inside a stretch and makes no claim across one, so a
-        metric that follows identities must not carry a name over a boundary.
+        Identity holds inside a stretch and makes no claim across one.
         """
         return sum(1 for boundary in self.boundaries if frame >= boundary)
 
@@ -109,7 +96,6 @@ class IdentityGroundTruth:
             "boundaries": self.boundaries,
             "decisions": self.decisions,
         }
-        # The file is rewritten after each arbitrated episode: never in place.
         write_json_atomically(path, payload)
 
     @classmethod
@@ -130,8 +116,7 @@ class IdentityGroundTruth:
                 for e in payload["episodes"]
             ],
             resolved=[int(f) for f in payload["resolved"]],
-            # The next two fields appeared after the first ground truths: a file
-            # that does not have them stays readable.
+            # fields added after the first ground truths: older files stay readable
             cuts=[
                 CameraCut(
                     frame=int(c["frame"]),
@@ -157,8 +142,7 @@ def assign_by_proximity(
 ) -> dict[int, dict[str, int]]:
     """Assign the four slots frame by frame, following the nearest previous position.
 
-    Frames that do not hold exactly two people per side are skipped rather than
-    guessed at: a ground truth with an invented entry is worse than a shorter one.
+    Frames that do not hold exactly two people per side are skipped.
     """
     assignments: dict[int, dict[str, int]] = {}
     previous: dict[str, np.ndarray] = {}
@@ -173,7 +157,7 @@ def assign_by_proximity(
         for slots, indices in ((NEAR_SLOTS, near), (FAR_SLOTS, far)):
             known = [s for s in slots if s in previous]
             if len(known) < 2:
-                # Premiere frame utilisable : ordre arbitraire mais stable, par x.
+                # first usable frame: arbitrary but stable order, by x
                 ordered = sorted(indices, key=lambda i: positions[i][0])
                 for slot, index in zip(slots, ordered):
                     row[slot] = index
@@ -200,11 +184,7 @@ def assign_by_proximity(
 def find_ambiguous_episodes(
     positions_by_frame: dict[int, np.ndarray], threshold: float = 1.5
 ) -> list[AmbiguousEpisode]:
-    """Stretches where two partners came within `threshold` metres of each other.
-
-    These, and only these, need a human decision: everywhere else the nearest
-    previous position identifies a player without doubt.
-    """
+    """Return the stretches where two partners came within `threshold` metres of each other."""
     episodes: list[AmbiguousEpisode] = []
     open_start: dict[tuple[str, str], int] = {}
     open_min: dict[tuple[str, str], float] = {}

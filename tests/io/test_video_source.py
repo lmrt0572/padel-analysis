@@ -6,7 +6,7 @@ from padel_analysis.io.video_source import VideoMetadata, VideoSource
 
 @pytest.fixture
 def tiny_video(tmp_path):
-    """Une video synthetique de 10 frames, chacune remplie de sa valeur d'index."""
+    """A synthetic video of 10 frames, each filled with its index value."""
     import cv2
 
     path = tmp_path / "tiny.mp4"

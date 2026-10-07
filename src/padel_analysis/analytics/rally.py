@@ -1,13 +1,7 @@
 """What happened in one rally: its contacts, who struck, where the ball landed.
 
-Everything here is computed from plain data - contacts already decided, player
-positions already on the court - so each statistic can be checked by hand on a rally
-built for the purpose. How the contacts were found is the business of the contact
-model; a rally only inherits its errors, about one surface in five on the measured
-judges, and says so rather than hiding it.
-
-Rallies are delimited by hand for now. The rest of the module does not care how the
-bounds were chosen, which is where an automatic detection would plug in.
+Computed from plain data, contacts already decided and players already placed, so
+each statistic can be checked by hand. A rally inherits the errors of the contact model.
 """
 
 import math
@@ -23,9 +17,7 @@ from .net_control import at_net_states
 RACKET = "raquette"
 WALLS = ("verre", "grillage")
 RACKET_HEIGHT = 1.0
-"""Where a strike is placed when estimating ball speed: at the striker's court position,
-one metre up. A racket contact has no surface to be read from, so its height is a
-convention and the speeds that start or end on one are flagged as estimates."""
+"""Height in metres a strike is placed at when estimating ball speed, by convention."""
 
 Point2 = tuple[float, float]
 Point3 = tuple[float, float, float]
@@ -36,7 +28,7 @@ class RallyContact:
     """One contact of a rally, as the contact model decided it."""
 
     frame: int
-    kind: str  # raquette, sol, verre, grillage, filet (racket, floor, glass, mesh, net)
+    kind: str  # raquette, sol, verre, grillage or filet
     point: Point3 | None  # on the surface touched, in metres; None for a stroke
     player: str | None  # the striker's slot, for a stroke
 
@@ -56,7 +48,7 @@ class Rally:
         object.__setattr__(self, "contacts", ordered)
 
     def time_of(self, contact: RallyContact) -> float:
-        """Seconds from the start of the rally."""
+        """Return the seconds from the start of the rally."""
         return (contact.frame - self.start) / self.fps
 
     @property
@@ -65,15 +57,14 @@ class Rally:
 
 
 def shots_by_player(rally: Rally) -> dict[str, int]:
-    """How many times each player struck the ball."""
+    """Return how many times each player struck the ball."""
     return dict(Counter(c.player for c in rally.contacts if c.kind == RACKET and c.player))
 
 
 def after_each_shot(rally: Rally) -> dict[str, dict[str, int]]:
-    """For each player, what the ball touched right after their shots.
+    """Return, for each player, what the ball touched right after their shots.
 
-    "fin" when nothing followed within the rally: the last shot, or a contact the
-    model missed.
+    "fin" when nothing followed within the rally.
     """
     after: dict[str, Counter] = {}
     contacts = rally.contacts
@@ -86,7 +77,7 @@ def after_each_shot(rally: Rally) -> dict[str, dict[str, int]]:
 
 
 def impacts(rally: Rally) -> list[RallyContact]:
-    """The contacts that can be placed on the court: floor, walls and net."""
+    """Return the contacts that can be placed on the court: floor, walls and net."""
     return [c for c in rally.contacts if c.kind != RACKET and c.point is not None]
 
 
@@ -105,10 +96,9 @@ class SpeedSegment:
 
 
 def ball_speeds(rally: Rally) -> list[SpeedSegment]:
-    """Straight-line speed between consecutive contacts that can both be placed.
+    """Return the straight-line speed between consecutive placeable contacts.
 
-    A lower bound: the ball flies a curve, not a chord, and a bounce the model missed
-    merges two flights into one.
+    A lower bound: the ball flies a curve, and a missed bounce merges two flights.
     """
     segments = []
     contacts = rally.contacts
@@ -143,12 +133,7 @@ class Movement:
 
 
 def movements(rally: Rally) -> dict[str, Movement]:
-    """Each player's smoothed path, the distance travelled, and the share at the net.
-
-    Smoothed as in the match statistics: the estimated position jitters, and summing
-    the jitter would add metres nobody ran. The window trims a little of the path at
-    both ends of the rally.
-    """
+    """Return each player's smoothed path, distance travelled and share at the net."""
     result = {}
     frames = np.arange(rally.start, rally.stop + 1)
     for player, track in rally.positions.items():

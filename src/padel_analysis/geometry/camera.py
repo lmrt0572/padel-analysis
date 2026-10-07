@@ -1,8 +1,7 @@
-"""Camera pose, and the five surfaces a ball can bounce off.
+"""Camera pose, and the surfaces a ball can bounce off.
 
-Unlike the players, the walls never move. Recovering the camera pose once per video
-lets any 3D court point be projected into the image, which is what contact-surface
-classification needs in order to tell a glass contact from a mesh contact.
+The pose, recovered once per video, projects any 3D court point into the image and
+casts a ray through any pixel.
 """
 
 from collections.abc import Sequence
@@ -19,12 +18,10 @@ MESH = "grillage"
 
 @dataclass(frozen=True)
 class Surface:
-    """One bounded plane of the court: the floor, or one of the four walls.
+    """One bounded plane of the court: the floor, a wall or the net.
 
-    The plane is the set of points satisfying ``normal . p == offset``. `contains`
-    bounds it to the real extent of the surface, and that bound is what makes an
-    intersection admissible or not - without it every ray meets every plane
-    somewhere, and nothing is decided.
+    The plane is the set of points satisfying ``normal . p == offset``; `contains`
+    bounds it to the real extent of the surface.
     """
 
     name: str
@@ -41,7 +38,7 @@ class Surface:
     def intersect(
         self, origin: np.ndarray, direction: np.ndarray
     ) -> np.ndarray | None:
-        """Where the ray meets this plane, or None if it never does in front."""
+        """Return where the ray meets this plane, or None if it never does in front."""
         along = float(self.normal @ direction)
         if abs(along) < 1e-9:
             return None
@@ -51,25 +48,23 @@ class Surface:
         return origin + distance * direction
 
     def contains(self, point: np.ndarray, margin: float = 0.0) -> bool:
-        """Whether the point lies within the real extent of the surface.
+        """Return whether the point lies within the real extent of the surface.
 
         Args:
             point: a court-space point, in metres.
-            margin: slack in metres, to absorb the camera pose error. Metres and not
-                pixels: a pixel is 1.51 cm near the camera and 6.47 cm at the far
-                baseline, so a pixel margin would be four times looser at depth.
+            margin: slack in metres, to absorb the camera pose error.
         """
         for value, (low, high) in zip(point, self.bounds):
             if low == high:
-                # The flat axis of the plane: the plane equation already guarantees it, and
-                # checking it here would fail on a floating-point rounding.
+                # the flat axis is guaranteed by the plane equation; checking it would fail
+                # on a rounding error
                 continue
             if not low - margin <= value <= high + margin:
                 return False
         return True
 
     def material_at(self, point: np.ndarray) -> str | None:
-        """Glass or mesh at that point, or None for the floor."""
+        """Return glass or mesh at that point, or None for the floor."""
         if self.glass_height is not None:
             return GLASS if point[2] <= self.glass_height else MESH
         if self.glass_from_ends is not None:
@@ -87,7 +82,7 @@ class CameraPose:
 
     @property
     def camera_centre(self) -> np.ndarray:
-        """Camera position in court coordinates, in metres."""
+        """The camera position in court coordinates, in metres."""
         return -self.rotation.T @ self.translation
 
     @classmethod
@@ -99,8 +94,7 @@ class CameraPose:
     ) -> "CameraPose":
         """Recover the pose from 3D court points and their pixels.
 
-        Include points off the ground plane - the top corners of the back wall -
-        otherwise the vertical direction is only weakly constrained.
+        Points off the ground plane are needed to constrain the vertical direction.
         """
         objects = np.asarray(object_points, dtype=np.float64).reshape(-1, 1, 3)
         images = np.asarray(image_points, dtype=np.float64).reshape(-1, 1, 2)
@@ -125,12 +119,7 @@ class CameraPose:
         )
 
     def ray(self, pixel: tuple[float, float]) -> tuple[np.ndarray, np.ndarray]:
-        """Camera centre and a unit direction, in court coordinates, through `pixel`.
-
-        The ball is somewhere on this ray and nothing says where - which is why a
-        height cannot be read off a single image in flight. At a contact it can, the
-        ball being then on a surface, and a ray meets a plane once.
-        """
+        """Return the camera centre and a unit direction through `pixel`, in court coordinates."""
         homogeneous = np.array([pixel[0], pixel[1], 1.0], dtype=np.float64)
         direction = self.rotation.T @ (np.linalg.inv(self.intrinsics) @ homogeneous)
         return self.camera_centre, direction / np.linalg.norm(direction)
@@ -144,12 +133,9 @@ class CameraPose:
 
 
 def court_surfaces(court: Court) -> list[Surface]:
-    """The six surfaces a ball can bounce off, the floor first and the net last.
+    """Return the six surfaces a ball can bounce off, the floor first and the net last.
 
-    The order matters: when a ray admits more than one surface, the caller takes the
-    first. The floor leads because a floor bounce is at zero height, so its position
-    is exact, whereas an admissible wall point may be nothing but an effect of the
-    margin.
+    When a ray admits more than one surface, the caller takes the first.
     """
     half_width, half_length = court.half_width, court.half_length
     glass_from_ends = half_length - court.side_wall_glass_length
@@ -190,10 +176,7 @@ def court_surfaces(court: Court) -> list[Surface]:
                 glass_from_ends=glass_from_ends,
             )
         )
-    # The net last: it is the smallest target and the rarest, so the one whose false
-    # positive would cost most. It only wins if it is alone. The height kept is that
-    # of the posts; the net sags by 4 cm in its middle, well below the pose
-    # error.
+    # the net last: the smallest and rarest target, it only wins when alone
     surfaces.append(
         Surface(
             name="net",
@@ -215,11 +198,9 @@ def estimate_intrinsics(
     image_size: tuple[int, int],
     focal_range: range = range(700, 4001, 5),
 ) -> np.ndarray:
-    """The focal length that reprojects these correspondences best.
+    """Return the intrinsics whose focal length reprojects these correspondences best.
 
-    The principal point is assumed at the image centre and distortion ignored. Both
-    are approximations, and their cost is not hidden: it shows up in the error on the
-    references the pose never fitted, which is the figure to trust.
+    The principal point is assumed at the image centre and distortion ignored.
 
     Args:
         object_points: 3D court points, including some off the ground.
@@ -253,14 +234,10 @@ def estimate_intrinsics(
 
 
 def pose_from_calibration(points: Sequence, image_size: tuple[int, int]) -> CameraPose:
-    """The camera pose fitted on a calibration's non-control points.
-
-    One entry point, so that the demo and the measurement scripts cannot drift into
-    recovering different cameras from the same file.
+    """Return the camera pose fitted on a calibration's non-control points.
 
     Raises:
-        ValueError: when every fitting point sits on the ground. A coplanar set leaves
-            the vertical direction free, and the pose it returned would mean nothing.
+        ValueError: when every fitting point sits on the ground.
     """
     fit = [p for p in points if not p.is_control]
     objects = np.array([p.court_xyz for p in fit], dtype=np.float64)

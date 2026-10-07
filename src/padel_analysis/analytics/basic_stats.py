@@ -1,21 +1,14 @@
 """Distance, speed and mean position, computed from court trajectories.
 
-Two traps, both measurable. A dropout must never be crossed as if it were a move,
-and position noise inflates travelled distance - the more so at the far end of the
-court, where one pixel is worth 4.3 times what it is at the near end. Smoothing is
-therefore offered explicitly, so the difference it makes can be reported rather
-than hidden.
+A dropout is never crossed as if it were a move, and smoothing is explicit so the
+share of position noise in a distance can be reported.
 """
 
 import numpy as np
 
 
 def step_distances(frames: np.ndarray, positions: np.ndarray) -> np.ndarray:
-    """Distances between positions on genuinely consecutive frames.
-
-    Pairs separated by a frame gap, or where either position is absent, are left
-    out entirely rather than joined.
-    """
+    """Return the distances between positions on consecutive frames, gaps left out."""
     frames = np.asarray(frames)
     positions = np.asarray(positions, dtype=np.float64)
     if frames.size < 2:
@@ -30,20 +23,14 @@ def step_distances(frames: np.ndarray, positions: np.ndarray) -> np.ndarray:
 
 
 def distance_travelled(frames: np.ndarray, positions: np.ndarray) -> float:
-    """Total distance in metres, gaps excluded."""
+    """Return the total distance in metres, gaps excluded."""
     return float(step_distances(frames, positions).sum())
 
 
 def smooth_positions(positions: np.ndarray, window: int = 9) -> np.ndarray:
-    """Moving average over `window` frames, leaving absences absent.
-
-    A player standing still still moves on paper, because the estimated position
-    jitters. Smoothing removes most of that; comparing the smoothed distance with
-    the raw one says how much of the total was noise.
-    """
+    """Return the moving average over `window` frames, leaving absences absent."""
     positions = np.asarray(positions, dtype=np.float64)
-    # A stretch shorter than the window (two cuts very close together) is smoothed over
-    # its own length.
+    # a stretch shorter than the window is smoothed over its own length
     window = min(window, len(positions))
     if window < 2:
         return positions.copy()
@@ -65,10 +52,9 @@ def smooth_positions(positions: np.ndarray, window: int = 9) -> np.ndarray:
 def speed_percentile(
     frames: np.ndarray, positions: np.ndarray, fps: float, percentile: float = 95.0
 ) -> float:
-    """Speed in metres per second at the given percentile of per-frame steps.
+    """Return the speed in m/s at the given percentile of per-frame steps.
 
-    A percentile rather than the maximum: a single bad position would set the
-    maximum on its own, and would say nothing about how fast the player ran.
+    A percentile rather than the maximum, which a single bad position would set.
     """
     steps = step_distances(frames, positions)
     if steps.size == 0:
@@ -77,7 +63,7 @@ def speed_percentile(
 
 
 def mean_position(positions: np.ndarray) -> np.ndarray:
-    """Average court position over the frames where the player was located."""
+    """Return the average court position over the frames where the player was located."""
     positions = np.asarray(positions, dtype=np.float64)
     present = ~np.isnan(positions[:, 0])
     if not present.any():

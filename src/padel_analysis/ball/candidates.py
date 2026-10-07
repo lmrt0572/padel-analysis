@@ -1,25 +1,8 @@
 """Ball candidates for one frame, and the interface both detectors share.
 
-This stage deliberately does not decide. It returns a ranked list, generous on
-purpose, and the trajectory stage picks from it. Two implementations sit behind
-the same interface - motion first, a network later - so that comparing them is a
-change of configuration rather than a rewrite, exactly as the two ground-point
-strategies were arranged in sub-project A.
-
-Motion is what separates a ball from everything that looks like one. A painted
-line, a logo, a reflection are all a white blob on a still image; none of them
-moves. The camera is fixed - 0.02 px of drift over 407 frames, measured - so what
-moves in the picture really moves.
-
-The spacing between the compared frames matters more than it looks. At 30 frames a
-second a slow ball travels less than its own diameter between adjacent frames, so
-it overlaps itself and the difference cancels.
-
-Measured over the whole evaluation slice, 3638 annotated balls: a spacing of one
-frame recovers 61 percent of them within ten pixels, a spacing of two 91 percent.
-Spacings of two, three and four tie on recall, and two is kept because it ranks the
-ball highest - sixth of the list against seventh and eighth. On the held-out match,
-19259 balls, the same spacing recovers 93 percent.
+This stage does not decide: it returns a ranked list and the trajectory stage picks
+from it. Motion and network detectors sit behind the same interface, so comparing
+them is a change of configuration.
 """
 
 from collections.abc import Sequence
@@ -40,10 +23,10 @@ class Candidate:
 
 
 class BallCandidates(Protocol):
-    """Produces ranked candidates for one frame, given the frames it asks for."""
+    """Produce ranked candidates for one frame, given the frames it asks for."""
 
     def frames_needed(self, index: int) -> list[int]:
-        """Frame numbers this detector needs in order to work on `index`."""
+        """Return the frame numbers this detector needs to work on `index`."""
         ...
 
     def __call__(self, frames: dict[int, np.ndarray], index: int) -> list[Candidate]:
@@ -61,13 +44,13 @@ class MotionCandidates:
         max_area: int = 900,
         max_candidates: int = 200,
     ) -> None:
-        """Args:
-        spacing: how many frames away the two compared neighbours sit.
-        min_peak: brightness a blob must gain over both neighbours.
-        min_area, max_area: pixel area a blob must fall within. The annotated
-            balls run from 4 to 29 px a side, so 900 keeps the largest while
-            refusing a limb.
-        max_candidates: cap on the returned list, strongest kept.
+        """Set the detector up.
+
+        Args:
+            spacing: how many frames away the two compared neighbours sit.
+            min_peak: brightness a blob must gain over both neighbours.
+            min_area, max_area: pixel area a blob must fall within.
+            max_candidates: cap on the returned list, strongest kept.
         """
         self._spacing = spacing
         self._min_peak = min_peak
@@ -112,12 +95,8 @@ def demote_inside_boxes(
 ) -> list[Candidate]:
     """Push candidates sitting on a player down the ranking, without removing them.
 
-    Three quarters of the candidates that outrank the ball are moving limbs, and
-    dropping them moves the ball from sixth of seventy-eight to second of nineteen.
-    Dropping them outright would also lose 4.9 percent of the balls - the ones
-    passing in front of a player - so the score is multiplied rather than the
-    candidate discarded: a demoted candidate is still reachable when the trajectory
-    asks for it.
+    A ball passing in front of a player must stay reachable, so the score is
+    multiplied rather than the candidate dropped.
 
     Args:
         candidates: ranked candidates, strongest first.

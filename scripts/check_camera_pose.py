@@ -1,10 +1,6 @@
-"""Fits the camera pose on the calibration, and judges it on its control points.
+"""Fit the camera pose on the calibration, and judge it on its control points.
 
-The points marked is_control are never used for the fit. It is the only way to get a
-figure that means something: a pose judged on what produced it measures nothing.
-
-What the gap is worth in metres depends on depth: a pixel is 1.51 cm near the camera
-and 6.47 cm at the far end. The control points cover both, and that is deliberate.
+The points marked is_control are never used for the fit.
 
 Usage:
     python scripts/check_camera_pose.py --calibration ground_truth/calibrations/FinalF.json

@@ -1,20 +1,8 @@
-"""Following the ball across frames, rather than judging each frame alone.
+"""Following the ball across frames by greedy growth, the measured baseline.
 
-The detection stage returns a ranked list and refuses to decide: the ball is the
-sixth candidate of seventy-eight, or the second of nineteen once the moving limbs
-are demoted. Picking it out of that list is what this module does, and it does it
-with the only thing a still frame cannot offer - continuity.
-
-A segment grows from two consecutive positions. At each step the expected position
-is the one a constant velocity would give, and the nearest candidate is taken if it
-falls inside a gate. The gate is measured, not chosen: over free play the distance
-between the real position and that prediction has a median of 5.4 px and a ninetieth
-percentile of 28.5 px, so thirty pixels covers ninety-one percent of it.
-
-Nothing here assumes a smooth trajectory over a whole rally. A padel ball bounces
-off the floor, the glass and the mesh, and a global smoother would impose a
-continuity the data does not have. Segments simply stop where the ball stops
-behaving, which is also where the contacts are.
+A segment grows from two consecutive positions: at each step the nearest candidate
+to the constant-velocity prediction is taken if it falls inside a gate. Segments
+stop where the ball stops behaving, which is where the contacts are.
 """
 
 import math
@@ -48,12 +36,7 @@ class Segment:
 
     @property
     def speed(self) -> float:
-        """Median distance travelled between two frames, in pixels.
-
-        A ball covers 14.4 px a frame in median. A limb that escaped its box, or a
-        moving advertising board, covers far less - and it is that difference, not
-        the length of the track, that tells them apart.
-        """
+        """The median distance travelled between two frames, in pixels."""
         ordered = [self.positions[f] for f in sorted(self.positions)]
         steps = [
             math.hypot(b[0] - a[0], b[1] - a[1])
@@ -131,15 +114,10 @@ def grow(
     Args:
         candidates: ranked candidates per frame.
         first, second: the two consecutive frames the seed is taken from.
-        gate: how far the real position may sit from the constant-velocity
-            prediction. Thirty pixels covers ninety-one percent of free play.
-        max_step: how far the ball may travel between the two seed frames. The
-            ninety-fifth percentile of the real displacement is 52.7 px.
-        max_misses: how many frames in a row may go unconfirmed before the segment
-            ends.
-        start, follow: the two candidates to seed on. Defaulting to the best-scored
-            one would seed on the ball only half the time - it is the second of the
-            list in median - so the caller is expected to try several.
+        gate: how far the real position may sit from the constant-velocity prediction.
+        max_step: how far the ball may travel between the two seed frames.
+        max_misses: how many frames in a row may go unconfirmed.
+        start, follow: the two candidates to seed on.
     """
     if not candidates.get(first) or not candidates.get(second):
         return None
@@ -172,30 +150,15 @@ def build_segments(
 ) -> list[Segment]:
     """Seed on every pair of consecutive frames and keep what physics allows.
 
-    Two bounds separate a ball from everything else that moves smoothly, and both
-    are measured on 814 annotated arcs rather than chosen.
-
-    A ball touches something every fifteen frames in median, and never goes more
-    than sixty-four without: a cap at sixty keeps 99.8 percent of real arcs and
-    refuses the long, placid tracks that a limb or an advertising board produces.
-    Ranking by length alone does the opposite of what is wanted here - the ball's
-    arcs are the short ones.
-
-    A ball also travels 14.4 px a frame in median. A floor at six keeps 85 percent
-    of real arcs and refuses what crawls.
-
-    Two segments may still claim the same frame; the longer one wins, having
-    survived more continuity constraints.
+    When two segments claim the same frame, the faster one wins.
 
     Args:
         candidates: ranked candidates per frame.
         gate, max_step, max_misses: passed through to `grow`.
-        min_length: a segment shorter than this is noise, not a trajectory.
-        max_length: a segment longer than this is not a ball.
+        min_length: a shorter segment is noise.
+        max_length: a longer segment is not a ball.
         min_speed: median pixels per frame a segment must cover.
         seeds_per_frame: how many of the best candidates each seed frame offers.
-            The ball is the second of the list in median, so trying only the best
-            one would start half the segments on something else.
     """
     frames = sorted(candidates)
     grown: list[Segment] = []
@@ -231,11 +194,7 @@ def build_segments(
 def positions_of(
     segments: Sequence[Segment], start: int, stop: int
 ) -> dict[int, Point | None]:
-    """One position per frame of [start, stop], None where no segment covers it.
-
-    This is the shape `ball_score` expects: a frame the trajectory never reached is
-    a miss, not a wrong answer.
-    """
+    """Return one position per frame of [start, stop], None where no segment covers it."""
     found: dict[int, Point] = {}
     for segment in segments:
         found.update(segment.positions)

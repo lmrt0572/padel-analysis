@@ -1,14 +1,7 @@
 """Making the displayed ball trajectory readable, without rounding its bounces.
 
-Two steps, for display. First, lone points that jump away from both neighbours are
-dropped: on a chosen path they are a frame where the wrong candidate won. Then each
-piece of trajectory is smoothed by a constant-velocity Kalman filter followed by a
-Rauch-Tung-Striebel backward pass, which re-estimates every point from the frames on
-both sides of it.
-
-A global smoother would round every contact into a curve, which is why the trajectory
-stage refused one. Here the smoothing is cut at each contact: straight between them,
-sharp at them. That is also how the tennis reference project gets its fluid trails.
+Lone points that jump away from both neighbours are dropped, then each piece is
+smoothed by a Kalman filter and a backward pass. Smoothing is cut at each contact.
 """
 
 import math
@@ -22,10 +15,7 @@ def despike(path: dict[int, Point | None], max_deviation: float = 25.0) -> dict[
     """Drop points lying far from the midpoint of their two neighbours.
 
     Args:
-        max_deviation: pixels a point may sit from that midpoint. A real ball between
-            two frames moves along a near-straight line; a jump well beyond it is a
-            wrong candidate, not a bounce - a bounce bends the path, it does not leave
-            one point stranded.
+        max_deviation: pixels a point may sit from that midpoint.
     """
     kept = dict(path)
 
@@ -35,8 +25,7 @@ def despike(path: dict[int, Point | None], max_deviation: float = 25.0) -> dict[
             return 0.0
         return math.dist(point, ((before[0] + after[0]) / 2, (before[1] + after[1]) / 2))
 
-    # The worst first: an outlier also skews the judgement of its two neighbours,
-    # which must only be judged once it has gone.
+    # worst first: an outlier skews the judgement of its two neighbours
     suspects = {f for f in kept if deviation(f) > max_deviation}
     while suspects:
         worst = max(suspects, key=deviation)
@@ -55,17 +44,12 @@ def smooth_path(
     process_noise: float = 100.0,
     measurement_noise: float = 9.0,
 ) -> dict[int, Point | None]:
-    """Each piece of the path smoothed on its own, pieces split at contacts and long gaps.
+    """Return the path smoothed piece by piece, split at contacts and long gaps.
 
     Args:
         cuts: contact frames; smoothing never runs across one.
-        max_gap: missing frames a piece may bridge. Zero by default: measured on an
-            annotated minute, bridging three frames invents positions and raises the
-            wrong ones from 194 to 261.
-        process_noise: how freely velocity may change between frames. At 100 the
-            displayed jerk falls from 6.0 to 4.5 px with no loss of accuracy; at 4 it
-            falls to 1.8 px, but wrong positions rise from 199 to 280, every undetected
-            bend being rounded off.
+        max_gap: missing frames a piece may bridge.
+        process_noise: how freely velocity may change between frames.
         measurement_noise: variance of a detected position, in square pixels.
     """
     out: dict[int, Point | None] = {frame: None for frame in path}

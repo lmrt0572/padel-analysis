@@ -1,14 +1,13 @@
-"""Produit les figures du README et du rapport, dans docs/figures/.
+"""Produce the figures of the README and of the report, in docs/figures/.
 
-Les chiffres viennent de fichiers ecrits par les scripts de mesure, jamais recopies a la
-main :
-  - docs/figures/verdicts.json : les trois juges, consignes une fois rendus ;
-  - outputs/measures/cv.json : validation croisee, confusion et courbe d'apprentissage
-    (scripts/train_contact_model.py --cv --curve --results ...) ;
-  - un cache de positions d'un match entier, pour les figures des joueurs ;
-  - outputs/match_stats/<match>.json : le bilan de chaque finale, par paire
+The numbers come from files written by the measurement scripts:
+  - docs/figures/verdicts.json: the judges, recorded once given;
+  - outputs/measures/cv.json: cross-validation, confusion and learning curve
+    (scripts/train_contact_model.py --cv --curve --results ...);
+  - a position cache of a whole match, for the player figures;
+  - outputs/match_stats/<match>.json: the report of each final, by pair
     (scripts/match_stats.py).
-Une figure dont la source manque est sautee, et le script le dit.
+A figure whose source is missing is skipped, and the script says so.
 
 Usage:
     python scripts/make_figures.py --cache cache/FinalF_full.json

@@ -66,7 +66,7 @@ def test_keypoints_are_returned_in_coco_order(annotation_file):
     annotations = PoseAnnotations.load(annotation_file)
     person = annotations.for_frame(0)[0]
     assert person.keypoints.shape == (17, 3)
-    # In the fixture row i is (i, i+100, 2) in DATASET order.
+    # in the fixture row i is (i, i+100, 2) in DATASET order
     expected_row = DATASET_KEYPOINTS.index("left_ankle")
     np.testing.assert_allclose(
         person.keypoints[LEFT_ANKLE], [expected_row, expected_row + 100, 2.0]

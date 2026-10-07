@@ -1,25 +1,8 @@
 """Choosing the ball over the whole sequence at once, not frame by frame.
 
-Growing segments greedily was tried first and measured: it covers 52.5 percent of
-the annotated balls at best, and 16.8 percent once overlaps are resolved. The reason
-is structural rather than a matter of tuning - every decision is local and final, so
-a bad start is never revisited and a good segment lost to an overlap is lost for
-good.
-
-Here the whole sequence is decided together. Each frame offers its best candidates
-plus the option of holding no ball at all, and the cheapest path through all of them
-is found by dynamic programming. The state carries two frames rather than one,
-because velocity is what makes a trajectory predictable and velocity needs a pair.
-
-The acceleration cost is capped, so that a contact costs a known amount rather than
-an unaffordable one - a padel ball bounces off the floor, the glass, the mesh and the
-rackets, and a path that could never afford to bounce would never be a ball.
-
-That was the reasoning. The measurement does not support it: removing the cap
-entirely costs one thousandth of the recall. The cap almost never binds, because the
-emission weight dominates and the deviations at a real contact stay under it. It is
-kept as a safeguard against a pathological frame, not as the mechanism it was
-believed to be.
+Each frame offers its best candidates plus the option of holding no ball, and the
+cheapest path through all of them is found by dynamic programming. The state
+carries two frames, because velocity needs a pair.
 """
 
 import math
@@ -33,14 +16,11 @@ Point = tuple[float, float]
 def acceleration_cost(
     previous: Point, current: Point, following: Point, ceiling: float = 80.0
 ) -> float:
-    """How far `following` sits from where constant velocity would put it.
+    """Return how far `following` sits from where constant velocity would put it.
 
     Args:
         previous, current, following: three consecutive positions.
-        ceiling: the most a single step may cost. A contact is a large deviation
-            that must stay affordable - free play deviates by 5.4 px in median and
-            64 px at the ninety-ninth percentile, so a ceiling above that lets a
-            bounce through at a bounded price.
+        ceiling: the most a single step may cost, so a bounce stays affordable.
     """
     expected_x = 2 * current[0] - previous[0]
     expected_y = 2 * current[1] - previous[1]
@@ -54,24 +34,19 @@ def emission_cost(
     weight: float = 30.0,
     absolute: bool = False,
 ) -> float:
-    """What it costs to pick this candidate rather than the best of its frame.
-
-    Scores are normalised inside the frame because the motion peak varies with the
-    background: comparing a candidate to its neighbours is meaningful, comparing it
-    to a candidate of another frame is not.
+    """Return what it costs to pick this candidate rather than the best of its frame.
 
     Args:
         candidate: the one being considered.
         frame: every candidate of that frame.
-        weight: what a completely worthless candidate costs, in pixel-equivalents,
-            so that this cost is commensurable with the acceleration one.
+        weight: what a worthless candidate costs, in pixel-equivalents.
+        absolute: read the score as it is rather than relative to the frame.
     """
     if weight == 0.0:
         return 0.0
     if absolute:
-        # A score already bounded in [0, 1] (the network's) is read as it is: a weak
-        # candidate is costly even when it is the best of its frame, and that is what
-        # lets the path give up when the ball is not there.
+        # a score already in [0, 1] is read as it is, so a weak best candidate still
+        # costs and the path can give up
         return weight * (1.0 - min(1.0, max(0.0, candidate.score)))
     if not frame:
         return 0.0
@@ -94,36 +69,19 @@ def best_path(
     absent_cost: float = 1200.0,
     absolute: bool = False,
 ) -> dict[int, Point | None]:
-    """The cheapest explanation of the whole sequence, frame by frame.
+    """Return the cheapest explanation of the whole sequence, frame by frame.
 
-    One relation between the two costs matters more than either value: **absence
-    must cost more than a bounce**. An absent frame constrains velocity neither on
-    the way in nor on the way out, so it launders an arbitrary jump for the price of
-    one frame - blinking every third frame makes every transition free. If absence
-    were the cheaper of the two, the cheapest path would make the ball vanish at
-    every contact - one every fifteen frames - and the measurement would look poor
-    without showing why.
+    Absence must cost more than a bounce, or the ball would vanish at every contact.
 
     Args:
         candidates: ranked candidates per frame, strongest first.
         start, stop: inclusive bounds of the answer.
-        width: how many candidates of each frame are considered. The ball sits in
-            the top ten 96 percent of the time, and the cost grows with the cube of
-            this number.
-        gate: ceiling on the acceleration cost. Swept over 40 to infinity: the
-            recall moves by a thousandth, so this bounds a pathological frame
-            rather than shaping the answer.
+        width: how many candidates of each frame are considered.
+        gate: ceiling on the acceleration cost.
         weight: what the weakest candidate of a frame costs, in pixel-equivalents.
-            This one does shape the answer, and its optimum is interior: the recall
-            runs 0.739, 0.764, 0.748, 0.712 at 120, 240, 480 and 960.
-        absent_cost: what holding no ball costs for one frame. Above about a
-            thousand the recall saturates, which is to say the path stops giving up
-            at all - and giving up is what the greedy baseline did too much of.
-        absolute: read candidate scores as they are rather than relative to the best
-            of their frame. Relative scores make the best candidate of every frame
-            free however weak it is, so the path can never prefer absence. Only
-            meaningful for scores bounded in [0, 1], which the network gives and
-            motion detection does not.
+        absent_cost: what holding no ball costs for one frame.
+        absolute: read candidate scores as they are; only meaningful for scores
+            bounded in [0, 1].
     """
     frames = list(range(start, stop + 1))
     kept: dict[int, list[Candidate]] = {

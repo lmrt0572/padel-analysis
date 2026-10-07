@@ -35,7 +35,7 @@ def test_bbox_strategy_returns_the_bottom_centre():
 
 
 def test_the_two_strategies_disagree_on_the_same_detection():
-    """Justifie l'ablation : si elles coincidaient, la comparer serait vide de sens."""
+    """Justify the ablation: if they coincided, comparing them would mean nothing."""
     detection = _detection([100.0, 200.0, 0.9], [300.0, 400.0, 0.9])
     ankle, _ = AnkleMidpoint()(detection)
     bbox, _ = BboxBottom()(detection)

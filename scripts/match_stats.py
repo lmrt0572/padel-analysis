@@ -1,16 +1,8 @@
-"""The report of a whole match, by pair: points, strokes, movement.
+"""Report a whole match, by pair: points, strokes, movement.
 
 Needs the analysis of the match (scripts/analyse_match.py) and the reading of its
-scoreboard (scripts/read_scores.py). Each expensive step is cached:
-
-1. the observations of the players (position on the ground, colour of the torso), read
-   once from the video, then a single player tracking over the whole match;
-2. the contacts of the model, slice by slice, and the striker of each stroke;
-3. the broadcast cuts, which open the rallies.
-
-The halves of the court are tied to the rows of the scoreboard by the changes of ends
-that the score imposes, and by the serve, the first stroke of each rally. Everything
-starts from the first reading of the scoreboard.
+scoreboard (scripts/read_scores.py). Player observations, contacts and broadcast cuts
+are each cached.
 
 Usage:
     python scripts/match_stats.py --match FinalF --contact-model weights/contact_net.pt
@@ -50,7 +42,7 @@ from padel_analysis.tracking.court_constraint import CourtSlotTracker
 CHUNKS = Path("outputs/match")
 CACHE = Path("outputs/match_obs")
 OUT = Path("outputs/match_stats")
-# The pairs as the scoreboard writes them, top row then bottom row.
+# the pairs as the scoreboard writes them, top row then bottom row
 PAIRS = {"FinalF": {1: "JOS / SAN", 2: "SAL / TRI"}, "FinalM": {1: "LEB / GAL", 2: "DIN / CHI"}}
 FPS = 30.0
 
@@ -60,7 +52,7 @@ def chunk_paths(match: str) -> list[Path]:
 
 
 def observations(match: str, path: Path) -> dict:
-    """Every detection of a chunk on the court, with its torso colour; cached."""
+    """Return every detection of a chunk on the court, with its torso colour; cached."""
     cached = CACHE / path.name
     if cached.exists():
         return pickle.loads(cached.read_bytes())
@@ -83,7 +75,7 @@ def observations(match: str, path: Path) -> dict:
 
 
 def tracked(match: str) -> tuple[dict, dict]:
-    """The players followed by one tracker over the whole match: frames, and assignments."""
+    """Return the players followed by one tracker over the match: frames and assignments."""
     frames = {}
     for path in chunk_paths(match):
         frames.update(observations(match, path))
@@ -105,7 +97,7 @@ def broadcast_cuts(match: str) -> list[int]:
 
 
 def contacts(match: str, frames: dict, whole: dict, model_path: Path) -> list:
-    """The model's contacts over the match, chunk by chunk, with the match-long tracking."""
+    """Return the model's contacts over the match, chunk by chunk, tracked match-long."""
     cached = OUT / f"{match}_contacts.pkl"
     if cached.exists():
         return pickle.loads(cached.read_bytes())

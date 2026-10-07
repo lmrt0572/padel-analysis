@@ -1,14 +1,8 @@
-"""Draws up the list of contacts found by the demonstration chain, to judge them.
+"""List the contacts found by the demonstration chain, to have them judged.
 
-The earlier judgements were on contacts detected on the ANNOTATED ball. The
-demonstration video, for its part, works on the reconstructed trajectory: that is where
-what is seen has to be measured. Each instant is judged once, for what really happened
-there; any variant of the chain is then scored on these judgements by matching its
-contacts to the judged instants, to within two frames.
-
-To cover several variants at once, the list is the union of the contacts found with and
-without the display filters. The computed positions are written alongside, so that the
-arbitration tool shows what the system claims.
+Each instant is judged once; any variant of the chain is then scored by matching its
+contacts to the judged instants, to within two frames. The list is the union of the
+contacts found with and without the display filters.
 
 Usage:
     python scripts/build_demo_contact_tasks.py --analysis outputs/demo_FinalF_analysis.pkl \

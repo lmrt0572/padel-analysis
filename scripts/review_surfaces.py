@@ -1,7 +1,7 @@
 """Human arbitration: what did the ball bounce off?
 
-Each contact is replayed in a loop, the ball circled, with its trail before and after
-to make the change of direction readable.
+Each contact is replayed in a loop, the ball circled, with its trail before and after.
+The contact to judge is the one under the magenta cross.
 
     s  the FLOOR
     v  a GLASS panel
@@ -11,28 +11,11 @@ to make the change of direction readable.
     n  NO contact: the trajectory goes straight through
     x  unreadable, I cannot decide
 
-The clip can contain several events, a bounce then a stroke. The one submitted to
-judgement is the only one marked by the magenta cross, and the playback lingers on it
-while showing CONTACT. The others are context.
-
-`n` and `x` do not say the same thing and must not be confused. `x` means "I cannot
-decide": it is a non-measurement, left out of the computation. `n` means "nothing
-happened here": it is a false positive of the contact stage, and it is the only way to
-measure its precision, the stroke annotation being too coarse.
-
     r  go back to the previous clip and cancel its answer
     q  quit, keeping the answers given
 
-Glass and mesh are asked for separately because the eye tells them apart. That is what
-makes the geometric deduction checkable instead of being assumed right.
-
-This tool never shows what the rule predicts, nor even whether it hesitates. A ground
-truth built on the assumption it has to judge only measures two errors agreeing: in
-sub-project A, correcting this flaw had taken IDF1 from 0.956 to 0.819, and the
-flattering figure was the artefact.
-
-The file is rewritten atomically after each answer: a power cut costs the clip in
-progress, not the campaign.
+`x` is left out of the computation; `n` counts as a false positive of the contact stage.
+The tool never shows what the rule predicts.
 
 Usage:
     python scripts/review_surfaces.py --video <video.mp4> \
@@ -70,12 +53,7 @@ MARK = (255, 80, 255)
 
 
 def draw(frame, centres, index, contact, caption):
-    """The frame, the trail of the ball, and the fixed marker of the instant to judge.
-
-    The marker does not move: it stays on the position of the ball at the frame of the
-    contact. Without it, a clip containing both a bounce and a stroke does not say
-    which of the two is submitted to judgement.
-    """
+    """Return the frame with the ball's trail and the fixed marker of the instant to judge."""
     canvas = frame.copy()
     for offset in range(-SPAN, SPAN + 1):
         point = centres.get(contact + offset)
@@ -113,14 +91,14 @@ def draw(frame, centres, index, contact, caption):
 
 
 def ask(source, centres, contact, caption):
-    """Replays the sequence in a loop until a valid key is pressed."""
+    """Replay the sequence in a loop until a valid key is pressed."""
     accepted = set(ANSWER_KEYS) | {"r", "q"}
     while True:
         for index, frame in source.iter_frames(
             start=max(0, contact - SPAN), stop=contact + SPAN + 1
         ):
             cv2.imshow(WINDOW, draw(frame, centres, index, contact, caption))
-            # The playback lingers on the instant to judge: that is the one the eye must see.
+            # the playback lingers on the instant to judge
             key = cv2.waitKey(320 if index == contact else 55) & 0xFF
             if key != 255 and chr(key) in accepted:
                 return chr(key)

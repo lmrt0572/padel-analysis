@@ -1,8 +1,6 @@
-"""Assembles the analytics into one JSON report.
+"""Assemble the analytics into one JSON report.
 
-Distance is given twice, raw and smoothed. The gap between them is the share the
-position noise contributed, and it is larger for the far half, where a pixel is
-worth 4.3 times what it is at the near end. Reporting both puts that in the open.
+Distance is given raw and smoothed: the gap is the share of position noise.
 """
 
 import json
@@ -24,7 +22,7 @@ SMOOTHING_WINDOW = 9
 
 
 def build_report(trajectories: MatchTrajectories) -> dict[str, Any]:
-    """Every figure this milestone produces, as plain Python types."""
+    """Return every figure of the report, as plain Python types."""
     players: dict[str, Any] = {}
     for slot in SLOTS:
         positions = trajectories.positions[slot]

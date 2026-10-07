@@ -44,7 +44,7 @@ def test_bounces_does_not_count_a_contact_inside_a_shot():
 
 
 def test_chance_precision_matches_the_coverage_it_draws_from():
-    """Un tirage aleatoire touche les intervalles a hauteur de leur couverture."""
+    """A random draw hits the intervals in proportion to their coverage."""
     rate = chance_precision(list(range(100)), _events(), count=20, draws=200, seed=0)
     assert rate == pytest.approx(0.10, abs=0.04)
 

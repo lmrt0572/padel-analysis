@@ -1,8 +1,7 @@
 """The court drawn from its own geometry, seen from the broadcast camera.
 
-A replay drawn on it shows what the analysis reconstructed - players, ball, contacts -
-and not a single pixel of the broadcast: the picture is the court model projected by
-the calibrated camera, nothing else.
+The picture is the court model projected by the calibrated camera, with no pixel of
+the broadcast.
 """
 
 import cv2
@@ -25,7 +24,7 @@ def _bgr(colour: str) -> tuple[int, int, int]:
 
 
 def court_backdrop(pose: CameraPose, size: tuple[int, int], court: Court = COURT) -> np.ndarray:
-    """A dark picture of the court as the camera sees it: floor, lines, net and walls."""
+    """Return a dark picture of the court as the camera sees it."""
     width, height = size
     canvas = np.full((height, width, 3), _bgr(style.BACKGROUND), dtype=np.uint8)
     w, ln, s = court.half_width, court.half_length, court.service_line_distance
@@ -46,8 +45,8 @@ def court_backdrop(pose: CameraPose, size: tuple[int, int], court: Court = COURT
         cv2.polylines(canvas, [shape], True, edge, 1, cv2.LINE_AA)
 
     def wall(far: bool):
-        # The far back wall and the sides go behind the floor in the picture; the near
-        # wall, in front: it is drawn last, more transparent.
+        # the far wall and the sides go behind the floor; the near wall is drawn last,
+        # more transparent
         y = ln if far else -ln
         alpha, edge = (0.16, GLASS_EDGE) if far else (0.05, NEAR_EDGE)
         panel([(-w, y, 0), (w, y, 0), (w, y, court.back_wall_glass_height),

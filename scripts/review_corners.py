@@ -1,12 +1,9 @@
-"""Review of the glass contacts marked near a corner, in the minutes marked before 29/09.
+"""Review the glass contacts marked near a corner, in the minutes marked before 29/09.
 
-The marking tool then replaced any mark placed within two frames of another: a ball
-that touches two glass panels in a corner, from one frame to the next, kept only one.
-This script finds the glass contacts marked within 1.5 m of a corner (the ray through
-the ball touches the back glass near a side wall there, or the side glass near the back
-wall) and opens the tool on each minute, `n` and `p` jumping from one moment to the
-next. Add the second glass contact where there were two; touch nothing otherwise. A
-minute closed with `q` is recorded as reviewed.
+The marking tool then kept a single mark where a ball touched two glass panels from one
+frame to the next. This opens the tool on each minute, `n` and `p` jumping between the
+glass contacts marked within 1.5 m of a corner. Add the second contact where there were
+two. A minute closed with `q` is recorded as reviewed.
 
 Usage:
     python scripts/review_corners.py            # review, minute after minute
@@ -35,7 +32,7 @@ PROGRESS = Path("outputs/coins/relues.json")
 
 
 def corner_moments(match: str, start: int) -> list[int]:
-    """The wall marks of one minute that sit near a corner and have no other wall beside."""
+    """Return the wall marks of one minute near a corner, with no other wall beside."""
     court = Court()
     surfaces = court_surfaces(court)
     analysis = pickle.loads(Path(minutes.analysis(match, start, "360")).read_bytes())

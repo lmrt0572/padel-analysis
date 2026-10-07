@@ -8,7 +8,7 @@ def test_minimap_has_the_requested_width_and_a_court_aspect_ratio():
     minimap = Minimap(Court(), width=300)
     image = minimap.draw({})
     assert image.shape[1] == 300
-    # 20 m long for 10 m wide: the image must be about twice as tall.
+    # 20 m long for 10 m wide: the image must be about twice as tall
     assert 1.7 < image.shape[0] / image.shape[1] < 2.5
 
 

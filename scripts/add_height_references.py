@@ -1,14 +1,7 @@
-"""Adds to the calibration file the references above the ground taken on the walls.
+"""Add to the calibration file the references above the ground taken on the walls.
 
-A homography makes do with points on the ground; a camera pose cannot, a coplanar set
-leaving the vertical direction free. These ten points come from the manual zoning of
-the walls, frame 200 of the women's final.
-
-The first two are used for the fit, the other eight remain controls and must stay so:
-pouring them into the fit would make the only honest measure of the pose disappear.
-
-The three calibrations share the same pixels, the camera being fixed and identical from
-one video to the next (checked by overlay in sub-project A).
+A camera pose needs points off the ground: a coplanar set leaves the vertical direction
+free. The first two points are used for the fit, the other eight stay controls.
 
 Usage:
     python scripts/add_height_references.py ground_truth/calibrations/*.json

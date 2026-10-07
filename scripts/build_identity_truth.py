@@ -1,11 +1,12 @@
-"""Construit la verite terrain d'identite a partir des annotations du dataset.
+"""Build the identity ground truth from the dataset annotations.
 
-L'association automatique couvre tout le match ; les episodes ambigus sont listes
-pour revue humaine.
+The automatic association covers the whole match; ambiguous episodes are listed for
+human review.
 
 Usage:
     python scripts/build_identity_truth.py --annotations <pose.json> \
-        --calibration ground_truth/calibrations/<nom>.json --out ground_truth/identity/<nom>.json
+        --calibration ground_truth/calibrations/<name>.json \
+        --out ground_truth/identity/<name>.json
 """
 
 import argparse

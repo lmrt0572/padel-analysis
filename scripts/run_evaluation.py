@@ -1,9 +1,9 @@
-"""Lance la campagne d'evaluation et ecrit ses resultats.
+"""Run the evaluation campaign and write its results.
 
 Usage:
     python scripts/run_evaluation.py --video <video.mp4> --annotations <pose.json> \
-        --identity ground_truth/identity/<nom>.json \
-        --calibration ground_truth/calibrations/<nom>.json --out outputs/<nom>_eval.json \
+        --identity ground_truth/identity/<name>.json \
+        --calibration ground_truth/calibrations/<name>.json --out outputs/<name>_eval.json \
         --frames 3000
 """
 
