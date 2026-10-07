@@ -1,129 +1,125 @@
 <p align="center">
-  <img src="docs/figures/banniere.gif" alt="Un échange joué sur le court de padel reconstruit en 3D" width="100%">
+  <img src="docs/figures/banniere.gif" alt="A rally played on the padel court rebuilt in 3D" width="100%">
 </p>
 
 # Padel Analysis
 
-> 🇬🇧 [English version](README.en.md)
+> 🇫🇷 [Version française](docs/README.fr.md)
 
-Analyse de matchs de padel filmés par **une seule caméra** : les joueurs, la balle,
-chaque contact et **ce que la balle a touché** (raquette, sol, vitre, grillage ou
-filet), puis **les statistiques du jeu** : distance parcourue, vitesse, temps au filet,
-frappes et volées, par joueur sur un échange et par paire sur un match.
+Analysis of padel matches filmed by **a single camera**: the players, the ball, every
+contact and **what the ball touched** (racket, floor, glass, mesh or net), then **the
+statistics of the game**: distance covered, speed, time at the net, strokes and
+volleys, per player over a rally and per pair over a match.
 
-**82 à 83 %** des contacts reconnus avec la bonne surface sur des minutes jamais vues ·
-**86 %** sur un tournoi jamais vu · la distance d'une paire **à 1 % près** sur un match
-entier · vérifié contre plus de **2 000 contacts pointés à la main**.
+**82 to 83 %** of contacts recognised with the right surface on minutes never seen ·
+**86 %** on a tournament never seen · a pair's distance **within 1 %** over a whole
+match · checked against more than **2,000 contacts marked by hand**.
 
-## Le projet en une minute
+## The project in one minute
 
 https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
 
-<sub>Avec le son. L'échange du film, ses contacts et ses statistiques sont ceux que le
-projet a mesurés ; entre deux contacts, la trajectoire de la balle en 3D est une
-illustration. Images : dataset PadelTracker100 (CC-BY-4.0), retransmission World Padel
-Tour.</sub>
+<sub>With sound; the captions are in French. The rally in the film, its contacts and its
+statistics are the ones the project measured; between two contacts, the ball's 3D
+trajectory is an illustration. Footage: PadelTracker100 dataset (CC-BY-4.0), World
+Padel Tour broadcast.</sub>
 
-## Ce que produit le projet
+## What the project produces
 
 https://github.com/user-attachments/assets/a1eb8fcd-89af-4678-96fa-427a242407b9
 
-<sub>L'échange en entier, tel que le projet le rend : les joueurs suivis, la balle, la
-zone touchée à chaque contact et le panneau de statistiques. Images : dataset
-PadelTracker100 (CC-BY-4.0), retransmission World Padel Tour.</sub>
+<sub>The whole rally as the project renders it: the tracked players, the ball, the area
+touched at each contact and the statistics panel. Footage: PadelTracker100 dataset
+(CC-BY-4.0), World Padel Tour broadcast.</sub>
 
-Une vidéo de l'échange avec, à côté, un panneau qui avance avec le jeu : la minicarte
-des joueurs, le numéro et la longueur de l'échange, les frappes de chaque paire dans
-l'échange, les points lus au tableau d'affichage et crédités au dernier frappeur, et
-pour chaque joueur ses frappes, ses volées, la distance parcourue, sa vitesse maximale
-et son temps au filet. À chaque contact, la zone touchée (carré de service, fond,
-panneau de vitre) s'éclaire en perspective.
+A video of the rally with, beside it, a panel that moves with the play: the players'
+minimap, the rally number and length, each pair's strokes in the rally, the points read
+off the scoreboard and credited to the last striker, and for each player their strokes,
+volleys, distance covered, top speed and time at the net. At each contact, the area
+touched (service box, back court, glass panel) lights up in perspective.
 
 <p align="center">
-  <img src="docs/figures/panneau.png" alt="Panneau de statistiques d'un échange" width="300">
+  <img src="docs/figures/panneau.png" alt="Statistics panel of a rally" width="300">
 </p>
 
-## Comment ça marche
+## How it works
 
 ```mermaid
 flowchart LR
-  V[Vidéo] --> C[Calibration du court]
-  V --> J[Joueurs : détection, suivi, identité]
-  V --> B[Balle : candidats, puis meilleur chemin sur toute la séquence]
-  J --> K[Contacts : réseau temporel et physique de la balle]
+  V[Video] --> C[Court calibration]
+  V --> J[Players: detection, tracking, identity]
+  V --> B[Ball: candidates, then the best path over the whole sequence]
+  J --> K[Contacts: temporal network and ball physics]
   B --> K
-  C --> S[Surface touchée, placée en 3D]
+  C --> S[Surface touched, placed in 3D]
   K --> S
-  V --> T[Tableau d'affichage et raccords]
-  S --> P[Échanges, points, statistiques]
+  V --> T[Scoreboard and broadcast cuts]
+  S --> P[Rallies, points, statistics]
   T --> P
 ```
 
-- **La balle est choisie sur toute la séquence**, et non image par image : le rappel
-  passe de 16 % à 72 %, puis à 80 % avec un réseau de détection entraîné.
-- **Les contacts** sont décidés par un petit réseau temporel, entraîné sur des minutes
-  pointées à la main, qui combine la trajectoire, les gestes des joueurs et la géométrie
-  du court.
-- **Les vitres que l'image ne montre pas se déduisent de la physique** : une balle trop
-  lente pour avoir rejoint le joueur directement après son rebond est passée par la
-  vitre (juste 13 fois sur 14).
-- **Une caméra ne voit pas la profondeur**, mais au moment d'un contact la balle est sur
-  une surface connue du court : le rayon de la caméra la place en trois dimensions.
+- **The ball is chosen over the whole sequence**, not frame by frame: recall goes from
+  16 % to 72 %, then to 80 % with a trained detection network.
+- **Contacts** are decided by a small temporal network, trained on hand-marked minutes,
+  which combines the trajectory, the players' gestures and the court geometry.
+- **Glass contacts the picture does not show are inferred from physics**: a ball too
+  slow to have reached the player straight after its bounce went by the glass (right
+  13 times out of 14).
+- **A camera does not see depth**, but at a contact the ball lies on a known surface of
+  the court: the camera ray places it in three dimensions.
 
-## Résultats
+## Results
 
-| Étape | Mesure | Sur des données jamais vues |
+| Stage | Measure | On data never seen |
 |---|---|---|
-| Joueurs | Détection (F1) | 0,88 |
-| Joueurs | Identité suivie (IDF1) | 0,84 |
-| Balle | Retrouvée à 10 px près | 80 % |
-| **Contacts, de bout en bout** | **Bonne surface** | **82-83 %** |
-| dont frappes · rebonds · vitres | Bonne surface | 93 % · 78 % · 64 % |
-| Autre tournoi, autre salle | Bonne surface | 86 % |
+| Players | Detection (F1) | 0.88 |
+| Players | Tracked identity (IDF1) | 0.84 |
+| Ball | Found within 10 px | 80 % |
+| **Contacts, end to end** | **Right surface** | **82-83 %** |
+| of which strokes · bounces · glass | Right surface | 93 % · 78 % · 64 % |
+| Another tournament, another venue | Right surface | 86 % |
 
-La démarche, sur 716 contacts pointés : des règles réglées à la main donnent **62 %**,
-un modèle appris **78 %**, la physique des vitres et un ensemble de 18 réseaux **83 %**.
-Chaque chiffre est mesuré sur des minutes **jamais regardées pendant les réglages** ;
-quand la validation croisée a promis 87 % et qu'un juge neuf a répondu 82 %, c'est 82 %
-qui est retenu.
+The path, over 716 marked contacts: hand-tuned rules give **62 %**, a learned model
+**78 %**, glass physics and an ensemble of 18 networks **83 %**. Every figure is
+measured on minutes **never looked at while tuning**; when cross-validation promised
+87 % and a fresh judge answered 82 %, 82 % is the figure kept.
 
-Le détail (mesures, ablations, essais abandonnés et pourquoi) est dans le
-**[rapport d'évaluation](docs/evaluation.md)**.
+The details (measurements, ablations, abandoned attempts and why) are in the
+**[evaluation report](docs/evaluation.md)**.
 
-## Le bilan d'un match
+## A match report
 
-Les deux finales analysées en entier, par paire : les points lus au tableau
-d'affichage, les frappes, les volées, les frappes après une vitre, la distance
-parcourue et le temps au filet. Chaque chiffre est vérifié : les déplacements contre
-les positions annotées du dataset (à 1 % près), les frappes contre les minutes pointées
-à la main (à 1 % près ; les volées à 7 %), les points contre le tableau.
+Both finals analysed in full, by pair: the points read off the scoreboard, the
+strokes, volleys, shots after the glass, distance covered and time at the net. Every
+figure is checked: movement against the dataset's annotated positions (within 1 %),
+strokes against the hand-marked minutes (within 1 %; volleys within 7 %), points
+against the scoreboard.
 
-![Bilan par paire des deux finales](docs/figures/bilan_paires.png)
+![Report by pair for both finals](docs/figures/bilan_paires.png)
 
 <p align="center">
-  <img src="docs/figures/points_longueur.png" alt="Points gagnés selon la longueur de l'échange" width="62%">
-  <img src="docs/figures/occupation_paires.png" alt="Occupation du terrain par paire" width="34%">
+  <img src="docs/figures/points_longueur.png" alt="Points won by rally length" width="62%">
+  <img src="docs/figures/occupation_paires.png" alt="Court occupancy by pair" width="34%">
 </p>
 
-Le bilan est donné **par paire, pas par joueur** : quand le suivi confond deux
-partenaires, la somme de la paire reste juste, mais la distance d'un joueur est fausse
-de plus de 12 % une fois sur dix. Les équipes sont suivies d'un changement de côté à
-l'autre par le score, qui dit quand elles changent ; le bilan part donc de la première
-lecture du tableau. L'occupation est repliée sur une moitié : le filet en haut.
+The report is given **by pair, not by player**: when tracking confuses two partners,
+the pair's total stays right, but one player's distance is off by more than 12 % once
+in ten. The teams are followed from one change of ends to the next by the score, which
+says when they change; the report therefore starts at the first scoreboard reading.
+Occupancy is folded onto one half: the net at the top. (Figure labels are in French.)
 
-## Limites
+## Limitations
 
-- **Analyse après match**, à quelques images par seconde sur une GTX 1650.
-- **Une seule caméra** : au fond du court, un rebond sur la vitre ne déplace la balle
-  que de quelques pixels, et un tiers de ces vitres restent manquées. Le son ne les
-  rattrape pas : testé, elles sont silencieuses dans l'enregistrement de diffusion.
-- **Le transfert à un autre court** est montré sur un seul échange, pas sur un match.
-- **L'identité des joueurs** se perd aux raccords de la retransmission, surtout chez
-  les hommes.
-- **Grillage et filet** sont trop rares pour être appris.
-- **Un seul annotateur** pour toute la vérité terrain pointée à la main.
+- **Post-match analysis**, at a few frames per second on a GTX 1650.
+- **A single camera**: at the far end of the court, a bounce off the glass moves the
+  ball by a few pixels only, and a third of those contacts are still missed. Sound does
+  not recover them: tested, they are silent in the broadcast recording.
+- **Transfer to another court** is shown on a single rally, not on a match.
+- **Player identity** is lost at broadcast cuts, mostly in the men's match.
+- **Mesh and net** contacts are too rare to be learned.
+- **A single annotator** for all the hand-marked ground truth.
 
-## Démarrage rapide
+## Quick start
 
 ```bash
 conda create -n padel python=3.11 -y
@@ -132,8 +128,8 @@ conda run -n padel pip install -e ".[dev]"
 conda run -n padel python -m pytest -q
 ```
 
-L'installation explicite de torch CUDA n'est pas optionnelle sous Windows : le torch
-tiré par défaut est une version CPU, et l'inférence passerait de minutes à heures.
+Installing CUDA torch explicitly is not optional on Windows: the default torch is a CPU
+build, and inference would go from minutes to hours.
 
 ```bash
 python scripts/download_dataset.py
@@ -142,23 +138,23 @@ python scripts/stats_video.py --match FinalF --minute 8000 --start 9084 --stop 9
     --contact-model weights/contact_net.pt --out outputs/stats.mp4 --replay
 ```
 
-Toutes les autres commandes (calibrer un court, pointer des contacts, entraîner et
-juger le modèle, refaire les figures) sont dans **[docs/utilisation.md](docs/utilisation.md)**.
+Every other command (calibrating a court, marking contacts, training and judging the
+model, rebuilding the figures) is in **[docs/usage.md](docs/usage.md)**.
 
-## Données et crédits
+## Data and credits
 
-- **[PadelTracker100](https://doi.org/10.5281/zenodo.14653706)** (CC-BY-4.0) : deux matchs
-  des World Padel Tour Finals 2022 en 1920×1080 à 30 images par seconde, avec les poses
-  des joueurs, la balle et les frappes annotées. Ses annotations de pose inversent
-  gauche et droite pour toutes les articulations appariées sauf les oreilles ;
-  `perception/keypoints.py` les remet dans l'ordre COCO.
+- **[PadelTracker100](https://doi.org/10.5281/zenodo.14653706)** (CC-BY-4.0): two matches
+  of the 2022 World Padel Tour Finals at 1920×1080 and 30 frames per second, with the
+  players' poses, the ball and the strokes annotated. Its pose annotations swap left and
+  right for every paired joint except the ears; `perception/keypoints.py` puts them back
+  in COCO order.
 - **Decorte et al.**, *Multi-Modal Hit Detection and Positional Analysis in Padel
-  Competitions*, CVPR Workshops 2024 : un échange de leur jeu de données a servi au test
-  sur un autre tournoi.
-- Aucune vidéo, image de retransmission ni poids de réseau n'est versionné.
+  Competitions*, CVPR Workshops 2024: a rally of their dataset served for the test on
+  another tournament.
+- No video, broadcast image or network weights are versioned.
 
 ## Licence
 
-AGPL-3.0, voir `LICENSE`. Le projet dépend d'Ultralytics, distribué sous AGPL-3.0, ce
-qui impose cette licence à l'ensemble : le code n'est pas réutilisable dans un produit
-propriétaire.
+AGPL-3.0, see `LICENSE`. The project depends on Ultralytics, distributed under AGPL-3.0,
+which imposes this licence on the whole: the code cannot be reused in a proprietary
+product.

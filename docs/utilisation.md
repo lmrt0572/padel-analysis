@@ -1,8 +1,10 @@
 # Utilisation
 
+> 🇬🇧 [English version](usage.md)
+
 Toutes les commandes du projet, de la calibration d'un court aux mesures du rapport.
 Elles se lancent depuis la racine du dépôt, dans l'environnement `padel`
-(voir l'installation dans le [README](../README.md#démarrage-rapide)).
+(voir l'installation dans le [README](README.fr.md#démarrage-rapide)).
 
 ## Données
 
@@ -147,7 +149,7 @@ python scripts/make_figures.py --cache cache/<match entier>.json
 ```
 
 Les commandes qui reproduisent chaque mesure sont dans le
-[rapport d'évaluation](evaluation.md#reproduire-lévaluation).
+[rapport d'évaluation](evaluation.md#reproducing-the-evaluation) (en anglais).
 
 ## Vérifier le code
 
