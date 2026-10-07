@@ -17,7 +17,7 @@ entier · vérifié contre plus de **2 000 contacts pointés à la main**.
 
 ## Le projet en une minute
 
-https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
+https://github.com/user-attachments/assets/ed9d191b-2fb4-46b8-8e27-e1115da1dcba
 
 <sub>Avec le son. L'échange du film, ses contacts et ses statistiques sont ceux que le
 projet a mesurés ; entre deux contacts, la trajectoire de la balle en 3D est une

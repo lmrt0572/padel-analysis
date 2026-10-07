@@ -17,7 +17,7 @@ match · checked against more than **2,000 contacts marked by hand**.
 
 ## The project in one minute
 
-https://github.com/user-attachments/assets/d661c68a-3d02-4013-a0c8-071019c78d98
+https://github.com/user-attachments/assets/c34ac185-3a00-4c1f-be38-abfe4c2aa396
 
 <sub>With sound. The rally in the film, its contacts and its statistics are the ones
 the project measured; between two contacts, the ball's 3D trajectory is an
@@ -26,7 +26,7 @@ broadcast.</sub>
 
 ## What the project produces
 
-https://github.com/user-attachments/assets/a1eb8fcd-89af-4678-96fa-427a242407b9
+https://github.com/user-attachments/assets/8f2beb2f-770e-4e6d-b34e-88d834493704
 
 <sub>The whole rally as the project renders it: the tracked players, the ball, the area
 touched at each contact and the statistics panel. Footage: PadelTracker100 dataset
