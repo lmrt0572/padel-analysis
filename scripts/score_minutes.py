@@ -1,13 +1,13 @@
 """Score the demonstration chain on every marked minute of a set.
 
 Counts are added up over the minutes, not rates. The judge minutes are only scored with
---juge; the first four judges now train the model, so scoring them with the shipped
+--judge; the first four judges now train the model, so scoring them with the shipped
 model no longer measures anything.
 
 Usage:
     python scripts/score_minutes.py --tag 360
-    python scripts/score_minutes.py --tag 360 --juge
-    python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --juge
+    python scripts/score_minutes.py --tag 360 --judge
+    python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --judge
 """
 
 import argparse
@@ -54,29 +54,29 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", required=True)
     parser.add_argument("--contact-model", type=Path, help="score the learned model")
-    parser.add_argument("--juge-5", action="store_true",
+    parser.add_argument("--judge-5", action="store_true",
                         help="score the fifth judge: only once")
-    parser.add_argument("--juge-4", action="store_true",
+    parser.add_argument("--judge-4", action="store_true",
                         help="score the fourth judge: only once")
-    parser.add_argument("--juge-3", action="store_true",
+    parser.add_argument("--judge-3", action="store_true",
                         help="score the third judge: only once")
-    parser.add_argument("--juge-2", action="store_true", help="score the second judge: only once")
-    parser.add_argument("--juge", action="store_true", help="score the judge minutes: only once")
+    parser.add_argument("--judge-2", action="store_true", help="score the second judge: only once")
+    parser.add_argument("--judge", action="store_true", help="score the judge minutes: only once")
     args = parser.parse_args()
     model = ContactModel.load(args.contact_model) if args.contact_model else None
-    if args.juge_5:
+    if args.judge_5:
         print("=== FIFTH JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_5, args.tag, model)
-    elif args.juge_4:
+    elif args.judge_4:
         print("=== FOURTH JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_4, args.tag, model)
-    elif args.juge_3:
+    elif args.judge_3:
         print("=== THIRD JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_3, args.tag, model)
-    elif args.juge_2:
+    elif args.judge_2:
         print("=== SECOND JUDGE: minutes never looked at ===")
         score(minutes.JUDGE_2, args.tag, model)
-    elif args.juge:
+    elif args.judge:
         print("=== JUDGE: men's match, minutes never looked at ===")
         score(minutes.JUDGE, args.tag, model)
     else:

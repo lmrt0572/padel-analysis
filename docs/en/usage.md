@@ -137,7 +137,7 @@ looked at, and that serve only once):
 ```bash
 python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
 python scripts/train_contact_model.py --cv --out weights/contact_net.pt
-python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --juge-5
+python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --judge-5
 ```
 
 The figures of the report are rebuilt from the numbers written by the measurement

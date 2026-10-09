@@ -758,7 +758,7 @@ matches.
 
 The tool replays each instant in a loop, the ball marked with a fixed cross, and
 **never shows what the rule predicts**. A ground truth built on the assumption it has
-to judge only measures two errors agreeing: in sub-project A, correcting this flaw had
+to judge only measures two errors agreeing: for the identity ground truth, correcting this flaw had
 taken IDF1 from 0.956 to 0.819.
 
 The men's match has 886 contacts, that is two hours of arbitration. The sample is
@@ -1062,7 +1062,7 @@ floor. It is the confusion the geometry announced (above about one metre, a cont
 the near glass and a floor bounce fall on the same pixel), and that is where the next
 gain would be, not in more marked minutes:
 
-![Learning curve](../figures/courbe.png)
+![Learning curve](../figures/learning_curve.png)
 
 The curve, redone over eleven minutes, rises from 73.2 % at two training minutes to
 81.6 % at eight, then 81.9 % at ten.
@@ -1492,11 +1492,11 @@ a few per cent towards the volleys, always in the same direction. The winners an
 errors per player, credited to the last striker, have no ground truth and stay in the
 statistics video, outside the report.
 
-![Report by pair for both finals](../figures/bilan_paires.png)
+![Report by pair for both finals](../figures/pair_report.png)
 
-![Points won by rally length](../figures/points_longueur.png)
+![Points won by rally length](../figures/points_by_length.png)
 
-![Court occupancy by pair](../figures/occupation_paires.png)
+![Court occupancy by pair](../figures/pair_occupancy.png)
 
 ## Parameter notes
 

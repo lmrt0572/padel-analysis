@@ -39,7 +39,7 @@ def _font(size: int, weight: str = "Regular") -> ImageFont.ImageFont:
                 return ImageFont.truetype(str(candidate), size)
             except OSError:
                 continue
-    return ImageFont.load_default()
+    return ImageFont.load_default(size)
 
 
 def _rgb(hex_colour: str) -> tuple[int, int, int]:

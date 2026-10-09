@@ -12,7 +12,7 @@ can then be scored in precision and in recall.
        mark a contact on the frame shown; typing again on that frame changes its kind
 
     r  cancel the last mark
-    n  p    with --revoir, go to the next / previous moment to review
+    n  p    with --review, go to the next / previous moment to review
     q  quit (everything is already saved)
 
 Usage:
@@ -186,10 +186,10 @@ def main() -> None:
     parser.add_argument("--start", type=int, required=True)
     parser.add_argument("--frames", type=int, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--revoir", type=Path,
+    parser.add_argument("--review", type=Path,
                         help="JSON file of frames to review, browsed with n and p")
     args = parser.parse_args()
-    review = json.loads(args.revoir.read_text(encoding="utf-8")) if args.revoir else ()
+    review = json.loads(args.review.read_text(encoding="utf-8")) if args.review else ()
     run(args.video, args.video_name, args.start, args.frames, args.out, review)
 
 

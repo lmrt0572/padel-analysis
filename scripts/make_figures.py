@@ -37,7 +37,7 @@ def main() -> None:
     parser.add_argument("--measures", type=Path, default=Path("outputs/measures/cv.json"))
     parser.add_argument("--cache", type=Path, help="position cache of a whole match")
     parser.add_argument("--fps", type=float, default=30.0)
-    parser.add_argument("--bilans", type=Path, default=Path("outputs/match_stats"),
+    parser.add_argument("--reports", type=Path, default=Path("outputs/match_stats"),
                         help="folder of the match reports, by pair")
     parser.add_argument("--out", type=Path, default=Path("docs/figures"))
     args = parser.parse_args()
@@ -45,9 +45,9 @@ def main() -> None:
     verdicts = read(args.verdicts)
     measures = read(args.measures) or {}
     if verdicts is not None:
-        figures.judges_chart(verdicts, measures.get("cv"), args.out / "juges.png")
+        figures.judges_chart(verdicts, measures.get("cv"), args.out / "judges.png")
     if "curve" in measures:
-        figures.learning_curve_chart(measures["curve"], args.out / "courbe.png")
+        figures.learning_curve_chart(measures["curve"], args.out / "learning_curve.png")
     if "confusion" in measures:
         figures.confusion_chart(measures["confusion"], args.out / "confusion.png")
 
@@ -55,20 +55,20 @@ def main() -> None:
         trajectories = MatchTrajectories.from_cache(PositionCache.load(args.cache), args.fps)
         court = Court()
         figures.heatmaps_chart({slot: trajectories.positions[slot] for slot in SLOTS}, court,
-                               args.out / "occupation.png")
+                               args.out / "occupancy.png")
         import numpy as np
 
         depths = np.concatenate([trajectories.depth(slot) for slot in SLOTS])
         report = build_report(trajectories)
         figures.net_control_chart(depths, report["net_control"]["threshold_m"],
-                                  report["net_control"], args.out / "filet.png")
+                                  report["net_control"], args.out / "net_control.png")
 
-    reports = [read(args.bilans / f"{match}.json") for match in ("FinalF", "FinalM")]
+    reports = [read(args.reports / f"{match}.json") for match in ("FinalF", "FinalM")]
     reports = [report for report in reports if report]
     if reports:
-        figures.pair_duel_chart(reports, args.out / "bilan_paires.png")
-        figures.points_by_length_chart(reports, args.out / "points_longueur.png")
-        figures.pair_occupancy_chart(reports, args.out / "occupation_paires.png")
+        figures.pair_duel_chart(reports, args.out / "pair_report.png")
+        figures.points_by_length_chart(reports, args.out / "points_by_length.png")
+        figures.pair_occupancy_chart(reports, args.out / "pair_occupancy.png")
 
     print(f"figures written to {args.out}")
 

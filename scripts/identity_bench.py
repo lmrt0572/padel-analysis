@@ -1,12 +1,12 @@
 """Test bench of the identity tracking, on the minutes already analysed.
 
 The analysed minutes already carry the detections; with the torso colours cached, any
-tracking is replayed in a few seconds. The judge minutes are only scored with --juge,
+tracking is replayed in a few seconds. The judge minutes are only scored with --judge,
 once, when the tracking is frozen.
 
 Usage:
     python scripts/identity_bench.py            # builds the cache, scores the tuning
-    python scripts/identity_bench.py --juge     # the verdict, once
+    python scripts/identity_bench.py --judge     # the verdict, once
 """
 
 import argparse
@@ -81,11 +81,11 @@ def score(chosen, make_tracker=CourtSlotTracker) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--juge", action="store_true")
+    parser.add_argument("--judge", action="store_true")
     args = parser.parse_args()
-    chosen = minutes.IDENTITY_JUDGE if args.juge else ALL
+    chosen = minutes.IDENTITY_JUDGE if args.judge else ALL
     result = score(chosen)
-    title = "JUGE, huit minutes neuves" if args.juge else "reglage, vingt minutes"
+    title = "JUDGE, eight fresh minutes" if args.judge else "tuning, twenty minutes"
     print(f"{title}: {len(chosen)} minutes, {result['frames']} frames scored")
     print(f"  IDF1 {result['idf1']:.3f}   identity changes {result['switches']}")
 

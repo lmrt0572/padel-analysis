@@ -2,7 +2,7 @@
 
 The scoreboard is read on a few frames at the start of each rally and the most frequent
 reading is kept. Between two successive rallies, the grammar of the score says who won
-the point, or that a reading is doubtful. With --mosaique, scoreboards drawn at random
+the point, or that a reading is doubtful. With --mosaic, scoreboards drawn at random
 are written with their reading, to check it by eye.
 
 Usage:
@@ -40,7 +40,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--match", required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--mosaique", type=Path, help="check image to write")
+    parser.add_argument("--mosaic", type=Path, help="check image to write")
     args = parser.parse_args()
 
     board = Scoreboard.from_examples(EXAMPLES, frame_of)
@@ -94,7 +94,7 @@ def main() -> None:
     }
     args.out.write_text(json.dumps(payload, indent=1), encoding="utf-8")
 
-    if args.mosaique:
+    if args.mosaic:
         chosen = random.Random(0).sample(sorted(crops), min(24, len(crops)))
         tiles = []
         for start in chosen:
@@ -108,7 +108,7 @@ def main() -> None:
         while len(tiles) % 4:
             tiles.append(np.zeros_like(tiles[0]))
         rows = [np.hstack(tiles[i:i + 4]) for i in range(0, len(tiles), 4)]
-        cv2.imwrite(str(args.mosaique), np.vstack(rows))
+        cv2.imwrite(str(args.mosaic), np.vstack(rows))
 
 
 if __name__ == "__main__":

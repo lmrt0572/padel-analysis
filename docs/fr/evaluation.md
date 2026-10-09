@@ -772,7 +772,7 @@ produite à la main, sur les deux matchs.
 L'outil rejoue chaque instant en boucle, la balle marquée d'une croix fixe, et
 **n'affiche jamais ce que la règle prédit**. Une vérité terrain construite sur
 l'hypothèse qu'elle doit juger ne mesure que deux erreurs qui s'accordent : au
-sous-projet A, corriger ce défaut avait fait passer l'IDF1 de 0,956 à 0,819.
+pour la vérité d'identité, corriger ce défaut avait fait passer l'IDF1 de 0,956 à 0,819.
 
 Le match masculin compte 886 contacts, soit deux heures d'arbitrage. L'échantillon est
 **stratifié**, et sa taille comme sa graine sont enregistrées dans le fichier : un
@@ -1078,7 +1078,7 @@ sol. C'est la confusion que la géométrie annonçait (au-dessus d'environ un m�
 contact sur la vitre proche et un rebond au sol tombent sur le même pixel), et c'est là
 que se trouverait le prochain gain, pas dans davantage de minutes pointées :
 
-![Courbe d'apprentissage](../figures/courbe.png)
+![Courbe d'apprentissage](../figures/learning_curve.png)
 
 La courbe, refaite sur onze minutes, monte de 73,2 % à deux minutes d'entraînement à
 81,6 % à huit, puis 81,9 % à dix.
@@ -1509,11 +1509,11 @@ de quelques pour cent vers les volées, toujours dans le même sens. Les points 
 et les fautes par joueur, crédités au dernier frappeur, n'ont pas de vérité terrain et
 restent dans la vidéo de statistiques, hors du bilan.
 
-![Bilan par paire des deux finales](../figures/bilan_paires.png)
+![Bilan par paire des deux finales](../figures/pair_report.png)
 
-![Points gagnés selon la longueur de l'échange](../figures/points_longueur.png)
+![Points gagnés selon la longueur de l'échange](../figures/points_by_length.png)
 
-![Occupation du terrain par paire](../figures/occupation_paires.png)
+![Occupation du terrain par paire](../figures/pair_occupancy.png)
 
 ## Notes sur les paramètres
 

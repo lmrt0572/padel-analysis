@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="docs/figures/banniere.gif" alt="A rally played on the padel court rebuilt in 3D" width="100%">
+  <img src="docs/figures/banner.gif" alt="A rally played on the padel court rebuilt in 3D" width="100%">
 </p>
 
 # Padel Analysis
+
+[![tests](https://github.com/lmrt0572/padel-analysis/actions/workflows/tests.yml/badge.svg)](https://github.com/lmrt0572/padel-analysis/actions/workflows/tests.yml)
 
 > 🇫🇷 [Version française](docs/fr/README.md)
 
@@ -40,7 +42,7 @@ volleys, distance covered, top speed and time at the net. At each contact, the a
 touched (service box, back court, glass panel) lights up in perspective.
 
 <p align="center">
-  <img src="docs/figures/panneau.png" alt="Statistics panel of a rally" width="300">
+  <img src="docs/figures/panel.png" alt="Statistics panel of a rally" width="300">
 </p>
 
 ## How it works
@@ -96,11 +98,11 @@ figure is checked: movement against the dataset's annotated positions (within 1 
 strokes against the hand-marked minutes (within 1 %; volleys within 7 %), points
 against the scoreboard.
 
-![Report by pair for both finals](docs/figures/bilan_paires.png)
+![Report by pair for both finals](docs/figures/pair_report.png)
 
 <p align="center">
-  <img src="docs/figures/points_longueur.png" alt="Points won by rally length" width="62%">
-  <img src="docs/figures/occupation_paires.png" alt="Court occupancy by pair" width="34%">
+  <img src="docs/figures/points_by_length.png" alt="Points won by rally length" width="62%">
+  <img src="docs/figures/pair_occupancy.png" alt="Court occupancy by pair" width="34%">
 </p>
 
 The report is given **by pair, not by player**: when tracking confuses two partners,
@@ -130,7 +132,8 @@ conda run -n padel python -m pytest -q
 ```
 
 Installing CUDA torch explicitly is not optional on Windows: the default torch is a CPU
-build, and inference would go from minutes to hours.
+build, and inference would go from minutes to hours. Writing the videos also needs
+[ffmpeg](https://ffmpeg.org) on the `PATH`.
 
 ```bash
 python scripts/download_dataset.py
@@ -154,8 +157,8 @@ model, rebuilding the figures) is in **[docs/en/usage.md](docs/en/usage.md)**.
   another tournament.
 - No video, broadcast image or network weights are versioned.
 
-## Licence
+## Author and licence
 
-AGPL-3.0, see `LICENSE`. The project depends on Ultralytics, distributed under AGPL-3.0,
+By Léo Martin. AGPL-3.0, see `LICENSE`. The project depends on Ultralytics, distributed under AGPL-3.0,
 which imposes this licence on the whole: the code cannot be reused in a proprietary
 product.
