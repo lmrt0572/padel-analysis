@@ -160,17 +160,16 @@ def test_the_principal_point_sits_at_the_image_centre(synthetic_pose):
 
 
 def test_a_point_on_a_wall_is_contained_without_any_margin(synthetic_pose):
-    """The flat axis comes from a floating-point computation: requiring it exact would fail.
+    """Accept a point whose flat axis carries a rounding drift.
 
-    The point is produced by a real intersection, not written by hand: it is the
-    rounding drift that is at stake, and an exact literal would not reproduce it.
+    The drift of a real intersection depends on the machine, so it is also written by hand.
     """
     pose, _, _ = synthetic_pose
     wall = court_surfaces(Court())[2]
     pixel = pose.project(np.array([[1.0, 10.0, 2.0]]))[0]
-    meeting = wall.intersect(*pose.ray(pixel))
-    assert meeting[1] != 10.0
-    assert wall.contains(meeting, margin=0.0)
+    assert wall.contains(wall.intersect(*pose.ray(pixel)), margin=0.0)
+    assert wall.contains(np.array([1.0, 10.0 + 1e-9, 2.0]), margin=0.0)
+    assert wall.contains(np.array([1.0, 10.0 - 1e-9, 2.0]), margin=0.0)
 
 
 def test_a_pose_comes_straight_from_calibration_points(synthetic_pose):
