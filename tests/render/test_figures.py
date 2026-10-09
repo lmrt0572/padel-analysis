@@ -74,6 +74,6 @@ def test_the_match_figures_are_drawn(tmp_path):
 
     reports = [_match_report("FinalF"), _match_report("FinalM")]
     for draw, name in ((pair_duel_chart, "duel.png"), (points_by_length_chart, "longueur.png"),
-                       (pair_occupancy_chart, "occupation.png")):
+                       (pair_occupancy_chart, "occupancy.png")):
         draw(reports, tmp_path / name)
         assert (tmp_path / name).stat().st_size > 0

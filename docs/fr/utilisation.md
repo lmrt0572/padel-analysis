@@ -137,7 +137,7 @@ regardées, qui ne servent qu'une fois) :
 ```bash
 python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360
 python scripts/train_contact_model.py --cv --out weights/contact_net.pt
-python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --juge-5
+python scripts/score_minutes.py --tag 360 --contact-model weights/contact_net.pt --judge-5
 ```
 
 Les figures du rapport se refont depuis les chiffres écrits par les scripts de mesure :

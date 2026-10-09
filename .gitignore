@@ -1,6 +1,6 @@
-# Données et médias : jamais versionnés.
-# ground_truth/ fait exception et EST versionné : calibrations et vérité terrain
-# d'identité, sans lesquelles l'évaluation ne serait pas reproductible. Aucune image.
+# Data and media: never versioned.
+# ground_truth/ is the exception and IS versioned: calibrations and hand-made ground
+# truth, without which the evaluation could not be reproduced. No image.
 data/
 *.mp4
 *.mkv
@@ -8,16 +8,17 @@ data/
 *.wav
 *.mp3
 
-# Poids de modèles
+# Model weights
 *.pt
 *.onnx
 *.pth
+weights/
 
-# Sorties
+# Outputs
 outputs/
 *.log
 
-# Cache de pipeline
+# Pipeline cache
 cache/
 
 # Python
@@ -30,15 +31,13 @@ dist/
 build/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.coverage
 
-# Environnement local
+# Local environment
 .env
 .vscode/
 .idea/
 
-# Poids entraines et leurs parametres
-weights/
-
-# Restes d une ecriture atomique interrompue
+# Leftovers of an interrupted atomic write
 *.tmp
-.coverage

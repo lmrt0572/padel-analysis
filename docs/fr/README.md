@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="../figures/banniere.gif" alt="Un échange joué sur le court de padel reconstruit en 3D" width="100%">
+  <img src="../figures/banner.gif" alt="Un échange joué sur le court de padel reconstruit en 3D" width="100%">
 </p>
 
 # Padel Analysis
+
+[![tests](https://github.com/lmrt0572/padel-analysis/actions/workflows/tests.yml/badge.svg)](https://github.com/lmrt0572/padel-analysis/actions/workflows/tests.yml)
 
 > 🇬🇧 [English version](../../README.md)
 
@@ -12,8 +14,9 @@ filet), puis **les statistiques du jeu** : distance parcourue, vitesse, temps au
 frappes et volées, par joueur sur un échange et par paire sur un match.
 
 **82 à 83 %** des contacts reconnus avec la bonne surface sur des minutes jamais vues ·
-**86 %** sur un tournoi jamais vu · la distance d'une paire **à 1 % près** sur un match
-entier · vérifié contre plus de **2 000 contacts pointés à la main**.
+**86 %** sur un tournoi jamais vu · distance parcourue par chaque paire mesurée **à
+environ 1 % près** sur un match entier · vérifié contre plus de **2 000 contacts pointés
+à la main**.
 
 ## Le projet en une minute
 
@@ -40,7 +43,7 @@ et son temps au filet. À chaque contact, la zone touchée (carré de service, f
 panneau de vitre) s'éclaire en perspective.
 
 <p align="center">
-  <img src="../figures/panneau_fr.png" alt="Panneau de statistiques d'un échange" width="300">
+  <img src="../figures/panel_fr.png" alt="Panneau de statistiques d'un échange" width="300">
 </p>
 
 ## Comment ça marche
@@ -98,11 +101,11 @@ parcourue et le temps au filet. Chaque chiffre est vérifié : les déplacements
 les positions annotées du dataset (à 1 % près), les frappes contre les minutes pointées
 à la main (à 1 % près ; les volées à 7 %), les points contre le tableau.
 
-![Bilan par paire des deux finales](../figures/bilan_paires.png)
+![Bilan par paire des deux finales](../figures/pair_report.png)
 
 <p align="center">
-  <img src="../figures/points_longueur.png" alt="Points gagnés selon la longueur de l'échange" width="62%">
-  <img src="../figures/occupation_paires.png" alt="Occupation du terrain par paire" width="34%">
+  <img src="../figures/points_by_length.png" alt="Points gagnés selon la longueur de l'échange" width="62%">
+  <img src="../figures/pair_occupancy.png" alt="Occupation du terrain par paire" width="34%">
 </p>
 
 Le bilan est donné **par paire, pas par joueur** : quand le suivi confond deux
@@ -135,6 +138,7 @@ conda run -n padel python -m pytest -q
 
 L'installation explicite de torch CUDA n'est pas optionnelle sous Windows : le torch
 tiré par défaut est une version CPU, et l'inférence passerait de minutes à heures.
+L'écriture des vidéos demande aussi [ffmpeg](https://ffmpeg.org) dans le `PATH`.
 
 ```bash
 python scripts/download_dataset.py
@@ -158,8 +162,8 @@ juger le modèle, refaire les figures) sont dans **[utilisation.md](utilisation.
   sur un autre tournoi.
 - Aucune vidéo, image de retransmission ni poids de réseau n'est versionné.
 
-## Licence
+## Auteur et licence
 
-AGPL-3.0, voir `LICENSE`. Le projet dépend d'Ultralytics, distribué sous AGPL-3.0, ce
+Par Léo Martin. AGPL-3.0, voir `LICENSE`. Le projet dépend d'Ultralytics, distribué sous AGPL-3.0, ce
 qui impose cette licence à l'ensemble : le code n'est pas réutilisable dans un produit
 propriétaire.

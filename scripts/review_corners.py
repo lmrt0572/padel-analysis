@@ -7,7 +7,7 @@ two. A minute closed with `q` is recorded as reviewed.
 
 Usage:
     python scripts/review_corners.py            # review, minute after minute
-    python scripts/review_corners.py --liste    # only count the moments
+    python scripts/review_corners.py --list    # only count the moments
 """
 
 import argparse
@@ -64,7 +64,7 @@ def corner_moments(match: str, start: int) -> list[int]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--liste", action="store_true", help="count without opening the tool")
+    parser.add_argument("--list", action="store_true", help="count without opening the tool")
     args = parser.parse_args()
     done = json.loads(PROGRESS.read_text(encoding="utf-8")) if PROGRESS.exists() else []
     plan = [(match, start, corner_moments(match, start)) for match, start in BEFORE_FIX]
@@ -72,7 +72,7 @@ def main() -> None:
     left = [(match, start, m) for match, start, m in plan if m and f"{match}_{start}" not in done]
     print(f"{total} glass contacts near a corner in {len(BEFORE_FIX)} minutes; "
           f"{sum(len(m) for *_, m in left)} to review in {len(left)} minutes")
-    if args.liste:
+    if args.list:
         for match, start, moments in plan:
             print(f"  {match} {start:5} : {len(moments)}")
         return

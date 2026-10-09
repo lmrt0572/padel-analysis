@@ -1,11 +1,11 @@
 """Measure the cutting into rallies against the serves annotated in the dataset.
 
 An announced rally start is right if it falls within two seconds of a serve. The
-minutes the contact model has never seen are only scored with --juge, once.
+minutes the contact model has never seen are only scored with --judge, once.
 
 Usage:
     python scripts/rally_bench.py --contact-model weights/contact_net.pt
-    python scripts/rally_bench.py --contact-model weights/contact_net.pt --juge
+    python scripts/rally_bench.py --contact-model weights/contact_net.pt --judge
 """
 
 import argparse
@@ -88,11 +88,11 @@ def score(keys, model: ContactModel) -> tuple[int, int, int]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--contact-model", type=Path, required=True)
-    parser.add_argument("--juge", action="store_true")
+    parser.add_argument("--judge", action="store_true")
     args = parser.parse_args()
-    keys = JUDGE if args.juge else TUNE
+    keys = JUDGE if args.judge else TUNE
     found, announced, real = score(keys, ContactModel.load(args.contact_model))
-    title = "JUGE" if args.juge else "reglage"
+    title = "JUDGE" if args.judge else "tuning"
     print(f"{title}: {found}/{real} serves found, {announced} starts announced, "
           f"precision {found / max(announced, 1):.0%}, recall {found / max(real, 1):.0%}")
 

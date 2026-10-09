@@ -6,13 +6,24 @@ build-backend = "setuptools.build_meta"
 name = "padel-analysis"
 version = "0.1.0"
 description = "Automatic analysis of padel matches from broadcast video"
+readme = "README.md"
+authors = [{ name = "Léo Martin" }]
+keywords = ["padel", "computer vision", "sports analytics", "tracking", "pose estimation"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Intended Audience :: Science/Research",
+]
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
+    "matplotlib>=3.8",
     "numpy>=1.26",
     "opencv-python>=4.9",
+    "pillow>=10.1",
     "scipy>=1.12",
+    "torch>=2.2",
     "ultralytics>=8.3",
 ]
 
@@ -20,9 +31,13 @@ dependencies = [
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.5", "pylint>=3.2"]
 eval = ["supervision>=0.25,<0.31", "motmetrics>=1.4"]
 
+[project.urls]
+Repository = "https://github.com/lmrt0572/padel-analysis"
+Documentation = "https://github.com/lmrt0572/padel-analysis/blob/main/docs/en/usage.md"
+
 [project.scripts]
 padel-analysis = "padel_analysis.cli:main"
-padel-analyse = "padel_analysis.analyse:main"
+padel-stats = "padel_analysis.analyse:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -34,9 +49,9 @@ testpaths = ["tests"]
 line-length = 100
 
 [tool.pylint.main]
-# OpenCV est une extension compilee : sans cela, chaque appel a cv2 passe pour une erreur.
+# OpenCV is a compiled extension: without this, every cv2 call is reported as an error.
 extension-pkg-allow-list = ["cv2"]
-# Les scripts s'importent entre eux par leur nom, comme lances depuis scripts/.
+# The scripts import each other by name, as when run from scripts/.
 init-hook = "import sys; sys.path.append('scripts')"
 
 [tool.pylint.typecheck]
