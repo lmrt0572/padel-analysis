@@ -140,6 +140,9 @@ L'installation explicite de torch CUDA n'est pas optionnelle sous Windows : le t
 tiré par défaut est une version CPU, et l'inférence passerait de minutes à heures.
 L'écriture des vidéos demande aussi [ffmpeg](https://ffmpeg.org) dans le `PATH`.
 
+Les deux réseaux entraînés, `ball_net.pt` et `contact_net.pt`, sont joints à la
+[dernière release](https://github.com/lmrt0572/padel-analysis/releases/latest) : à télécharger dans `weights/`.
+
 ```bash
 python scripts/download_dataset.py
 python scripts/analyse_minutes.py --weights weights/ball_net.pt --tag 360 --match FinalF --minute 8000
@@ -160,7 +163,11 @@ juger le modèle, refaire les figures) sont dans **[utilisation.md](utilisation.
 - **Decorte et al.**, *Multi-Modal Hit Detection and Positional Analysis in Padel
   Competitions*, CVPR Workshops 2024 : un échange de leur jeu de données a servi au test
   sur un autre tournoi.
-- Aucune vidéo, image de retransmission ni poids de réseau n'est versionné.
+- **La vérité terrain faite à la main** dans `ground_truth/` (calibrations, pointage des
+  contacts, vérité d'identité et de surface) est publiée sous CC BY 4.0, voir
+  `ground_truth/LICENSE.md`.
+- Aucune vidéo ni image de retransmission n'est versionnée. Les poids entraînés sont
+  joints aux [releases](https://github.com/lmrt0572/padel-analysis/releases).
 
 ## Auteur et licence
 

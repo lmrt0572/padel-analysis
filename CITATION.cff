@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software or its ground truth, please cite it as below."
+title: "Padel Analysis: automatic analysis of padel matches from broadcast video"
+type: software
+authors:
+  - family-names: Martin
+    given-names: Léo
+version: 0.1.0
+date-released: 2026-10-09
+license: AGPL-3.0-or-later
+repository-code: "https://github.com/lmrt0572/padel-analysis"
+keywords:
+  - padel
+  - computer vision
+  - sports analytics
