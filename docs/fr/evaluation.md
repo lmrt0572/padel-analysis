@@ -4,6 +4,53 @@
 
 Ce document détaille chaque mesure résumée dans le [README](README.md) : comment elle a été obtenue, ce qu'elle vaut, et ce qu'elle ne dit pas. Les chiffres portent sur deux matchs du dataset PadelTracker100 : la finale féminine sert à régler, la finale masculine n'est utilisée qu'une fois, pour juger.
 
+## En bref
+
+| Question | Réponse | Section |
+|---|---|---|
+| Les joueurs sont-ils trouvés ? | F1 de détection de **0,88** sur le match tenu à l'écart. | [Match tenu à l'écart](#match-tenu-à-lécart) |
+| Chaque joueur est-il suivi ? | IDF1 de **0,84** sur huit minutes jamais vues. L'identité se perd encore aux coupes de la retransmission. | [Limites connues](#limites-connues) |
+| La balle est-elle trouvée ? | À moins de 10 px pour **79 à 80 %** des balles annotées du match tenu à l'écart. | [Détection de balle par réseau](#détection-de-balle-par-réseau) |
+| Chaque contact reçoit-il la bonne surface ? | **82 à 83 %** sur des minutes jamais vues, là où des règles réglées à la main donnaient 62 %. | [Les juges deviennent des données](#les-juges-deviennent-des-données) |
+| Cela tient-il sur un autre court ? | **86 %** sur un échange d'un autre tournoi, 76 contacts sur 88. | [Un autre tournoi, avec le son](#un-autre-tournoi-avec-le-son) |
+| Les statistiques d'un match sont-elles justes ? | Points exacts, distance d'une paire à 1,3 % près, frappes à 1,2 % près. | [Le bilan d'un match entier](#le-bilan-dun-match-entier) |
+
+Deux essais qui ont échoué sont gardés en entier : utiliser la logique d'un échange pour
+corriger les contacts ([un résultat négatif](#la-logique-du-padel-pour-compléter-limage--un-résultat-négatif)), et utiliser le son pour retrouver les
+vitres que l'image ne montre pas ([un autre tournoi](#un-autre-tournoi-avec-le-son)). Ce qui ne marche pas encore est
+listé dans les [limites connues](#limites-connues).
+
+## Sommaire
+
+- [Résultats](#résultats)
+  - [Stabilité de la caméra](#stabilité-de-la-caméra)
+  - [Précision de la calibration](#précision-de-la-calibration)
+  - [Asymétrie de précision entre les deux moitiés du court](#asymétrie-de-précision-entre-les-deux-moitiés-du-court)
+  - [Résolution d'inférence](#résolution-dinférence)
+  - [Perception et suivi](#perception-et-suivi)
+  - [Analyse tactique : contrôle du filet](#analyse-tactique--contrôle-du-filet)
+  - [Analyse tactique : distance et vitesse](#analyse-tactique--distance-et-vitesse)
+- [Évaluation](#évaluation)
+  - [Détection](#détection)
+  - [Ablation 1 : d'où vient le point au sol](#ablation-1--doù-vient-le-point-au-sol)
+  - [Vérité terrain d'identité](#vérité-terrain-didentité)
+  - [Ablation 2 : la contrainte de court](#ablation-2--la-contrainte-de-court)
+  - [Ce que l'arbitrage change à la mesure](#ce-que-larbitrage-change-à-la-mesure)
+  - [Phases aériennes](#phases-aériennes)
+  - [Match tenu à l'écart](#match-tenu-à-lécart)
+  - [Candidats de balle](#candidats-de-balle)
+  - [Trajectoire de la balle](#trajectoire-de-la-balle)
+  - [Détection de balle par réseau](#détection-de-balle-par-réseau)
+  - [Instants de contact](#instants-de-contact)
+  - [Surfaces de contact](#surfaces-de-contact)
+  - [De bout en bout : ce que la démonstration affiche](#de-bout-en-bout--ce-que-la-démonstration-affiche)
+  - [Un autre tournoi, avec le son](#un-autre-tournoi-avec-le-son)
+  - [Le bilan d'un match entier](#le-bilan-dun-match-entier)
+- [Notes sur les paramètres](#notes-sur-les-paramètres)
+- [Limites connues](#limites-connues)
+- [Reproduire l'évaluation](#reproduire-lévaluation)
+- [Ce que ce dépôt versionne](#ce-que-ce-dépôt-versionne)
+
 ## Résultats
 
 ### Stabilité de la caméra
