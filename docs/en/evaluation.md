@@ -4,6 +4,53 @@
 
 This document details every measurement summarised in the [README](../../README.md): how it was obtained, what it is worth, and what it does not say. The figures cover two matches of the PadelTracker100 dataset: the women's final is used for tuning, the men's final is used only once, for judging.
 
+## At a glance
+
+| Question | Answer | Section |
+|---|---|---|
+| Are the players found? | Detection F1 of **0.88** on the held-out match. | [Held-out match](#held-out-match) |
+| Is each player followed? | IDF1 of **0.84** on eight minutes never seen. Identity is still lost at broadcast cuts. | [Known limitations](#known-limitations) |
+| Is the ball found? | Within 10 px for **79 to 80 %** of the annotated balls of the held-out match. | [Ball detection by a network](#ball-detection-by-a-network) |
+| Does each contact get the right surface? | **82 to 83 %** on minutes never seen, where hand-tuned rules gave 62 %. | [The judges become data](#the-judges-become-data) |
+| Does it hold on another court? | **86 %** on one rally of another tournament, 76 contacts out of 88. | [Another tournament, with sound](#another-tournament-with-sound) |
+| Are the match statistics right? | Points exact, a pair's distance within 1.3 %, strokes within 1.2 %. | [The report of a whole match](#the-report-of-a-whole-match) |
+
+Two attempts that failed are kept in full: using the logic of a rally to correct the
+contacts ([a negative result](#the-logic-of-padel-to-complete-the-picture-a-negative-result)), and using sound to recover the glass contacts the
+picture does not show ([another tournament](#another-tournament-with-sound)). What still does not work is listed under
+[known limitations](#known-limitations).
+
+## Contents
+
+- [Results](#results)
+  - [Camera stability](#camera-stability)
+  - [Calibration accuracy](#calibration-accuracy)
+  - [Accuracy asymmetry between the two halves of the court](#accuracy-asymmetry-between-the-two-halves-of-the-court)
+  - [Inference resolution](#inference-resolution)
+  - [Perception and tracking](#perception-and-tracking)
+  - [Tactical analysis: net control](#tactical-analysis-net-control)
+  - [Tactical analysis: distance and speed](#tactical-analysis-distance-and-speed)
+- [Evaluation](#evaluation)
+  - [Detection](#detection)
+  - [Ablation 1: where the ground point comes from](#ablation-1-where-the-ground-point-comes-from)
+  - [Identity ground truth](#identity-ground-truth)
+  - [Ablation 2: the court constraint](#ablation-2-the-court-constraint)
+  - [What arbitration changes in the measurement](#what-arbitration-changes-in-the-measurement)
+  - [Airborne phases](#airborne-phases)
+  - [Held-out match](#held-out-match)
+  - [Ball candidates](#ball-candidates)
+  - [Ball trajectory](#ball-trajectory)
+  - [Ball detection by a network](#ball-detection-by-a-network)
+  - [Contact instants](#contact-instants)
+  - [Contact surfaces](#contact-surfaces)
+  - [End to end: what the demonstration shows](#end-to-end-what-the-demonstration-shows)
+  - [Another tournament, with sound](#another-tournament-with-sound)
+  - [The report of a whole match](#the-report-of-a-whole-match)
+- [Parameter notes](#parameter-notes)
+- [Known limitations](#known-limitations)
+- [Reproducing the evaluation](#reproducing-the-evaluation)
+- [What this repository versions](#what-this-repository-versions)
+
 ## Results
 
 ### Camera stability
